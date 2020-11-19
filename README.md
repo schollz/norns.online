@@ -60,7 +60,7 @@ then rebuild `matron` inside the norns:
 
 make sure you choose `yourname` to whatever you want. anyone with knowledge of `yourname` can access your norns.
 
-### Go!
+### clone the norns
 
 open https://norns.online/#yourname. share it with others and let them control your norns.
 
