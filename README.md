@@ -1,8 +1,8 @@
-# norn.online
+# norns.online
 
 ![111](https://user-images.githubusercontent.com/6550035/99736745-c470c180-2a7b-11eb-80d4-e9b2a02167cf.png)
 
-Crowdsource the control of a [norns](https://monome.org/docs/norns/).
+Crowdsource the control of a [norns](https://monome.org/docs/norns/) from [norns.online](https://norns.online).
 
 ## Instructions
 
@@ -31,7 +31,16 @@ Restart it:
 
 ### Allowing arbitrary lua execution
 
-First [add this change](https://github.com/schollz/norns/commit/3202c3f1cfd40ac132d59e66276bfe0653ca2264).
+[Add this change](https://github.com/schollz/norns/commit/3202c3f1cfd40ac132d59e66276bfe0653ca2264) to allow arbitrary lua execution
+
+Then rebuild `matron` inside the norns.
+
+```
+> cd ~/norns
+> ./waf configure
+> ./waf
+> sudo reboot now
+``` 
 
 ### Clone and build the program
 
