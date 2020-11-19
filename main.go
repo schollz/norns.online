@@ -22,36 +22,12 @@ import (
 
 var addr = flag.String("addr", "192.168.0.82:5555", "http service address")
 var mu sync.Mutex
-
-type State struct {
-	Input Input
-	Menu  bool
-}
-
-type Input struct {
-	Encs []Enc `json:"encs"`
-	Keys []Key `json:"keys"`
-}
-type Enc struct {
-	N int `json:"n"`
-	Z int `json:"z"`
-}
-type Key struct {
-	N int  `json:"n"`
-	Z int  `json:"z"`
-	F bool `json:"f"`
-}
-
-var state State
+var inMenu bool
 
 func main() {
 	logger.SetLevel("debug")
 	flag.Parse()
 	log.SetFlags(0)
-
-	state = State{Input: Input{}}
-	state.Input.Keys = make([]Key, 3)
-	state.Input.Encs = make([]Enc, 3)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
@@ -73,22 +49,28 @@ func main() {
 
 	done := make(chan struct{})
 
-	go func() {
-		defer close(done)
-		for {
-			_, message, err := c.ReadMessage()
-			if err != nil {
-				logger.Error("read:", err)
-				continue
-			}
-			logger.Tracef("recv: '%s'", message)
-		}
-	}()
+	// go func() {
+	// 	defer close(done)
+	// 	for {
+	// 		_, message, err := c.ReadMessage()
+	// 		if err != nil {
+	// 			logger.Error("read:", err)
+	// 			continue
+	// 		}
+	// 		logger.Tracef("recv: '%s'", message)
+	// 	}
+	// }()
 
 	go func() {
+		client := &http.Client{
+			Transport: &http.Transport{
+				MaxIdleConnsPerHost: 1,
+			},
+			Timeout: 30000 * time.Second,
+		}
 		for {
 			response, err := func() (response string, err error) {
-				resp, err := http.Get("http://duct.schollz.com/b")
+				resp, err := client.Get("http://duct.schollz.com/b")
 				if err != nil {
 					return
 				}
@@ -114,6 +96,7 @@ func main() {
 				continue
 			}
 			mu.Lock()
+			logger.Debugf("running command: '%s'", cmd)
 			err = c.WriteMessage(websocket.TextMessage, []byte(`_norns.system_cmd_lua("`+cmd+`")`+"\n"))
 			mu.Unlock()
 			if err != nil {
@@ -123,7 +106,7 @@ func main() {
 		}
 	}()
 
-	ticker := time.NewTicker(250 * time.Millisecond)
+	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 	fmt.Println("ceonnected")
 	for {
@@ -139,10 +122,12 @@ func main() {
 				log.Println("write:", err)
 				return
 			}
+			time.Sleep(10 * time.Millisecond)
+
 			err = postImage()
 			if err != nil {
 				logger.Errorf("image: %+w", err)
-				return
+				continue
 			}
 		case <-interrupt:
 			log.Println("interrupt")
@@ -196,41 +181,63 @@ func postImage() (err error) {
 	return
 }
 
+type Message struct {
+	Kind string
+	N    int
+	Z    int
+	Fast bool
+}
+
 func processMessage(s string) (cmd string, err error) {
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		logger.Error(err)
 		return
 	}
-	var m Input
+	var m Message
 	err = json.Unmarshal(b, &m)
 	if err != nil {
 		logger.Error(err)
 		return
 	}
 
-	for i, k := range m.Keys {
-		k.Z = sanitizeKey(k.Z)
-		if k.F != state.Input.Keys[i].F && i == 0 && k.F {
-			// TODO toggle menu
-		}
-		state.Input.Keys[i].F = k.F
-		if k.Z != state.Input.Keys[i].Z {
-			state.Input.Keys[i].Z = k.Z
-			cmd += fmt.Sprintf("key(%d,%d) ", i, k.Z)
-		}
-	}
-	for i, k := range m.Encs {
-		k.Z = sanitizeEnc(k.Z)
-		if k.Z != state.Input.Encs[i].Z {
-			state.Input.Encs[i].Z = k.Z
-			cmd += fmt.Sprintf("enc(%d,%d) ", i, k.Z)
+	if m.Kind == "enc" {
+		cmd = fmt.Sprintf("enc(%d,%d)", sanitizeIndex(m.N), sanitizeEnc(m.Z))
+	} else if m.Kind == "key" {
+		cmd = fmt.Sprintf("key(%d,%d)", sanitizeIndex(m.N), sanitizeKey(m.Z))
+		if m.Fast && m.N == 1 {
+			inMenu = !inMenu
+			if inMenu {
+				cmd = "set_mode(true)"
+			} else {
+				cmd = "_menu.set_mode(false)"
+			}
 		}
 	}
+	if inMenu {
+		cmd = "_menu." + cmd
+	}
+
 	return
 }
 
+func sanitizeIndex(v int) int {
+	if v < 1 {
+		return 1
+	} else if v > 3 {
+		return 3
+	}
+	return v
+}
+
 func sanitizeEnc(v int) int {
+	if inMenu {
+		if v < -1 {
+			return -1
+		} else if v > 1 {
+			return 1
+		}
+	}
 	if v < -3 {
 		return -3
 	} else if v > 3 {
