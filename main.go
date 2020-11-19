@@ -78,9 +78,9 @@ func main() {
 				continue
 			}
 			logger.Debugf("got command: '%s'", response)
-			mu.Lock()
-			err = c.WriteMessage(websocket.TextMessage, []byte(`_norns.system_cmd_lua("`+response+`")`+"\n"))
-			mu.Unlock()
+			// mu.Lock()
+			// err = c.WriteMessage(websocket.TextMessage, []byte(`_norns.system_cmd_lua("`+response+`")`+"\n"))
+			// mu.Unlock()
 			if err != nil {
 				logger.Error(err)
 				continue
