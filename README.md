@@ -2,38 +2,44 @@
 
 ![111](https://user-images.githubusercontent.com/6550035/99736745-c470c180-2a7b-11eb-80d4-e9b2a02167cf.png)
 
-Crowdsource the control of a [norns](https://monome.org/docs/norns/) from [norns.online](https://norns.online).
+crowdsource the control of a [norns](https://monome.org/docs/norns/) from [norns.online](https://norns.online).
 
-## Instructions
+## how does it work?
 
-First SSH into the norns.
+- norns runs a server that generates a screenshot at 10fps. screenshots are sent to special address on relay server ([duct.schollz.com](https://duct.schollz.com)) which servers as a multi-process, multi-consumer queue.
+- server on norns listens to another address on relay server for commands and sanitizes those commands as either "encoders" or "keys". those commands are then sent to matron via websockets.
+- website uses special address (designated by "`#`") to connect to relay and wait for / send info to your norns
 
-### Improve the DNS resolution
+## instructions
 
-Edit the DHCPCD
+first SSH into the norns.
+
+### improve the DNS resolution
+
+edit the DHCP
 
 ```
 > sudo vim /etc/dhcpcd.conf
 ```
 
-Add this line somewhere:
+add this line somewhere:
 
 ```
 static domain_name_servers=192.168.0.1 1.1.1.1 1.0.0.1
 ```
 
-Restart it:
+restart it:
 
 ```
 > sudo service dhcpcd restart
 ```
 
 
-### Allowing arbitrary lua execution
+### allow arbitrary lua execution
 
-[Add this change](https://github.com/schollz/norns/commit/3202c3f1cfd40ac132d59e66276bfe0653ca2264) to allow arbitrary lua execution
+[add this change](https://github.com/schollz/norns/commit/3202c3f1cfd40ac132d59e66276bfe0653ca2264) to allow arbitrary lua execution
 
-Then rebuild `matron` inside the norns.
+then rebuild `matron` inside the norns:
 
 ```
 > cd ~/norns
@@ -42,24 +48,25 @@ Then rebuild `matron` inside the norns.
 > sudo reboot now
 ``` 
 
-### Clone and build the program
+### clone and build the program
 
 ```
+> cd ~/dust
 > git clone https://github.com/schollz/norns.online
+> cd norns.online
 > go build -v
 > ./norns.online --name yourname
 ```
 
-Make sure you choose `yourname` to whatever you want. Anyone with knowledge of `yourname` can access your norns.
-
+make sure you choose `yourname` to whatever you want. anyone with knowledge of `yourname` can access your norns.
 
 ### Go!
 
-Open https://norns.online/#yourname
+open https://norns.online/#yourname. share it with others and let them control your norns.
 
-### Optional: make stream
+### optional: make stream
 
-I haven't figured out how to embed the music stream. Until I do, make a twitch stream and it can link from click on the screen.
+i haven't figured out how to embed the music stream. until I do, make a twitch stream and it can link from click on the screen.
 
 ## License
 
