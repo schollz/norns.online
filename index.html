@@ -15,8 +15,8 @@
             left: 60px;
             top: 250px;
             background-color: #000;
-            width: 500px;
-            height: 250px;
+            width: 550px;
+            height: 270px;
             padding: 20px;
             border-radius: 10px;
             border-color: #222222;
@@ -92,7 +92,7 @@
 <body>
     <div class="norns">
         <div class="nornsimage">
-            <img src="screenshot2.png">
+            <img id="img">
         </div>
         <button class="button k0" id="k0"></button>
         <button class="button k1" id="k1"></button>
@@ -125,38 +125,10 @@
             if (callNow) func.apply(context, args);
         };
     };
-    setInterval(function() {
-        $.get("https://duct.schollz.com/a.png", function(data) {
-            if (data.length > 3) {
-                document.getElementById('img')
-                    .setAttribute(
-                        'src',
-                        'data:image/png;base64,' + data
-                    )
-            }
-        });
-    }, 250);
+
 
     var keys = [];
     var encs = [];
-
-    function updateServer() {
-        data = {
-            encs: [],
-            keys: []
-        }
-        for (var i = 0; i < 3; i++) {
-            data.keys.push({
-                z: keys[i].val(),
-                f: keys[i].get_fast_clicked(),
-            })
-            data.encs.push({
-                z: encs[i].val()
-            })
-        }
-        $.post( "https://duct.schollz.com/b?pubsub=true", btoa(JSON.stringify(data)));
-    }
-
 
     function currentTime() {
         return (new Date()).getTime();
@@ -168,6 +140,7 @@
         let z = 0;
         return {
             change: function(v) {
+                console.log(v, last_time)
                 if (currentTime() - last_time < 200) {
                     return
                 }
@@ -192,7 +165,7 @@
                     z = -1 * multiplier;
                 }
                 value = v;
-                updateServer()
+                $.post("https://duct.schollz.com/b?pubsub=true", btoa(JSON.stringify({ kind: "enc", n: i + 1, z: z })));
             },
             val: function() {
                 return z;
@@ -209,7 +182,7 @@
                 console.log(i + " clicked")
                 value = 1 - value;
                 $("#k" + i).toggleClass("latched")
-                if (currentTime() - last_time < 250 && value == 0) {
+                if (currentTime() - last_time < 500 && value == 0) {
                     console.log("fast click!")
                     fast_clicked = true
                 } else {
@@ -217,7 +190,12 @@
                     fast_clicked = false
                 }
                 last_time = currentTime();
-                updateServer()
+                if (i == 0) {
+                    $.post("https://duct.schollz.com/b", btoa(JSON.stringify({ kind: "key", n: i + 1, z: value, fast: fast_clicked })));
+                } else if (value > 0) {
+                    console.log({ kind: "key", n: i + 1, z: value })
+                    $.post("https://duct.schollz.com/b", btoa(JSON.stringify({ kind: "key", n: i + 1, z: value })));
+                }
             },
             val: function() {
                 return value;
@@ -239,6 +217,18 @@
             document.getElementById("k" + i).addEventListener("mouseup", keys[i].change);
         }
     }
+    async function execute1() {
+        while (true) {
+            postResult = await $.get("https://duct.schollz.com/a.png").promise();
+            if (postResult.length > 3) {
+                await document.getElementById('img').setAttribute(
+                    'src',
+                    'data:image/png;base64,' + postResult
+                )
+            }
+        }
+    }
+    execute1();
     </script>
 </body>
 
