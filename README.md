@@ -68,6 +68,6 @@ open https://norns.online/#yourname. share it with others and let them control y
 
 i haven't figured out how to embed the music stream. until I do, make a twitch stream and it can link from click on the screen.
 
-## License
+## license
 
 MIT
