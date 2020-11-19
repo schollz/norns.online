@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"flag"
@@ -10,12 +11,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"os/signal"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/disintegration/imaging"
 	"github.com/gorilla/websocket"
 	"github.com/schollz/logger"
 )
@@ -50,10 +50,8 @@ func main() {
 	log.SetFlags(0)
 
 	state = State{Input: Input{}}
-	for i := 0; i < 3; i++ {
-		state.Input.Keys[i] = Key{}
-		state.Input.Encs[i] = Enc{}
-	}
+	state.Input.Keys = make([]Key, 3)
+	state.Input.Encs = make([]Enc, 3)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
@@ -134,7 +132,6 @@ func main() {
 			return
 		case t := <-ticker.C:
 			logger.Tracef("writing message at %s\n", t)
-			// err := c.WriteMessage(websocket.TextMessage, []byte(`_norns.system_cmd_lua("enc(2,1)")`+"\n"))
 			mu.Lock()
 			err := c.WriteMessage(websocket.TextMessage, []byte(`_norns.screen_export_png("/tmp/screenshot.png")`+"\n"))
 			mu.Unlock()
@@ -142,13 +139,11 @@ func main() {
 				log.Println("write:", err)
 				return
 			}
-			cmd := exec.Command("convert", strings.Fields(`/tmp/screenshot.png -gamma 1.25 -filter point -resize 400% -gravity center -background black -extent 120% /tmp/screenshot2.png`)...)
-			_, err = cmd.Output()
+			err = postImage()
 			if err != nil {
-				logger.Error(err)
+				logger.Errorf("image: %+w", err)
 				return
 			}
-			postImage()
 		case <-interrupt:
 			log.Println("interrupt")
 
@@ -169,12 +164,25 @@ func main() {
 }
 
 func postImage() (err error) {
-	f, err := os.Open("/tmp/screenshot2.png")
+	src, err := imaging.Open("/tmp/screenshot.png")
+	if err != nil {
+		logger.Error("failed to open image: %v", err)
+		return
+	}
+	// Resize the cropped image to width = 200px preserving the aspect ratio.
+	src = imaging.Resize(src, 550, 0, imaging.NearestNeighbor)
+	src = imaging.AdjustGamma(src, 1.25)
+	err = imaging.Save(src, "/tmp/screenshot2.png")
 	if err != nil {
 		return
 	}
-	defer f.Close()
-	req, err := http.NewRequest("POST", "https://duct.schollz.com/a.png?pubsub=true", f)
+
+	b, err := ioutil.ReadFile("/tmp/screenshot2.png")
+	if err != nil {
+		return
+	}
+	base64data := base64.StdEncoding.EncodeToString(b)
+	req, err := http.NewRequest("POST", "https://duct.schollz.com/a.png?pubsub=true", bytes.NewBufferString(base64data))
 	if err != nil {
 		return
 	}
