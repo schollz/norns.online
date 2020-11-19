@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -21,10 +23,37 @@ import (
 var addr = flag.String("addr", "192.168.0.82:5555", "http service address")
 var mu sync.Mutex
 
+type State struct {
+	Input Input
+	Menu  bool
+}
+
+type Input struct {
+	Encs []Enc `json:"encs"`
+	Keys []Key `json:"keys"`
+}
+type Enc struct {
+	N int `json:"n"`
+	Z int `json:"z"`
+}
+type Key struct {
+	N int  `json:"n"`
+	Z int  `json:"z"`
+	F bool `json:"f"`
+}
+
+var state State
+
 func main() {
 	logger.SetLevel("debug")
 	flag.Parse()
 	log.SetFlags(0)
+
+	state = State{Input: Input{}}
+	for i := 0; i < 3; i++ {
+		state.Input.Keys[i] = Key{}
+		state.Input.Encs[i] = Enc{}
+	}
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
@@ -78,9 +107,17 @@ func main() {
 				continue
 			}
 			logger.Debugf("got command: '%s'", response)
-			// mu.Lock()
-			// err = c.WriteMessage(websocket.TextMessage, []byte(`_norns.system_cmd_lua("`+response+`")`+"\n"))
-			// mu.Unlock()
+			cmd, err := processMessage(response)
+			if err != nil {
+				logger.Error(err)
+				continue
+			}
+			if cmd == "" {
+				continue
+			}
+			mu.Lock()
+			err = c.WriteMessage(websocket.TextMessage, []byte(`_norns.system_cmd_lua("`+cmd+`")`+"\n"))
+			mu.Unlock()
 			if err != nil {
 				logger.Error(err)
 				continue
@@ -149,4 +186,55 @@ func postImage() (err error) {
 	}
 	defer resp.Body.Close()
 	return
+}
+
+func processMessage(s string) (cmd string, err error) {
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	var m Input
+	err = json.Unmarshal(b, &m)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+
+	for i, k := range m.Keys {
+		k.Z = sanitizeKey(k.Z)
+		if k.F != state.Input.Keys[i].F && i == 0 && k.F {
+			// TODO toggle menu
+		}
+		state.Input.Keys[i].F = k.F
+		if k.Z != state.Input.Keys[i].Z {
+			state.Input.Keys[i].Z = k.Z
+			cmd += fmt.Sprintf("key(%d,%d) ", i, k.Z)
+		}
+	}
+	for i, k := range m.Encs {
+		k.Z = sanitizeEnc(k.Z)
+		if k.Z != state.Input.Encs[i].Z {
+			state.Input.Encs[i].Z = k.Z
+			cmd += fmt.Sprintf("enc(%d,%d) ", i, k.Z)
+		}
+	}
+	return
+}
+
+func sanitizeEnc(v int) int {
+	if v < -3 {
+		return -3
+	} else if v > 3 {
+		return 3
+	}
+	return v
+}
+func sanitizeKey(v int) int {
+	if v < 0 {
+		return 0
+	} else if v > 1 {
+		return 1
+	}
+	return v
 }
