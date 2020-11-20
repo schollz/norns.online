@@ -6,9 +6,9 @@ crowdsource the control of a [norns](https://monome.org/docs/norns/) from [norns
 
 ## how does it work?
 
-- norns runs a server that generates a screenshot at 10fps. screenshots are sent to special address on relay server ([duct.schollz.com](https://duct.schollz.com)) which servers as a multi-process, multi-consumer queue.
-- server on norns listens to another address on relay server for commands and sanitizes those commands as either "encoders" or "keys". those commands are then sent to matron via websockets.
-- website uses special address (designated by "`#`") to connect to relay and wait for / send info to your norns
+- norns runs a service that generates a screenshot at 10fps. screenshots are sent to special address on relay server ([duct.schollz.com](https://duct.schollz.com)). 
+- the relay serves as a multi-process, multi-consumer queue. opening the webpage with a special address (designated by "`#`") allows it to connect to the relay. the website can then consume screenshots and send input to the relay.
+- at the same time, the norns service listens to the relay for input commands from the website. it then sanitizes those commands as either "encoders" or "keys". those commands are then sent to matron via websockets.
 
 ## instructions
 
