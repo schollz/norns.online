@@ -15,6 +15,7 @@ local textentry=require 'textentry'
 CONFIG_FILE="/home/we/dust/code/norns.online/config.json"
 KILL_FILE="/tmp/norns.online.kill"
 START_FILE="/home/we/dust/code/norns.online/start.sh"
+SERVER_FILE="/home/we/dust/code/norns.online/norns.online"
 LATEST_RELEASE=""
 px=48
 py=16
@@ -181,15 +182,23 @@ function load_settings()
 end
 
 function update()
-  uimessage = "downloading"
+  uimessage = "building"
   redraw()
-  os.execute("curl "+LATEST_RELEASE+" -o /home/we/dust/code/norns.online/norns.online")
+  os.execute("cd /home/we/dust/code/norns.online; go build")
   uimessage = ""
+  redraw()
+  if not util.file_exists(SERVER_FILE) then 
+    uimessage = "downloading"
+    redraw()
+    os.execute("curl "..LATEST_RELEASE.." -o "..SERVER_FILE)
+    uimessage = ""
+    redraw()
+  end
 end
 
 function start()
   write_settings()
-  if not util.file_exists("/home/we/dust/code/norns.online/norns.online") then 
+  if not util.file_exists(SERVER_FILE) then 
     update()
   end
   os.execute(START_FILE)
