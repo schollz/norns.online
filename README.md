@@ -14,26 +14,6 @@ crowdsource the control of a [norns](https://monome.org/docs/norns/) from [norns
 
 first SSH into the norns.
 
-### improve the DNS resolution
-
-edit the DHCP
-
-```
-> sudo vim /etc/dhcpcd.conf
-```
-
-add this line somewhere:
-
-```
-static domain_name_servers=192.168.0.1 1.1.1.1 1.0.0.1
-```
-
-restart it:
-
-```
-> sudo service dhcpcd restart
-```
-
 
 ### allow arbitrary lua execution
 
@@ -55,10 +35,10 @@ then rebuild `matron` inside the norns:
 > git clone https://github.com/schollz/norns.online
 > cd norns.online
 > go build -v
-> ./norns.online --name yourname
+> ./norns.online --name yourname --menu
 ```
 
-make sure you choose `yourname` to whatever you want. anyone with knowledge of `yourname` can access your norns.
+make sure you choose `yourname` to whatever you want. anyone with knowledge of `yourname` can access your norns. allowing `--menu` allows menu diving.
 
 ### clone the norns
 

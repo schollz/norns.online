@@ -13,7 +13,8 @@
 
         .hints {
             font-family:"Lucida Console", Monaco, monospace;
-            padding-top: 5em;
+            padding-top: 1em;
+            font-size:1.5em;
         }
 
         .nornsimage {
@@ -59,7 +60,7 @@
             background-color: #222222;
             border: none;
             border-radius: 50%;
-            box-shadow: 0px 10px #999;
+            box-shadow: 2px 12px  #999;
         }
 
 
@@ -99,7 +100,7 @@
     <div class="center">
         <div class="norns">
             <div class="nornsimage">
-                <a href="/" target="_blank" id="twitch"><img id="img" src="sleep.png" style="filter: brightness(1);"></a>
+                <a href="/" target="_blank" class="twitch"><img id="img" src="sleep.png" style="filter: brightness(1);"></a>
             </div>
             <button class="button k0" id="k0"></button>
             <button class="button k1" id="k1"></button>
@@ -114,18 +115,17 @@
                 <input type="text" value="75" class="enc2" data-width="100" data-displayInput=false data-cursor=true data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
             </div>
         </div>
+        <div class="twitch">
+            <iframe src="https://player.twitch.tv/?channel=infinitedigits_music&parent=norns.local" height="100px" width="600px" frameborder="0" scrolling="true" allowfullscreen="false">
+            </iframe>
+        </div>
         <div class="hints">
-            <details>
-                <summary></summary>
-                <pre>≋h≋i≋n≋t≋s≋
-
-- make play not destruction
-- k1 latches so you can use it as a shift.
-- double click k1 to get into/out-of menu.
-- its slow. be patient.
-- get the source at github.com/schollz/norns.online
-</pre>
-            </details>
+            <ul>
+                <li>listen to livestream on <a href="/" target="_blank" class="twitch">twitch.tv</a></li>
+                <li>k1 latches so you can use it as a shift.</li>
+                <li>double click k1 to get into/out-of menu.</li>
+                <li>get instructions for your own norns on <a href="https://github.com/schollz/norns.online">github</a></li>
+            </ul>
         </div>
     </div>
     <script src="/js/jquery-3.5.1.min.js"></script>
@@ -133,11 +133,11 @@
     <script>
     var norns_id = window.location.hash.substr(1);
     console.log(norns_id);
-if (norns_id.length < 3) {
-	norns_id = "infinitedigits_music"
-}
+    if (norns_id.length < 3) {
+        norns_id = "infinitedigits_music"
+    }
     if (norns_id.length > 3) {
-        $("#twitch").attr("href", "https://www.twitch.tv/" + norns_id)
+        $(".twitch").attr("href", "https://www.twitch.tv/" + norns_id)
     }
 
     function debounce(func, wait, immediate) {
@@ -179,14 +179,14 @@ if (norns_id.length < 3) {
                     dif = (v - value);
                 }
                 value = v;
-                if (currentTime() - last_time < 250) {
+                if (currentTime() - last_time < 500) {
                     consecutive_turns = consecutive_turns + dif;
                     return
                 }
                 var multiplier = 1;
-                if (Math.abs(consecutive_turns) > 32) {
+                if (Math.abs(consecutive_turns) > 64) {
                     multiplier = 3;
-                } else if (Math.abs(consecutive_turns) > 15) {
+                } else if (Math.abs(consecutive_turns) > 30) {
                     multiplier = 2;
                 }
                 consecutive_turns = 0;
@@ -217,7 +217,7 @@ if (norns_id.length < 3) {
             reset: function() {
                 value = 0;
                 $("#k" + i).removeClass("latched")
-                $.post("https://duct.schollz.com/b", btoa(JSON.stringify({ kind: "key", n: i + 1, z: value })));
+                $.post("https://duct.schollz.com/norns.online." + norns_id, btoa(JSON.stringify({ kind: "key", n: i + 1, z: value })));
             },
             change: function() {
                 console.log(i + " clicked")
@@ -254,7 +254,7 @@ if (norns_id.length < 3) {
         });
         if (i == 0) {
             document.getElementById("k" + i).addEventListener("click", keys[i].change);
-//     document.getElementById("k" + i).addEventListener("mouseleave", keys[i].reset);
+            //     document.getElementById("k" + i).addEventListener("mouseleave", keys[i].reset);
         } else {
             document.getElementById("k" + i).addEventListener("mousedown", keys[i].change);
             document.getElementById("k" + i).addEventListener("mouseup", keys[i].change);
