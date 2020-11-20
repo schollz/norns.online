@@ -24,6 +24,7 @@ settings = {
   allowmenu=false,
   allowencs=true,
   allowkeys=true,
+  allowtwitch=false,
   keepawake=false,
   framerate=5,
 }
@@ -55,13 +56,15 @@ function key(n,z)
     elseif ui==5 then
       settings.allowencs = not settings.allowencs 
     elseif ui==6 then
+      settings.allowtwitch = not settings.allowtwitch
+    elseif ui==7 then
       settings.keepawake = not settings.keepawake
-    elseif ui==7 then 
+    elseif ui==8 then 
       settings.framerate = settings.framerate + 1 
       if settings.framerate > 12 then 
         settings.framerate = 1 
       end 
-    elseif ui==8 then 
+    elseif ui==9 then 
       update()
     end
     write_settings()
@@ -82,56 +85,71 @@ function redraw()
   end
   screen.text("norns.online/"+settings.name)
 
-screen.move(8,1)
   uistuff = {}
-  uistuff[1] = {
+  local i=1
+  uistuff[i] = {
     position={1,1},
     name = "norns.online/"..settings.name,
   }
-  uistuff[2] = {
+  i = i + 1
+  uistuff[i] = {
     position={9,1},
     name = "start",
   }
   if util.file_exists(KILL_FILE) then
-    uistuff[2].name = "stop"
+    uistuff[i].name = "stop"
   end
-  uistuff[3] = {
+  i = i + 1
+  uistuff[i] = {
     position={17,1},
     name="menu: disabled",
   }
   if settings.allowmenu then 
-    uistuff[3].name="menu: enabled"
+    uistuff[i].name="menu: enabled"
   end
-  uistuff[4] = {
+  i = i + 1
+  uistuff[i] = {
     position={25,1},
     name="keys: disabled",
   }
   if settings.allowmenu then 
-    uistuff[4].name="keys: enabled"
+    uistuff[i].name="keys: enabled"
   end
-  uistuff[5] = {
+  i = i + 1
+  uistuff[i] = {
     position={33,1},
     name="encs: disabled",
   }
-  if settings.allowmenu then 
-    uistuff[5].name="encs: enabled"
+  if settings.allowencs then 
+    uistuff[i].name="encs: enabled"
   end
-  uistuff[6] = {
+  i = i + 1
+  uistuff[i] = {
+    position={33,1},
+    name="twitch: disabled",
+  }
+  if settings.allowtwitch then 
+    uistuff[i].name="twitch: enabled"
+  end
+  i = i + 1
+  uistuff[i] = {
     position={40,1},
     name="awake: disabled",
   }
-  if settings.allowmenu then 
-    uistuff[6].name="awake: enabled"
+  if settings.keepawake then 
+    uistuff[i].name="awake: enabled"
   end
-  uistuff[7] = {
+  i = i + 1
+  uistuff[i] = {
     position={48,1},
     name="framerate: "..settings.framerate,
   }
-  uistuff[8] = {
+  i = i + 1
+  uistuff[i] = {
     position={48,1},
     name="update?",
   }
-  for i=1,8 do
+  for i=1,9 do
     if ui==i then 
       screen.level(15)
     else 

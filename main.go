@@ -86,12 +86,13 @@ rm -- "$0"
 }
 
 type NornsOnline struct {
-	Name      string `json:"name"`
-	AllowMenu bool   `json:"allowmenu"`
-	AllowEncs bool   `json:"allowkeys"`
-	AllowKeys bool   `json:"allowencs"`
-	KeepAwake bool   `json:"keepawake"`
-	FrameRate int    `json:"framerate"`
+	Name        string `json:"name"`
+	AllowMenu   bool   `json:"allowmenu"`
+	AllowEncs   bool   `json:"allowkeys"`
+	AllowKeys   bool   `json:"allowencs"`
+	AllowTwitch bool   `json:"allowtwitch"`
+	KeepAwake   bool   `json:"keepawake"`
+	FrameRate   int    `json:"framerate"`
 
 	configFile     string
 	configFileHash []byte
@@ -266,7 +267,7 @@ func (n *NornsOnline) Run() (err error) {
 			n.Unlock()
 			time.Sleep(10 * time.Millisecond)
 
-			err = n.postImage()
+			err = n.updateClient()
 			if err != nil {
 				logger.Tracef("image: %+w", err)
 				continue
@@ -291,7 +292,12 @@ func (n *NornsOnline) Run() (err error) {
 	return
 }
 
-func (n *NornsOnline) postImage() (err error) {
+type Payload struct {
+	Img    string `json:"img"`
+	Twitch bool   `json:"twitch"`
+}
+
+func (n *NornsOnline) updateClient() (err error) {
 	// open dumped image
 	src, err := imaging.Open("/tmp/screenshot.png")
 	if err != nil {
@@ -311,7 +317,17 @@ func (n *NornsOnline) postImage() (err error) {
 		return
 	}
 	base64data := base64.StdEncoding.EncodeToString(b)
-	req, err := http.NewRequest("POST", RELAY_ADDRESS+n.Name+".png?pubsub=true", bytes.NewBufferString(base64data))
+
+	payload := Payload{
+		Img:    base64data,
+		Twitch: n.AllowTwitch,
+	}
+	payloadbytes, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+	payloadbase64 := base64.StdEncoding.EncodeToString(payloadbytes)
+	req, err := http.NewRequest("POST", RELAY_ADDRESS+n.Name+".png?pubsub=true", bytes.NewBufferString(payloadbase64))
 	if err != nil {
 		return
 	}

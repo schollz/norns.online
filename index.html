@@ -124,8 +124,10 @@
             </div>
         </div>
         <script src="https://player.twitch.tv/js/embed/v1.js"></script>
-        <div style="padding-top:1em" class="text">live stream:</div>
-        <div id="playerdiv"></div>
+        <div id="livestream">
+            <div style="padding-top:1em" class="text">live stream:</div>
+            <div id="playerdiv"></div>
+        </div>
         <div class="hints">
             <div>hints:</div>
             <ul>
@@ -268,11 +270,19 @@
     async function execute1() {
         while (true) {
             postResult = await $.get("https://duct.schollz.com/norns.online." + norns_id + ".png").promise();
-            if (postResult.length > 3) {
+            data = atob(postResult);
+            if ('img' in data) {
                 await document.getElementById('img').setAttribute(
                     'src',
-                    'data:image/png;base64,' + postResult
+                    'data:image/png;base64,' + data['img']
                 )
+            }
+            if ('twitch' in data) {
+                if (data['twitch']) {
+                    await $("#livestream").removeClass("hidden");
+                } else {
+                    await $("#livestream").addClass("hidden");
+                }
             }
         }
     }
