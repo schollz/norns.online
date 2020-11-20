@@ -133,6 +133,9 @@
     <script>
     var norns_id = window.location.hash.substr(1);
     console.log(norns_id);
+if (norns_id.length < 3) {
+	norns_id = "infinitedigits_music"
+}
     if (norns_id.length > 3) {
         $("#twitch").attr("href", "https://www.twitch.tv/" + norns_id)
     }
@@ -251,7 +254,7 @@
         });
         if (i == 0) {
             document.getElementById("k" + i).addEventListener("click", keys[i].change);
-            document.getElementById("k" + i).addEventListener("mouseleave", keys[i].reset);
+//     document.getElementById("k" + i).addEventListener("mouseleave", keys[i].reset);
         } else {
             document.getElementById("k" + i).addEventListener("mousedown", keys[i].change);
             document.getElementById("k" + i).addEventListener("mouseup", keys[i].change);
