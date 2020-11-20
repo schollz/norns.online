@@ -2,7 +2,7 @@
 
 ![111](https://user-images.githubusercontent.com/6550035/99736745-c470c180-2a7b-11eb-80d4-e9b2a02167cf.png)
 
-crowdsource the control of a [norns](https://monome.org/docs/norns/) from [norns.online](https://norns.online).
+crowdsource the control of a [norns](https://monome.org/docs/norns/) from [norns.online](https://norns.online#infinitedigits).
 
 ## how does it work?
 
