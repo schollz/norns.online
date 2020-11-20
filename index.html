@@ -163,32 +163,37 @@
         let last_time = currentTime();
         let value = 0;
         let z = 0;
+        let consecutive_turns = 0;
         return {
             change: function(v) {
-                if (currentTime() - last_time < 200) {
+                increased = v > value
+                dif = 0;
+                if (Math.abs(value - v) > 50) {
+                    increased = !increased;
+                } else {
+                    dif = (v - value);
+                }
+                value = v;
+                if (currentTime() - last_time < 250) {
+                    consecutive_turns = consecutive_turns + dif;
                     return
                 }
                 var multiplier = 1;
-                if (currentTime() - last_time < 500) {
+                if (Math.abs(consecutive_turns) > 32) {
+                    multiplier = 3;
+                } else if (Math.abs(consecutive_turns) > 15) {
                     multiplier = 2;
                 }
-                if (currentTime() - last_time < 250) {
-                    multiplier = 3;
-                }
+                consecutive_turns = 0;
 
                 last_time = currentTime()
-                increased = v > value
-                if (Math.abs(value - v) > 50) {
-                    increased = !increased;
-                }
                 if (increased) {
-                    console.log(i + " increased")
                     z = 1 * multiplier;
+                    console.log(i + " increased " + z)
                 } else {
-                    console.log(i + " decreased")
                     z = -1 * multiplier;
+                    console.log(i + " decreased " + z)
                 }
-                value = v;
                 if (norns_id.length > 3) {
                     $.post("https://duct.schollz.com/norns.online." + norns_id + "?pubsub=true", btoa(JSON.stringify({ kind: "enc", n: i + 1, z: z })))
                 }
