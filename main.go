@@ -3,12 +3,13 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -20,25 +21,84 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/gorilla/websocket"
 	"github.com/schollz/logger"
+	"github.com/shirou/gopsutil/v3/process"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-var addr = flag.String("addr", "192.168.0.82:5555", "http service address")
-var name = flag.String("name", "", "special name for accessing")
-var menuAllowed = flag.Bool("menu", false, "allow the use of the menu")
-var keepAwake = flag.Bool("keep-awake", false, "prevent screen from sleeping")
-var mu sync.Mutex
-var inMenu bool
-var client *http.Client
+var RELAY_ADDRESS = "http://duct.schollz.com/norns.online."
+
+var config = flag.String("config", "", "config file to use")
 
 func main() {
-	logger.SetLevel("debug")
-	flag.Parse()
-	log.SetFlags(0)
-
-	if *name == "" {
-		fmt.Println("need name, use --name")
+	// first make sure its not already running an instance
+	processes, err := process.Processes()
+	if err != nil {
+		panic(err)
+	}
+	numRunning := 0
+	pid := int32(0)
+	for _, process := range processes {
+		name, _ := process.Name()
+		if name == "norns.online" {
+			numRunning++
+			if pid == 0 {
+				pid = process.Pid
+			}
+		}
+	}
+	if numRunning > 1 {
+		fmt.Println("already running")
 		os.Exit(1)
 	}
+	ioutil.WriteFile("/tmp/norns.online.pid", []byte(fmt.Sprint(pid)), 0644)
+
+	fmt.Printf("%d\n", pid)
+
+	// setup logger
+	logger.SetOutput(&lumberjack.Logger{
+		Filename:   "/tmp/norns.online.log",
+		MaxSize:    10, // megabytes
+		MaxBackups: 3,
+		MaxAge:     28,    //days
+		Compress:   false, // disabled by default
+	})
+	logger.SetLevel("debug")
+	flag.Parse()
+
+	if *config == "" {
+		logger.Error("need config, use --config")
+		os.Exit(1)
+	}
+	n, err := New(*config)
+	if err != nil {
+		logger.Error(err)
+		os.Exit(1)
+	}
+	err = n.Run()
+	if err != nil {
+		logger.Error(err)
+		os.Exit(1)
+	}
+}
+
+type NornsOnline struct {
+	Name      string `json:"name"`
+	Menu      bool   `json:"menu"`
+	KeepAwake bool   `json:"keep-awake"`
+
+	configFile     string
+	configFileHash []byte
+	active         bool
+	inMenu         bool
+	client         *http.Client
+	sync.Mutex
+}
+
+// New returns a new instance
+func New(configFile string) (n *NornsOnline, err error) {
+	n = new(NornsOnline)
+	n.configFile = configFile
+	err = n.Load()
 
 	// setup dialer for fast DNS resolution
 	var (
@@ -64,7 +124,7 @@ func main() {
 	}
 
 	http.DefaultTransport.(*http.Transport).DialContext = dialContext
-	client = &http.Client{
+	n.client = &http.Client{
 		Transport: &http.Transport{
 			Proxy:                 http.ProxyFromEnvironment,
 			DialContext:           dialContext,
@@ -76,12 +136,39 @@ func main() {
 		},
 		Timeout: 30000 * time.Second,
 	}
+	return
+}
+
+// Load will update the configuration if config file changes
+func (n *NornsOnline) Load() (err error) {
+	currentHash, err := MD5HashFile(n.configFile)
+	if err != nil {
+		return
+	}
+	if bytes.Equal(n.configFileHash, currentHash) {
+		return
+	}
+	b, err := ioutil.ReadFile(n.configFile)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(b, &n)
+	if err != nil {
+		return
+	}
+	n.configFileHash = currentHash
+	logger.Debugf("loaded: %+v", n)
+	return
+}
+
+// Run forever
+func (n *NornsOnline) Run() (err error) {
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	u := url.URL{Scheme: "ws", Host: *addr, Path: "/"}
-	log.Printf("connecting to %s", u.String())
+	u := url.URL{Scheme: "ws", Host: "192.168.0.82:5555", Path: "/"}
+	logger.Infof("connecting to %s", u.String())
 	var cstDialer = websocket.Dialer{
 		Subprotocols:     []string{"bus.sp.nanomsg.org"},
 		ReadBufferSize:   1024,
@@ -91,29 +178,18 @@ func main() {
 
 	c, _, err := cstDialer.Dial(u.String(), nil)
 	if err != nil {
-		panic(err)
+		logger.Error(err)
+		os.Exit(1)
 	}
 	defer c.Close()
 
 	done := make(chan struct{})
 
-	// go func() {
-	// 	defer close(done)
-	// 	for {
-	// 		_, message, err := c.ReadMessage()
-	// 		if err != nil {
-	// 			logger.Error("read:", err)
-	// 			continue
-	// 		}
-	// 		logger.Tracef("recv: '%s'", message)
-	// 	}
-	// }()
-
 	go func() {
 		pings := 0
 		for {
 			response, err := func() (response string, err error) {
-				resp, err := client.Get("http://duct.schollz.com/norns.online." + *name)
+				resp, err := n.client.Get(RELAY_ADDRESS + n.Name)
 				if err != nil {
 					return
 				}
@@ -130,7 +206,7 @@ func main() {
 				continue
 			}
 			logger.Debugf("got command: '%s'", response)
-			cmd, err := processMessage(response)
+			cmd, err := n.processMessage(response)
 			if err != nil {
 				logger.Error(err)
 				continue
@@ -138,15 +214,14 @@ func main() {
 			if cmd == "" {
 				continue
 			}
-			mu.Lock()
+			n.Lock()
 			logger.Debugf("running command: '%s'", cmd)
-			//err = c.WriteMessage(websocket.TextMessage, []byte(`_norns.system_cmd_lua("`+cmd+`")`+"\n"))
-			err = c.WriteMessage(websocket.TextMessage, []byte(cmd+"\n"))
+			// err = c.WriteMessage(websocket.TextMessage, []byte(cmd+"\n"))
 			pings++
-			if pings%20 == 0 && *keepAwake {
+			if pings%20 == 0 && n.KeepAwake {
 				err = c.WriteMessage(websocket.TextMessage, []byte(`screen.ping()`+"\n"))
 			}
-			mu.Unlock()
+			n.Unlock()
 			if err != nil {
 				logger.Error(err)
 				continue
@@ -154,35 +229,39 @@ func main() {
 		}
 	}()
 
+	logger.Info("connected")
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
-	fmt.Println("ceonnected")
+	ticker2 := time.NewTicker(1000 * time.Millisecond)
+	defer ticker2.Stop()
 	for {
 		select {
 		case <-done:
 			return
+		case _ = <-ticker2.C:
+			n.Load()
 		case t := <-ticker.C:
 			logger.Tracef("writing message at %s\n", t)
-			mu.Lock()
-			err := c.WriteMessage(websocket.TextMessage, []byte(`_norns.screen_export_png("/tmp/screenshot.png")`+"\n"))
-			mu.Unlock()
-			if err != nil {
-				log.Println("write:", err)
-				return
-			}
+			n.Lock()
+			// err = c.WriteMessage(websocket.TextMessage, []byte(`_norns.screen_export_png("/tmp/screenshot.png")`+"\n"))
+			// if err != nil {
+			// 	log.Println("write:", err)
+			// 	return
+			// }
+			n.Unlock()
 			time.Sleep(10 * time.Millisecond)
 
-			err = postImage()
+			err = n.postImage()
 			if err != nil {
-				logger.Errorf("image: %+w", err)
+				logger.Tracef("image: %+w", err)
 				continue
 			}
 		case <-interrupt:
-			log.Println("interrupt")
+			logger.Info("interrupt - quitting gracefully")
 
 			// Cleanly close the connection by sending a close message and then
 			// waiting (with timeout) for the server to close the connection.
-			err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			err = c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
 				logger.Info("write close:", err)
 				return
@@ -194,14 +273,16 @@ func main() {
 			return
 		}
 	}
+	return
 }
 
-func postImage() (err error) {
+func (n *NornsOnline) postImage() (err error) {
+	// open dumped image
 	src, err := imaging.Open("/tmp/screenshot.png")
 	if err != nil {
-		logger.Error("failed to open image: %v", err)
 		return
 	}
+
 	// Resize the cropped image to width = 200px preserving the aspect ratio.
 	src = imaging.Resize(src, 550, 0, imaging.NearestNeighbor)
 	src = imaging.AdjustGamma(src, 1.25)
@@ -215,13 +296,13 @@ func postImage() (err error) {
 		return
 	}
 	base64data := base64.StdEncoding.EncodeToString(b)
-	req, err := http.NewRequest("POST", "https://duct.schollz.com/norns.online."+*name+".png?pubsub=true", bytes.NewBufferString(base64data))
+	req, err := http.NewRequest("POST", RELAY_ADDRESS+n.Name+".png?pubsub=true", bytes.NewBufferString(base64data))
 	if err != nil {
 		return
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := client.Do(req)
+	resp, err := n.client.Do(req)
 	if err != nil {
 		return
 	}
@@ -236,7 +317,7 @@ type Message struct {
 	Fast bool
 }
 
-func processMessage(s string) (cmd string, err error) {
+func (n *NornsOnline) processMessage(s string) (cmd string, err error) {
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
 		logger.Error(err)
@@ -253,16 +334,16 @@ func processMessage(s string) (cmd string, err error) {
 		cmd = fmt.Sprintf("enc(%d,%d)", sanitizeIndex(m.N), sanitizeEnc(m.Z))
 	} else if m.Kind == "key" {
 		cmd = fmt.Sprintf("key(%d,%d)", sanitizeIndex(m.N), sanitizeKey(m.Z))
-		if m.Fast && m.N == 1 && *menuAllowed {
-			inMenu = !inMenu
-			if inMenu {
+		if m.Fast && m.N == 1 && n.Menu {
+			n.inMenu = !n.inMenu
+			if n.inMenu {
 				cmd = "set_mode(true)"
 			} else {
 				cmd = "_menu.set_mode(false)"
 			}
 		}
 	}
-	if inMenu {
+	if n.inMenu {
 		cmd = "_menu." + cmd
 	}
 
@@ -300,4 +381,21 @@ func sanitizeKey(v int) int {
 		return 1
 	}
 	return v
+}
+
+// MD5HashFile returns MD5 hash
+func MD5HashFile(fname string) (hash256 []byte, err error) {
+	f, err := os.Open(fname)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	h := md5.New()
+	if _, err = io.Copy(h, f); err != nil {
+		return
+	}
+
+	hash256 = h.Sum(nil)
+	return
 }
