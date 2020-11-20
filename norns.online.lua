@@ -12,13 +12,14 @@
 local json=include("lib/json")
 local textentry=require 'textentry'
 
+-- default files / directories
 CONFIG_FILE="/home/we/dust/code/norns.online/config.json"
 KILL_FILE="/tmp/norns.online.kill"
 START_FILE="/home/we/dust/code/norns.online/start.sh"
 SERVER_FILE="/home/we/dust/code/norns.online/norns.online"
-LATEST_RELEASE=""
-px=48
-py=16
+LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v0.0.1/norns.online"
+
+-- default settings
 settings = {
   name=randomString(5),
   allowmenu=false,
@@ -34,6 +35,7 @@ uishift=false
 
 function init()
   load_settings()
+  write_settings()
   redraw()
 end
 
