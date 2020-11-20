@@ -21,6 +21,7 @@ import (
 )
 
 var addr = flag.String("addr", "192.168.0.82:5555", "http service address")
+var name = flag.String("name", "", "special name for accessing")
 var mu sync.Mutex
 var inMenu bool
 
@@ -28,6 +29,11 @@ func main() {
 	logger.SetLevel("debug")
 	flag.Parse()
 	log.SetFlags(0)
+
+	if *name == "" {
+		fmt.Println("need name, use --name")
+		os.Exit(1)
+	}
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
@@ -70,7 +76,7 @@ func main() {
 		}
 		for {
 			response, err := func() (response string, err error) {
-				resp, err := client.Get("http://duct.schollz.com/b")
+				resp, err := client.Get("http://duct.schollz.com/norns.online." + *name)
 				if err != nil {
 					return
 				}
@@ -167,7 +173,7 @@ func postImage() (err error) {
 		return
 	}
 	base64data := base64.StdEncoding.EncodeToString(b)
-	req, err := http.NewRequest("POST", "https://duct.schollz.com/a.png?pubsub=true", bytes.NewBufferString(base64data))
+	req, err := http.NewRequest("POST", "https://duct.schollz.com/norns.online."+*name+".png?pubsub=true", bytes.NewBufferString(base64data))
 	if err != nil {
 		return
 	}
@@ -231,13 +237,13 @@ func sanitizeIndex(v int) int {
 }
 
 func sanitizeEnc(v int) int {
-	if inMenu {
-		if v < -1 {
-			return -1
-		} else if v > 1 {
-			return 1
-		}
-	}
+	// if inMenu {
+	// 	if v < -1 {
+	// 		return -1
+	// 	} else if v > 1 {
+	// 		return 1
+	// 	}
+	// }
 	if v < -3 {
 		return -3
 	} else if v > 3 {
