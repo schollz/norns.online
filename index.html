@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>norns</title>
+    <title>ᑎOᖇᑎᔕ ||| OᑎᒪIᑎE</title>
     <style>
         .norns {
             background-color: #AAA9AD;
@@ -9,6 +9,11 @@
             height: 600px;
             border-radius: 10px;
             box-shadow: 10px 10px #999;
+        }
+
+        .hints {
+            font-family:"Lucida Console", Monaco, monospace;
+            padding-top: 5em;
         }
 
         .nornsimage {
@@ -94,7 +99,7 @@
     <div class="center">
         <div class="norns">
             <div class="nornsimage">
-                <img id="img" style="filter: brightness(2);">
+                <a href="/" target="_blank" id="twitch"><img id="img" src="sleep.png" style="filter: brightness(1);"></a>
             </div>
             <button class="button k0" id="k0"></button>
             <button class="button k1" id="k1"></button>
@@ -109,10 +114,27 @@
                 <input type="text" value="75" class="enc2" data-width="100" data-displayInput=false data-cursor=true data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
             </div>
         </div>
+        <div class="hints">
+            <details>
+                <summary></summary>
+                <pre>≋h≋i≋n≋t≋s≋
+
+- k1 latches so you can use it as a shift.
+- double click k1 to get into/out-of menu.
+- its slow. be patient.
+</pre>
+            </details>
+        </div>
     </div>
     <script src="/js/jquery-3.5.1.min.js"></script>
     <script src="/js/jquery.knob.min.js"></script>
     <script>
+    var norns_id = window.location.hash.substr(1);
+    console.log(norns_id);
+    if (norns_id.length > 3) {
+        $("#twitch").attr("href", "https://www.twitch.tv/" + norns_id)
+    }
+
     function debounce(func, wait, immediate) {
         var timeout;
         return function() {
@@ -141,34 +163,40 @@
         let last_time = currentTime();
         let value = 0;
         let z = 0;
+        let consecutive_turns = 0;
         return {
             change: function(v) {
-                console.log(v, last_time)
-                if (currentTime() - last_time < 200) {
+                increased = v > value
+                dif = 0;
+                if (Math.abs(value - v) > 50) {
+                    increased = !increased;
+                } else {
+                    dif = (v - value);
+                }
+                value = v;
+                if (currentTime() - last_time < 250) {
+                    consecutive_turns = consecutive_turns + dif;
                     return
                 }
                 var multiplier = 1;
-                if (currentTime() - last_time < 500) {
+                if (Math.abs(consecutive_turns) > 32) {
+                    multiplier = 3;
+                } else if (Math.abs(consecutive_turns) > 15) {
                     multiplier = 2;
                 }
-                if (currentTime() - last_time < 250) {
-                    multiplier = 3;
-                }
+                consecutive_turns = 0;
 
                 last_time = currentTime()
-                increased = v > value
-                if (Math.abs(value - v) > 50) {
-                    increased = !increased;
-                }
                 if (increased) {
-                    console.log(i + " increased")
                     z = 1 * multiplier;
+                    console.log(i + " increased " + z)
                 } else {
-                    console.log(i + " decreased")
                     z = -1 * multiplier;
+                    console.log(i + " decreased " + z)
                 }
-                value = v;
-                $.post("https://duct.schollz.com/b?pubsub=true", btoa(JSON.stringify({ kind: "enc", n: i + 1, z: z })));
+                if (norns_id.length > 3) {
+                    $.post("https://duct.schollz.com/norns.online." + norns_id + "?pubsub=true", btoa(JSON.stringify({ kind: "enc", n: i + 1, z: z })))
+                }
             },
             val: function() {
                 return z;
@@ -198,11 +226,12 @@
                     fast_clicked = false
                 }
                 last_time = currentTime();
-                if (i == 0) {
-                    $.post("https://duct.schollz.com/b", btoa(JSON.stringify({ kind: "key", n: i + 1, z: value, fast: fast_clicked })));
-                } else if (value > 0) {
-                    console.log({ kind: "key", n: i + 1, z: value })
-                    $.post("https://duct.schollz.com/b", btoa(JSON.stringify({ kind: "key", n: i + 1, z: value })));
+                if (norns_id.length > 3) {
+                    if (i == 0) {
+                        $.post("https://duct.schollz.com/norns.online." + norns_id, btoa(JSON.stringify({ kind: "key", n: i + 1, z: value, fast: fast_clicked })));
+                    } else if (value > 0) {
+                        $.post("https://duct.schollz.com/norns.online." + norns_id, btoa(JSON.stringify({ kind: "key", n: i + 1, z: value })));
+                    }
                 }
             },
             val: function() {
@@ -228,7 +257,7 @@
     }
     async function execute1() {
         while (true) {
-            postResult = await $.get("https://duct.schollz.com/a.png").promise();
+            postResult = await $.get("https://duct.schollz.com/norns.online." + norns_id + ".png").promise();
             if (postResult.length > 3) {
                 await document.getElementById('img').setAttribute(
                     'src',
@@ -237,7 +266,9 @@
             }
         }
     }
-    execute1();
+    if (norns_id.length > 3) {
+        execute1();
+    }
     </script>
 </body>
 
