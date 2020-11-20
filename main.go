@@ -317,6 +317,7 @@ type Message struct {
 	Fast bool
 }
 
+// processMessage only lets certain k inds of messages through
 func (n *NornsOnline) processMessage(s string) (cmd string, err error) {
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
