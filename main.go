@@ -87,8 +87,11 @@ rm -- "$0"
 
 type NornsOnline struct {
 	Name      string `json:"name"`
-	Menu      bool   `json:"menu"`
+	AllowMenu bool   `json:"allowmenu"`
+	AllowEncs bool   `json:"allowkeys"`
+	AllowKeys bool   `json:"allowencs"`
 	KeepAwake bool   `json:"keepawake"`
+	FrameRate int    `json:"framerate"`
 
 	configFile     string
 	configFileHash []byte
@@ -102,6 +105,10 @@ type NornsOnline struct {
 func New(configFile string) (n *NornsOnline, err error) {
 	n = new(NornsOnline)
 	n.configFile = configFile
+	n.AllowEncs = true
+	n.AllowKeys = true
+	n.KeepAwake = false
+	n.FrameRate = 4
 	err = n.Load()
 
 	// setup dialer for fast DNS resolution
@@ -238,7 +245,7 @@ func (n *NornsOnline) Run() (err error) {
 	}()
 
 	logger.Info("connected")
-	ticker := time.NewTicker(100 * time.Millisecond)
+	ticker := time.NewTicker(time.Duration(1000/n.FrameRate) * time.Millisecond)
 	defer ticker.Stop()
 	ticker2 := time.NewTicker(1000 * time.Millisecond)
 	defer ticker2.Stop()
@@ -339,11 +346,11 @@ func (n *NornsOnline) processMessage(s string) (cmd string, err error) {
 		return
 	}
 
-	if m.Kind == "enc" {
+	if m.Kind == "enc" && n.AllowEncs {
 		cmd = fmt.Sprintf("enc(%d,%d)", sanitizeIndex(m.N), sanitizeEnc(m.Z))
-	} else if m.Kind == "key" {
+	} else if m.Kind == "key" && n.AllowKeys {
 		cmd = fmt.Sprintf("key(%d,%d)", sanitizeIndex(m.N), sanitizeKey(m.Z))
-		if m.Fast && m.N == 1 && n.Menu {
+		if m.Fast && m.N == 1 && n.AllowMenu {
 			n.inMenu = !n.inMenu
 			if n.inMenu {
 				cmd = "set_mode(true)"

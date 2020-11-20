@@ -18,12 +18,16 @@ START_FILE="/home/we/dust/code/norns.online/start.sh"
 LATEST_RELEASE=""
 px=48
 py=16
-name=""
+settings = {
+  name=randomString(5),
+  allowmenu=false,
+  allowencs=true,
+  allowkeys=true,
+  keepawake=false,
+  framerate=5,
+}
 
 function init()
-  params:add{type='binary',name='allow menu',id='allowmenu',behavior='toggle',allow_pmap=true,action=function(v) update_settings() end}
-  params:add{type='binary',name='keep awake',id='keepawake',behavior='toggle',allow_pmap=true,action=function(v) update_settings() end}
-  
   load_settings()
   redraw()
 end
@@ -79,17 +83,7 @@ function update_settings()
 end
 
 function write_settings()
-  dat={}
-  dat.name=name
-  dat.menu=false
-  dat.keepawake=false
-  if params:get("allowmenu")==1 then
-    dat.menu=true
-  end
-  if params:get("keepawake")==1 then
-    dat.keepawake=true
-  end
-  jsondata=json.encode(dat)
+  jsondata=json.encode(settings)
   f=io.open(CONFIG_FILE,"w")
   f:write(jsondata)
   f:close(f)
@@ -100,18 +94,7 @@ function load_settings()
     do return end
   end
   data=readAll(CONFIG_FILE)
-  dat=json.decode(data)
-  name=dat.name
-  if dat.menu then
-    params:set("allowmenu",1)
-  else
-    params:set("allowmenu",0)
-  end
-  if dat.keepawake then
-    params:set("keepawake",1)
-  else
-    params:set("keepawake",0)
-  end
+  settings=json.decode(data)
 end
 
 function update()
@@ -127,4 +110,15 @@ end
 function stop()
   os.execute(KILL_FILE)
   redraw()
+end
+
+
+local charset = {}  do -- [a-z]
+  for c = 97, 122 do table.insert(charset, string.char(c)) end
+end
+
+local function randomString(length)
+  if not length or length <= 0 then return '' end
+  math.randomseed(os.clock()^5)
+  return randomString(length - 1) .. charset[math.random(1, #charset)]
 end
