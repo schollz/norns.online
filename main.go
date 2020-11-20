@@ -25,6 +25,7 @@ import (
 var addr = flag.String("addr", "192.168.0.82:5555", "http service address")
 var name = flag.String("name", "", "special name for accessing")
 var menuAllowed = flag.Bool("menu", false, "allow the use of the menu")
+var keepAwake = flag.Bool("keep-awake", false, "prevent screen from sleeping")
 var mu sync.Mutex
 var inMenu bool
 var client *http.Client
@@ -109,7 +110,7 @@ func main() {
 	// }()
 
 	go func() {
-
+		pings := 0
 		for {
 			response, err := func() (response string, err error) {
 				resp, err := client.Get("http://duct.schollz.com/norns.online." + *name)
@@ -139,7 +140,12 @@ func main() {
 			}
 			mu.Lock()
 			logger.Debugf("running command: '%s'", cmd)
-			err = c.WriteMessage(websocket.TextMessage, []byte(`_norns.system_cmd_lua("`+cmd+`")`+"\n"))
+			//err = c.WriteMessage(websocket.TextMessage, []byte(`_norns.system_cmd_lua("`+cmd+`")`+"\n"))
+			err = c.WriteMessage(websocket.TextMessage, []byte(cmd+"\n"))
+			pings++
+			if pings%20 == 0 && *keepAwake {
+				err = c.WriteMessage(websocket.TextMessage, []byte(`screen.ping()`+"\n"))
+			}
 			mu.Unlock()
 			if err != nil {
 				logger.Error(err)
