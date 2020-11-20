@@ -60,6 +60,8 @@ function key(n,z)
       if settings.framerate > 12 then 
         settings.framerate = 1 
       end 
+    elseif ui==8 then 
+      update()
     end
     write_settings()
   end
@@ -67,7 +69,7 @@ function key(n,z)
 end
 
 function enc(n,z) 
-  ui = util.clamp(ui+sign(z),1,5)
+  ui = util.clamp(ui+sign(z),1,8)
 end
 
 function redraw()
@@ -80,15 +82,62 @@ function redraw()
   screen.text("norns.online/"+settings.name)
 
 screen.move(8,1)
-  if ui==2 then 
-	  screen.level(15)
-  else 
-  		screen.level(4)
-  end
+  uistuff = {}
+  uistuff[1] = {
+    position={1,1},
+    name = "norns.online/"..settings.name,
+  }
+  uistuff[2] = {
+    position={9,1},
+    name = "start",
+  }
   if util.file_exists(KILL_FILE) then
-    screen.text('stop')
-  else
-    screen.text('start')
+    uistuff[2].name = "stop"
+  end
+  uistuff[3] = {
+    position={17,1},
+    name="menu: disabled",
+  }
+  if settings.allowmenu then 
+    uistuff[3].name="menu: enabled"
+  end
+  uistuff[4] = {
+    position={25,1},
+    name="keys: disabled",
+  }
+  if settings.allowmenu then 
+    uistuff[4].name="keys: enabled"
+  end
+  uistuff[5] = {
+    position={33,1},
+    name="encs: disabled",
+  }
+  if settings.allowmenu then 
+    uistuff[5].name="encs: enabled"
+  end
+  uistuff[6] = {
+    position={40,1},
+    name="awake: disabled",
+  }
+  if settings.allowmenu then 
+    uistuff[6].name="awake: enabled"
+  end
+  uistuff[7] = {
+    position={48,1},
+    name="framerate: "..settings.framerate,
+  }
+  uistuff[8] = {
+    position={48,1},
+    name="update?",
+  }
+  for i=1,8 do
+    if ui==i then 
+      screen.level(15)
+    else 
+        screen.level(4)
+    end
+    screen.move(uistuff[i].position[1],uistuff[i].position[2])
+    screen.text(uistuff[i].name)
   end
 
   if uimessage ~= "" then 
@@ -116,11 +165,6 @@ end
 -- norns.online stuff
 --
 
-function update_settings()
-  redraw()
-  write_settings()
-end
-
 function write_settings()
   jsondata=json.encode(settings)
   f=io.open(CONFIG_FILE,"w")
@@ -145,6 +189,9 @@ end
 
 function start()
   write_settings()
+  if not util.file_exists("/home/we/dust/code/norns.online/norns.online") then 
+    update()
+  end
   os.execute(START_FILE)
   redraw()
 end
