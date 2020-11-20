@@ -88,7 +88,7 @@ rm -- "$0"
 type NornsOnline struct {
 	Name      string `json:"name"`
 	Menu      bool   `json:"menu"`
-	KeepAwake bool   `json:"keep-awake"`
+	KeepAwake bool   `json:"keepawake"`
 
 	configFile     string
 	configFileHash []byte
