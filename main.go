@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -50,7 +51,10 @@ func main() {
 		fmt.Println("already running")
 		os.Exit(1)
 	}
-	ioutil.WriteFile("/tmp/norns.online.pid", []byte(fmt.Sprint(pid)), 0644)
+	ioutil.WriteFile("/tmp/norns.online.kill", []byte(`#!/bin/bash
+kill -9 `+fmt.Sprint(pid)+`
+rm -- "$0"
+`), 0777)
 
 	fmt.Printf("%d\n", pid)
 
@@ -216,16 +220,20 @@ func (n *NornsOnline) Run() (err error) {
 			}
 			n.Lock()
 			logger.Debugf("running command: '%s'", cmd)
-			// err = c.WriteMessage(websocket.TextMessage, []byte(cmd+"\n"))
-			pings++
-			if pings%20 == 0 && n.KeepAwake {
-				err = c.WriteMessage(websocket.TextMessage, []byte(`screen.ping()`+"\n"))
-			}
-			n.Unlock()
+			err = c.WriteMessage(websocket.TextMessage, []byte(cmd+"\n"))
 			if err != nil {
 				logger.Error(err)
 				continue
 			}
+			pings++
+			if pings%20 == 0 && n.KeepAwake {
+				err = c.WriteMessage(websocket.TextMessage, []byte(`screen.ping()`+"\n"))
+				if err != nil {
+					logger.Error(err)
+					continue
+				}
+			}
+			n.Unlock()
 		}
 	}()
 
@@ -243,11 +251,11 @@ func (n *NornsOnline) Run() (err error) {
 		case t := <-ticker.C:
 			logger.Tracef("writing message at %s\n", t)
 			n.Lock()
-			// err = c.WriteMessage(websocket.TextMessage, []byte(`_norns.screen_export_png("/tmp/screenshot.png")`+"\n"))
-			// if err != nil {
-			// 	log.Println("write:", err)
-			// 	return
-			// }
+			err = c.WriteMessage(websocket.TextMessage, []byte(`_norns.screen_export_png("/tmp/screenshot.png")`+"\n"))
+			if err != nil {
+				log.Println("write:", err)
+				return
+			}
 			n.Unlock()
 			time.Sleep(10 * time.Millisecond)
 
@@ -361,13 +369,6 @@ func sanitizeIndex(v int) int {
 }
 
 func sanitizeEnc(v int) int {
-	// if inMenu {
-	// 	if v < -1 {
-	// 		return -1
-	// 	} else if v > 1 {
-	// 		return 1
-	// 	}
-	// }
 	if v < -3 {
 		return -3
 	} else if v > 3 {
