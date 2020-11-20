@@ -15,19 +15,6 @@ crowdsource the control of a [norns](https://monome.org/docs/norns/) from [norns
 first SSH into the norns.
 
 
-### allow arbitrary lua execution
-
-[add this change](https://github.com/schollz/norns/commit/3202c3f1cfd40ac132d59e66276bfe0653ca2264) to allow arbitrary lua execution
-
-then rebuild `matron` inside the norns:
-
-```
-> cd ~/norns
-> ./waf configure
-> ./waf
-> sudo reboot now
-``` 
-
 ### clone and build the program
 
 ```
