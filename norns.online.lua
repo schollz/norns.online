@@ -26,6 +26,9 @@ settings = {
   keepawake=false,
   framerate=5,
 }
+uimessage = ""
+ui = 1
+uishift=false 
 
 function init()
   load_settings()
@@ -33,48 +36,84 @@ function init()
 end
 
 function key(n,z)
-  if n==1 and z==1 then
-    textentry.enter(name,"","enter name:")
-  elseif n==2 and z==1 then
-    params:delta('menu',z)
-  elseif n==3 then
-    params:delta('awake',z)
+  if n==2 then
+    uishift = z==1
+  elseif n==3 and z==1 and uishift then
+    if ui==1 then 
+      textentry.enter(ui.name)
+    elseif ui==2 then 
+      if util.file_exists(KILL_FILE) then 
+        stop()
+      else
+        start()
+      end
+    elseif ui==3 then
+      settings.allowmenu = not settings.allowmenu 
+    elseif ui==4 then
+      settings.allowkeys = not settings.allowkeys 
+    elseif ui==5 then
+      settings.allowencs = not settings.allowencs 
+    elseif ui==6 then
+      settings.keepawake = not settings.keepawake
+    elseif ui==7 then 
+      settings.framerate = settings.framerate + 1 
+      if settings.framerate > 12 then 
+        settings.framerate = 1 
+      end 
+    end
+    write_settings()
   end
   redraw()
 end
 
+function enc(n,z) 
+  ui = util.clamp(ui+sign(z),1,5)
+end
+
 function redraw()
-  screen.move(py+px,py)
-  screen.level(15)
-  screen.text('name: ')
-  screen.move(py,py*2)
-  screen.level(params:get('allowmenu')==1 and 15 or 2)
-  screen.text('allow menu')
-  screen.move(py+px,py*2)
-  screen.level(params:get('keepawake')==1 and 15 or 2)
-  screen.text('keep awake')
-  screen.move(py-px,py*0.5)
+  screen.move(1,1)
+  if ui==1 then 
+	  screen.level(15)
+  else 
+  		screen.level(4)
+  end
+  screen.text("norns.online/"+settings.name)
+
+screen.move(8,1)
+  if ui==2 then 
+	  screen.level(15)
+  else 
+  		screen.level(4)
+  end
   if util.file_exists(KILL_FILE) then
     screen.text('stop')
   else
     screen.text('start')
   end
+
+  if uimessage ~= "" then 
+	 -- get the pixel length of the string
+	  local width = screen.text_extents(uimessage)
+	  
+	  -- draw our box
+	  local x = 10
+	  local y = 10
+	  local padding = 10
+	  screen.level(15)
+	  screen.rect(x, y, width + padding, 10)
+	  screen.fill()
+	  
+	  -- draw our text
+	  screen.level(0)
+	  screen.move(x + (padding / 2), y + 8)
+	  screen.text(uimessage)
+
+  end
   screen.update()
 end
 
 --
--- utils
---
-
-function readAll(file)
-  local f=assert(io.open(file,"rb"))
-  local content=f:read("*all")
-  f:close()
-  return content
-end
-
---
---
+-- norns.online stuff
 --
 
 function update_settings()
@@ -98,7 +137,10 @@ function load_settings()
 end
 
 function update()
+  uimessage = "downloading"
+  redraw()
   os.execute("curl "+LATEST_RELEASE+" -o /home/we/dust/code/norns.online/norns.online")
+  uimessage = ""
 end
 
 function start()
@@ -112,6 +154,38 @@ function stop()
   redraw()
 end
 
+
+--
+-- utils
+--
+
+function sign(x)
+  if x>0 then
+    return 1
+  elseif x<0 then
+    return-1
+  else
+    return 0
+  end
+end
+
+
+function show_message(message)
+	uimessage = message 
+	redraw()
+	clock.run(function()
+		clock.sleep(0.5)
+		uimessage = ""
+		redraw()
+	end)
+end
+
+function readAll(file)
+  local f=assert(io.open(file,"rb"))
+  local content=f:read("*all")
+  f:close()
+  return content
+end
 
 local charset = {}  do -- [a-z]
   for c = 97, 122 do table.insert(charset, string.char(c)) end
