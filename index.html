@@ -11,11 +11,15 @@
             box-shadow: 10px 10px #999;
         }
 
-        .hints {
+        .hints, .text {
             font-family:"Lucida Console", Monaco, monospace;
             padding-top: 1em;
             font-size:1.5em;
         }
+
+	#playerdiv {
+		padding-top: 10px
+	}
 
         .nornsimage {
             position: absolute;
@@ -115,13 +119,22 @@
                 <input type="text" value="75" class="enc2" data-width="100" data-displayInput=false data-cursor=true data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
             </div>
         </div>
-        <div class="twitch">
-            <iframe src="https://player.twitch.tv/?channel=infinitedigits_music&parent=norns.local" height="100px" width="600px" frameborder="0" scrolling="true" allowfullscreen="false">
-            </iframe>
-        </div>
+	<script src= "https://player.twitch.tv/js/embed/v1.js"></script>
+	<div style="padding-top:1em" class="text">live stream:</div>
+	<div id="playerdiv"></div>
+<script type="text/javascript">
+  var options = {
+    width: 1050,
+    height: 200,
+    channel: "infinitedigits_music",
+    parent: ["norns.local"]
+  };
+  var player = new Twitch.Player("playerdiv", options);
+  player.setVolume(0.5);
+</script>
         <div class="hints">
+		<div>hints:</div>
             <ul>
-                <li>listen to livestream on <a href="/" target="_blank" class="twitch">twitch.tv</a></li>
                 <li>k1 latches so you can use it as a shift.</li>
                 <li>double click k1 to get into/out-of menu.</li>
                 <li>get instructions for your own norns on <a href="https://github.com/schollz/norns.online">github</a></li>
