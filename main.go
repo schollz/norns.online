@@ -2,12 +2,14 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -22,8 +24,10 @@ import (
 
 var addr = flag.String("addr", "192.168.0.82:5555", "http service address")
 var name = flag.String("name", "", "special name for accessing")
+var menuAllowed = flag.Bool("menu", false, "allow the use of the menu")
 var mu sync.Mutex
 var inMenu bool
+var client *http.Client
 
 func main() {
 	logger.SetLevel("debug")
@@ -33,6 +37,43 @@ func main() {
 	if *name == "" {
 		fmt.Println("need name, use --name")
 		os.Exit(1)
+	}
+
+	// setup dialer for fast DNS resolution
+	var (
+		dnsResolverIP        = "1.1.1.1:53" // Google DNS resolver.
+		dnsResolverProto     = "udp"        // Protocol to use for the DNS resolver
+		dnsResolverTimeoutMs = 5000         // Timeout (ms) for the DNS resolver (optional)
+	)
+
+	dialer := &net.Dialer{
+		Resolver: &net.Resolver{
+			PreferGo: true,
+			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+				d := net.Dialer{
+					Timeout: time.Duration(dnsResolverTimeoutMs) * time.Millisecond,
+				}
+				return d.DialContext(ctx, dnsResolverProto, dnsResolverIP)
+			},
+		},
+	}
+
+	dialContext := func(ctx context.Context, network, addr string) (net.Conn, error) {
+		return dialer.DialContext(ctx, network, addr)
+	}
+
+	http.DefaultTransport.(*http.Transport).DialContext = dialContext
+	client = &http.Client{
+		Transport: &http.Transport{
+			Proxy:                 http.ProxyFromEnvironment,
+			DialContext:           dialContext,
+			MaxIdleConnsPerHost:   3,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       9000 * time.Second,
+			TLSHandshakeTimeout:   1000 * time.Second,
+			ExpectContinueTimeout: 3000 * time.Second,
+		},
+		Timeout: 30000 * time.Second,
 	}
 
 	interrupt := make(chan os.Signal, 1)
@@ -68,12 +109,7 @@ func main() {
 	// }()
 
 	go func() {
-		client := &http.Client{
-			Transport: &http.Transport{
-				MaxIdleConnsPerHost: 1,
-			},
-			Timeout: 30000 * time.Second,
-		}
+
 		for {
 			response, err := func() (response string, err error) {
 				resp, err := client.Get("http://duct.schollz.com/norns.online." + *name)
@@ -179,7 +215,7 @@ func postImage() (err error) {
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return
 	}
@@ -211,7 +247,7 @@ func processMessage(s string) (cmd string, err error) {
 		cmd = fmt.Sprintf("enc(%d,%d)", sanitizeIndex(m.N), sanitizeEnc(m.Z))
 	} else if m.Kind == "key" {
 		cmd = fmt.Sprintf("key(%d,%d)", sanitizeIndex(m.N), sanitizeKey(m.Z))
-		if m.Fast && m.N == 1 {
+		if m.Fast && m.N == 1 && *menuAllowed {
 			inMenu = !inMenu
 			if inMenu {
 				cmd = "set_mode(true)"
