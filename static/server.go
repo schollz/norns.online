@@ -46,7 +46,7 @@ func handle(w http.ResponseWriter, r *http.Request) (err error) {
 			err = nil
 		}
 	} else {
-		if strings.HasPrefix(r.URL.Path, "/js/") {
+		if strings.HasPrefix(r.URL.Path, "/js/") || strings.HasPrefix(r.URL.Path, "/img/") {
 			http.FileServer(http.Dir(".")).ServeHTTP(w, r)
 		} else {
 			http.ServeFile(w, r, "index.html")
