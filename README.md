@@ -25,10 +25,11 @@ future directions:
 
 possible uses:
 
-- twitch plays norns
+- twitch plays norns (params -> twitch to enable livestream)
 - control multiple norns simultaneously
 - make demos
 - tech support other people's norns
+- !?!?!?
 
 ## my other norns
 
