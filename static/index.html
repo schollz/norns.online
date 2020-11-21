@@ -263,6 +263,7 @@ top: 300px;
                 if (data['twitch']) {
                     await $("#livestream").removeClass("hidden");
                     if (!twitchActivated) {
+                        twitchActivated = true;
                         $(".twitch").attr("href", "https://www.twitch.tv/" + norns_id)
                         var options = {
                             width: 1050,
