@@ -8,7 +8,7 @@ access your norns, or someone else's from the browser.
 
 **how does it work?** norns runs a service that sends screenshots to `norns.online/<yourname>`. the website at `norns.online/<yourname>` sends inputs back to norns. norns listens to to inputs and runs the acceptable ones (adjustable with parameters). what was [just an idea](https://llllllll.co/t/norns-online-crowdsource-your-norns/38492) is now a norns script.
 
-**note of caution:** when using this keep in mind that anyone with the url `norns.online/<yourname>` can access your norns. even though the inputs are sanitized on the norns so that only `enc()` and `key()` and `_menu.setmode()` functions are available, even with these functions someone could reset your norns / make some havoc. if this concerns you, don't share `<yourname>` with anyone or avoid using this script.
+**note of caution:** if you are using this and your norns is "online", then *anyone* with the url `norns.online/<yourname>` can access your norns. even though the inputs are sanitized on the norns so that only `enc()` and `key()` and `_menu.setmode()` functions are available, even with these functions someone could reset your norns / make some havoc. if this concerns you, don't share `<yourname>` with anyone or avoid using this script.
 
 
 future directions:
