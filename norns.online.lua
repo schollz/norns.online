@@ -101,7 +101,7 @@ function redraw()
   screen.font_face(3)
   screen.font_size(12)
   screen.move(64,8)
-  screen.text_center("you are")
+  screen.text_center("you are now")
   screen.move(64,22)
   screen.font_face(3)
   screen.font_size(12)
@@ -120,6 +120,13 @@ function redraw()
     screen.move(64,58)
     screen.font_face(7)
     screen.font_size(24)
+    if string.len(settings.name)>20 then
+      screen.move(64,53)
+      screen.font_size(12)
+    elseif string.len(settings.name)>10 then
+      screen.move(64,53)
+      screen.font_size(14)
+    end
     screen.text_center(settings.name)
   else
     screen.level(15)
@@ -199,7 +206,8 @@ function update()
   if not util.file_exists(SERVER_FILE) then
     uimessage="downloading"
     redraw()
-    os.execute("curl "..LATEST_RELEASE.." -o "..SERVER_FILE)
+    os.execute("curl -L "..LATEST_RELEASE.." -o "..SERVER_FILE)
+    os.execute("chmod +x "..SERVER_FILE)
     uimessage=""
     redraw()
   end
