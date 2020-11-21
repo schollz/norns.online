@@ -244,13 +244,13 @@ top: 300px;
         $(`.enc${i}`).knob({
             'change': encs[i].change,
         });
-        if (i == 0) {
-            document.getElementById("k" + i).addEventListener("click", keys[i].change);
-            //     document.getElementById("k" + i).addEventListener("mouseleave", keys[i].reset);
-        } else {
+        // if (i == 0) {
+        //     document.getElementById("k" + i).addEventListener("click", keys[i].change);
+        //     //     document.getElementById("k" + i).addEventListener("mouseleave", keys[i].reset);
+        // } else {
             document.getElementById("k" + i).addEventListener("mousedown", keys[i].change);
             document.getElementById("k" + i).addEventListener("mouseup", keys[i].change);
-        }
+        // }
     }
 
     if (norns_id.length > 0) {
