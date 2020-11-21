@@ -226,7 +226,7 @@ top: 300px;
                 if (norns_id.length > 0) {
                     if (i == 0 && socket != null) {
                         socket.send(JSON.stringify({ kind: "key", n: i + 1, z: value, fast: fast_clicked, "recipient": "norns" }))
-                    } else if (value > 0 && socket != null) {
+                    } else if (socket != null) {
                         socket.send(JSON.stringify({ kind: "key", n: i + 1, z: value, "recipient": "norns" }))
                     }
                 }
