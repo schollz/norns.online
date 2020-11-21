@@ -1,7 +1,7 @@
 -- norns.online v0.0.1
 -- online norns on norns.online
 --
--- llllllll.co/t/norns.online
+-- llllllll.co/t/norns-online
 -- note!!! this script opens your
 -- norns to to the net
 -- - (ab)use with caution.
