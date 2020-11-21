@@ -40,7 +40,11 @@ func handle(w http.ResponseWriter, r *http.Request) (err error) {
 
 	// very special paths
 	if r.URL.Path == "/ws" {
-		return handleWebsocket(w, r)
+		err = handleWebsocket(w, r)
+		log.Infof("ws: %w", err)
+		if err != nil {
+			err = nil
+		}
 	} else {
 		if strings.HasPrefix(r.URL.Path, "/js/") {
 			http.FileServer(http.Dir(".")).ServeHTTP(w, r)
@@ -129,7 +133,6 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 				// skip unless its recipient
 				continue
 			}
-			log.Debugf("send message to %s", k)
 			go func(c2 *websocket.Conn, m Message) {
 				err := c2.WriteJSON(m)
 				if err != nil {
