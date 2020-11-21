@@ -61,11 +61,16 @@ var wsupgrader = websocket.Upgrader{
 }
 
 type Message struct {
-	Name  string `json:"name,omitempty"`
-	Group string `json:"group,omitempty"`
-
+	Name      string `json:"name,omitempty"`
+	Group     string `json:"group,omitempty"`
 	Recipient string `json:"recipient,omitempty"`
-	Data      string `json:"data"`
+
+	Img    string `json:"img,omitempty"`
+	Kind   string `json:"kind,omitempty"`
+	N      int    `json:"n"`
+	Z      int    `json:"z"`
+	Fast   bool   `json:"fast,omitempty"`
+	Twitch bool   `json:"twitch,omitempty"`
 }
 
 func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
@@ -124,6 +129,7 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 				// skip unless its recipient
 				continue
 			}
+			log.Debugf("send message to %s", k)
 			go func(c2 *websocket.Conn, m Message) {
 				err := c2.WriteJSON(m)
 				if err != nil {
