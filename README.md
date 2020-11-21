@@ -23,10 +23,12 @@ future directions:
 - K1+K2 updates
 - more params in global menu
 
-troubleshooting:
+possible uses:
 
-- buttons aren't working? double click K1 in browser to toggle menu. check to see if buttons work if you're not in menu.
-- buttons still aren't working? try a different browser maybe.
+- twitch plays norns
+- control multiple norns simultaneously
+- make demos
+- tech support other people's norns
 
 ## my other norns
 
