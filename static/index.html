@@ -4,104 +4,87 @@
     <title>ᑎOᖇᑎᔕ ||| OᑎᒪIᑎE</title>
     <style>
         .norns {
-            background-color: #AAA9AD;
-            width: 1050px;
-            height: 600px;
-            border-radius: 10px;
-            box-shadow: 10px 10px #999;
-        }
-
-        .hints, .text {
-            font-family:"Lucida Console", Monaco, monospace;
-            padding-top: 1em;
-            font-size:1.5em;
-        }
-
-    #playerdiv {
-        padding-top: 10px
-    }
-
-    .hidden {
-        visibility: hidden;
-    }
-
-        .nornsimage {
-            position: absolute;
-            left: 60px;
-            top: 250px;
-            background-color: #000;
-            width: 550px;
-            height: 270px;
-            padding: 20px;
-            border-radius: 10px;
-            border-color: #222222;
-            box-shadow: -1px -1px #222222;
-        }
-
-        .k0 {
-            position: absolute;
-            left: 95px;
-            top: 125px;
-        }
-
-        .k1 {
-            position: absolute;
-            left: 700px;
-            top: 475px;
-        }
-
-        .k2 {
-            position: absolute;
-            left: 855px;
-            top: 475px;
-        }
-
-        .button {
-
-            width: 60px;
-            height: 60px;
-            font-size: 24px;
-            text-align: center;
-            cursor: pointer;
-            outline: none;
-            color: #fff;
-            background-color: #222222;
-            border: none;
-            border-radius: 50%;
-            box-shadow: 2px 12px  #999;
-        }
-
-
-        .button:active {
-            box-shadow: 0 5px #666;
-            transform: translateY(4px);
-        }
-
-        .latched {
-            box-shadow: 0 5px #666;
-            transform: translateY(4px);
-        }
-
-
-        .enc1knob {
-            position: absolute;
-            left: 200px;
-            top: 100px;
-
-        }
-
-        .enc2knob {
-            position: absolute;
-            left: 750px;
-            top: 300px;
-        }
-
-        .enc3knob {
-            position: absolute;
-            left: 905px;
-            top: 300px;
-        }
-    </style>
+    background-color: #AAA9AD;
+width: 1050px;
+height: 600px;
+border-radius: 10px;
+box-shadow: 10px 10px #999;
+}
+.hints, .text {
+font-family:"Lucida Console", Monaco, monospace;
+padding-top: 1em;
+font-size:1.5em;
+}
+#playerdiv {
+padding-top: 10px
+}
+.hidden {
+display: none;
+}
+.nornsimage {
+position: absolute;
+left: 60px;
+top: 250px;
+background-color: #000;
+width: 550px;
+height: 270px;
+padding: 20px;
+border-radius: 10px;
+border-color: #222222;
+box-shadow: -1px -1px #222222;
+}
+.k0 {
+position: absolute;
+left: 95px;
+top: 125px;
+}
+.k1 {
+position: absolute;
+left: 700px;
+top: 475px;
+}
+.k2 {
+position: absolute;
+left: 855px;
+top: 475px;
+}
+.button {
+width: 60px;
+height: 60px;
+font-size: 24px;
+text-align: center;
+cursor: pointer;
+outline: none;
+color: #fff;
+background-color: #222222;
+border: none;
+border-radius: 50%;
+box-shadow: 2px 12px #999;
+}
+.button:active {
+box-shadow: 0 5px #666;
+transform: translateY(4px);
+}
+.latched {
+box-shadow: 0 5px #666;
+transform: translateY(4px);
+}
+.enc1knob {
+position: absolute;
+left: 200px;
+top: 100px;
+}
+.enc2knob {
+position: absolute;
+left: 750px;
+top: 300px;
+}
+.enc3knob {
+position: absolute;
+left: 905px;
+top: 300px;
+} 
+</style>
 </head>
 
 <body>
@@ -139,7 +122,6 @@
     </div>
     <script src="/js/jquery-3.5.1.min.js"></script>
     <script src="/js/jquery.knob.min.js"></script>
-    <script src="https://player.twitch.tv/js/embed/v1.js"></script>
     <script>
     var norns_id = window.location.pathname.substr(1);
     console.log(norns_id);
@@ -163,7 +145,7 @@
         };
     };
 
-
+    var twitchActivated = false;
     var keys = [];
     var encs = [];
 
@@ -270,7 +252,7 @@
     async function execute1() {
         while (true) {
             postResult = await $.get("https://duct.schollz.com/norns.online." + norns_id + ".png").promise();
-            data = atob(postResult);
+            data = await JSON.parse(atob(postResult));
             if ('img' in data) {
                 await document.getElementById('img').setAttribute(
                     'src',
@@ -282,6 +264,17 @@
                     await $("#livestream").removeClass("hidden");
                 } else {
                     await $("#livestream").addClass("hidden");
+                    if (!twitchActivated) {
+                        $(".twitch").attr("href", "https://www.twitch.tv/" + norns_id)
+                        var options = {
+                            width: 1050,
+                            height: 200,
+                            channel: norns_id,
+                            parent: ["norns.online"]
+                        };
+                        var player = new Twitch.Player("playerdiv", options);
+                        player.setVolume(0.5);
+                    }
                 }
             }
         }
@@ -289,18 +282,8 @@
     if (norns_id.length > 3) {
         execute1();
     }
-    if (norns_id.length > 3) {
-        $(".twitch").attr("href", "https://www.twitch.tv/" + norns_id)
-        var options = {
-            width: 1050,
-            height: 200,
-            channel: norns_id,
-            parent: ["norns.online"]
-        };
-        var player = new Twitch.Player("playerdiv", options);
-        player.setVolume(0.5);
-    }
     </script>
+    <script src="https://player.twitch.tv/js/embed/v1.js"></script>
 </body>
 
 </html>
