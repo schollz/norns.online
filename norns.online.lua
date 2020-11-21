@@ -33,12 +33,39 @@ settings={
 uimessage=""
 ui=1
 uishift=false
-
+params:add_separator("norns.online")
 function init()
-  params:add_option("allowmenu","menu",{"disabled","allowed"},1)
+  params:add_option("allowmenu","menu",{"disabled","enabled"},2)
   params:set_action("allowmenu",function(v)
-    settings.allowmenu=v==1
-    redraw()
+    settings.allowmenu=v==2
+    write_settings()
+  end)
+  params:add_option("allowencs","encs",{"disabled","enabled"},2)
+  params:set_action("allowencs",function(v)
+    settings.allowencs=v==2
+    write_settings()
+  end)
+  params:add_option("allowkeys","keys",{"disabled","enabled"},2)
+  params:set_action("allowkeys",function(v)
+    settings.allowkeys=v==2
+    write_settings()
+  end)
+  params:add_option("allowtwitch","twitch",{"disabled","enabled"},1)
+  params:set_action("allowtwitch",function(v)
+    settings.allowtwitch=v==2
+    write_settings()
+  end)
+  
+  params:add_option("keepawake","keep awake",{"disabled","enabled"},1)
+  params:set_action("keepawake",function(v)
+    settings.keepawake=v==2
+    write_settings()
+  end)
+  
+  params:add_control("framerate","frame rate",controlspec.new(1,12,'lin',1,5,'fps'))
+  params:set_action("framerate",function(v)
+    settings.framerate=v
+    write_settings()
   end)
   
   settings.name=randomString(5)
@@ -50,15 +77,15 @@ end
 function key(n,z)
   if n==1 then
     uishift=z
-  elseif uishift==1 and n==3 then
+  elseif uishift==1 and n==2 then
     update()
-  elseif n==3 then
+  elseif n==2 and z==0 then
     textentry.enter(function(x)
       if x~=nil then
         settings.name=x
       end
     end,settings.name,"norns.online/")
-  elseif n==2 and z==1 then
+  elseif n==3 and z==1 then
     toggle()
   end
   redraw()
@@ -138,16 +165,34 @@ function load_settings()
   settings=json.decode(data)
   tab.print(settings)
   if settings.allowmenu then
-    params:set("allowmenu",1)
+    params:set("allowmenu",2)
   else
-    params:set("allowmenu",0)
+    params:set("allowmenu",1)
   end
+  if settings.allowencs then
+    params:set("allowencs",2)
+  else
+    params:set("allowencs",1)
+  end
+  if settings.allowkeys then
+    params:set("allowkeys",2)
+  else
+    params:set("allowkeys",1)
+  end
+  if settings.allowtwitch then
+    params:set("allowtwitch",2)
+  else
+    params:set("allowtwitch",1)
+  end
+  params:set("framerate",settings.framerate)
 end
 
 function update()
   uimessage="updating"
   redraw()
   os.execute("cd "..CODE_DIR.." && git pull")
+  uimessage="building"
+  redraw()
   os.execute("cd "..CODE_DIR.."; /usr/local/go/bin/go build")
   uimessage=""
   redraw()
