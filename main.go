@@ -241,7 +241,7 @@ func (n *NornsOnline) Run() (err error) {
 			}
 		case _ = <-ticker.C:
 			n.Lock()
-			err = n.norns.WriteMessage(websocket.TextMessage, []byte(`_norns.screen_export_png("/tmp/screenshot.png")`+"\n"))
+			err = n.norns.WriteMessage(websocket.TextMessage, []byte(`_norns.screen_export_png("/dev/shm/screenshot.png")`+"\n"))
 			if err != nil {
 				logger.Debugf("write: %w", err)
 				return
@@ -272,7 +272,7 @@ func (n *NornsOnline) Run() (err error) {
 
 func (n *NornsOnline) updateClient() (err error) {
 	// open dumped image
-	src, err := imaging.Open("/tmp/screenshot.png")
+	src, err := imaging.Open("/dev/shm/screenshot.png")
 	if err != nil {
 		return
 	}
@@ -280,12 +280,12 @@ func (n *NornsOnline) updateClient() (err error) {
 	// Resize the cropped image to width = 200px preserving the aspect ratio.
 	src = imaging.Resize(src, 550, 0, imaging.NearestNeighbor)
 	src = imaging.AdjustGamma(src, 1.25)
-	err = imaging.Save(src, "/tmp/screenshot2.png")
+	err = imaging.Save(src, "/dev/shm/screenshot2.png")
 	if err != nil {
 		return
 	}
 
-	b, err := ioutil.ReadFile("/tmp/screenshot2.png")
+	b, err := ioutil.ReadFile("/dev/shm/screenshot2.png")
 	if err != nil {
 		return
 	}
