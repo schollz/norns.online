@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -86,12 +85,13 @@ rm -- "$0"
 }
 
 type NornsOnline struct {
-	Name      string `json:"name"`
-	AllowMenu bool   `json:"allowmenu"`
-	AllowEncs bool   `json:"allowkeys"`
-	AllowKeys bool   `json:"allowencs"`
-	KeepAwake bool   `json:"keepawake"`
-	FrameRate int    `json:"framerate"`
+	Name        string `json:"name"`
+	AllowMenu   bool   `json:"allowmenu"`
+	AllowEncs   bool   `json:"allowencs"`
+	AllowKeys   bool   `json:"allowkeys"`
+	AllowTwitch bool   `json:"allowtwitch"`
+	KeepAwake   bool   `json:"keepawake"`
+	FrameRate   int    `json:"framerate"`
 
 	configFile     string
 	configFileHash []byte
@@ -109,7 +109,7 @@ func New(configFile string) (n *NornsOnline, err error) {
 	n.AllowKeys = true
 	n.KeepAwake = false
 	n.FrameRate = 4
-	err = n.Load()
+	_, err = n.Load()
 
 	// setup dialer for fast DNS resolution
 	var (
@@ -151,7 +151,7 @@ func New(configFile string) (n *NornsOnline, err error) {
 }
 
 // Load will update the configuration if config file changes
-func (n *NornsOnline) Load() (err error) {
+func (n *NornsOnline) Load() (updated bool, err error) {
 	currentHash, err := MD5HashFile(n.configFile)
 	if err != nil {
 		return
@@ -169,6 +169,7 @@ func (n *NornsOnline) Load() (err error) {
 	}
 	n.configFileHash = currentHash
 	logger.Debugf("loaded: %+v", n)
+	updated = true
 	return
 }
 
@@ -245,7 +246,11 @@ func (n *NornsOnline) Run() (err error) {
 	}()
 
 	logger.Info("connected")
-	ticker := time.NewTicker(time.Duration(1000/n.FrameRate) * time.Millisecond)
+	ticker := time.NewTicker(1 * time.Second)
+	if n.FrameRate > 1 {
+		ticker = time.NewTicker(time.Duration(1000/n.FrameRate) * time.Millisecond)
+	}
+	logger.Debugf("ticker: %+v", ticker)
 	defer ticker.Stop()
 	ticker2 := time.NewTicker(1000 * time.Millisecond)
 	defer ticker2.Stop()
@@ -254,23 +259,26 @@ func (n *NornsOnline) Run() (err error) {
 		case <-done:
 			return
 		case _ = <-ticker2.C:
-			n.Load()
-		case t := <-ticker.C:
-			logger.Tracef("writing message at %s\n", t)
+			updated, _ := n.Load()
+			if updated {
+				ticker.Stop()
+				if n.FrameRate == 1 {
+					ticker = time.NewTicker(1 * time.Second)
+				} else {
+					ticker = time.NewTicker(time.Duration(1000/n.FrameRate) * time.Millisecond)
+				}
+			}
+		case _ = <-ticker.C:
 			n.Lock()
 			err = c.WriteMessage(websocket.TextMessage, []byte(`_norns.screen_export_png("/tmp/screenshot.png")`+"\n"))
 			if err != nil {
-				log.Println("write:", err)
+				logger.Debugf("write: %w", err)
 				return
 			}
 			n.Unlock()
 			time.Sleep(10 * time.Millisecond)
 
-			err = n.postImage()
-			if err != nil {
-				logger.Tracef("image: %+w", err)
-				continue
-			}
+			go n.updateClient()
 		case <-interrupt:
 			logger.Info("interrupt - quitting gracefully")
 
@@ -291,7 +299,12 @@ func (n *NornsOnline) Run() (err error) {
 	return
 }
 
-func (n *NornsOnline) postImage() (err error) {
+type Payload struct {
+	Img    string `json:"img"`
+	Twitch bool   `json:"twitch"`
+}
+
+func (n *NornsOnline) updateClient() (err error) {
 	// open dumped image
 	src, err := imaging.Open("/tmp/screenshot.png")
 	if err != nil {
@@ -311,7 +324,18 @@ func (n *NornsOnline) postImage() (err error) {
 		return
 	}
 	base64data := base64.StdEncoding.EncodeToString(b)
-	req, err := http.NewRequest("POST", RELAY_ADDRESS+n.Name+".png?pubsub=true", bytes.NewBufferString(base64data))
+
+	payload := Payload{
+		Img:    base64data,
+		Twitch: n.AllowTwitch,
+	}
+	payloadbytes, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+	payloadbase64 := base64.StdEncoding.EncodeToString(payloadbytes)
+	tsent := time.Now()
+	req, err := http.NewRequest("POST", RELAY_ADDRESS+n.Name+".png?pubsub=true", bytes.NewBufferString(payloadbase64))
 	if err != nil {
 		return
 	}
@@ -321,6 +345,7 @@ func (n *NornsOnline) postImage() (err error) {
 	if err != nil {
 		return
 	}
+	logger.Debugf("sent data in %s", time.Since(tsent))
 	defer resp.Body.Close()
 	return
 }
@@ -346,17 +371,25 @@ func (n *NornsOnline) processMessage(s string) (cmd string, err error) {
 		return
 	}
 
-	if m.Kind == "enc" && n.AllowEncs {
-		cmd = fmt.Sprintf("enc(%d,%d)", sanitizeIndex(m.N), sanitizeEnc(m.Z))
-	} else if m.Kind == "key" && n.AllowKeys {
-		cmd = fmt.Sprintf("key(%d,%d)", sanitizeIndex(m.N), sanitizeKey(m.Z))
-		if m.Fast && m.N == 1 && n.AllowMenu {
-			n.inMenu = !n.inMenu
-			if n.inMenu {
-				cmd = "set_mode(true)"
-			} else {
-				cmd = "_menu.set_mode(false)"
+	if m.Kind == "enc" {
+		if n.AllowEncs {
+			cmd = fmt.Sprintf("enc(%d,%d)", sanitizeIndex(m.N), sanitizeEnc(m.Z))
+		} else {
+			logger.Debug("encs disabled")
+		}
+	} else if m.Kind == "key" {
+		if n.AllowKeys {
+			cmd = fmt.Sprintf("key(%d,%d)", sanitizeIndex(m.N), sanitizeKey(m.Z))
+			if m.Fast && m.N == 1 && n.AllowMenu {
+				n.inMenu = !n.inMenu
+				if n.inMenu {
+					cmd = "set_mode(true)"
+				} else {
+					cmd = "_menu.set_mode(false)"
+				}
 			}
+		} else {
+			logger.Debug("keys disabled")
 		}
 	}
 	if n.inMenu {
