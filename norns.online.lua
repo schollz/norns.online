@@ -206,7 +206,8 @@ function update()
   if not util.file_exists(SERVER_FILE) then
     uimessage="downloading"
     redraw()
-    os.execute("curl "..LATEST_RELEASE.." -o "..SERVER_FILE)
+    os.execute("curl -L "..LATEST_RELEASE.." -o "..SERVER_FILE)
+    os.execute("chmod +x "..SERVER_FILE)
     uimessage=""
     redraw()
   end
