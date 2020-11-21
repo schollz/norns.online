@@ -2,9 +2,9 @@
 -- remote control for your norns
 --
 -- llllllll.co/t/norns.online
---
---
---
+-- note!
+-- this script opens your norns to
+-- to the net - use with caution.
 --    ▼ instructions below ▼
 --
 --
@@ -13,10 +13,11 @@ local json=include("lib/json")
 local textentry=require 'textentry'
 
 -- default files / directories
-CONFIG_FILE="/home/we/dust/code/norns.online/config.json"
+CODE_DIR="/home/we/dust/code/norns.online/"
+CONFIG_FILE=CODE_DIR.."config.json"
 KILL_FILE="/tmp/norns.online.kill"
-START_FILE="/home/we/dust/code/norns.online/start.sh"
-SERVER_FILE="/home/we/dust/code/norns.online/norns.online"
+START_FILE=CODE_DIR.."start.sh"
+SERVER_FILE=CODE_DIR.."norns.online"
 LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v0.0.1/norns.online"
 
 -- default settings
@@ -85,7 +86,7 @@ function redraw()
   else 
   		screen.level(4)
   end
-  screen.text("norns.online/"+settings.name)
+  screen.text("norns.online/"..settings.name)
 
   uistuff = {}
   local i=1
@@ -204,7 +205,7 @@ end
 function update()
   uimessage = "building"
   redraw()
-  os.execute("cd /home/we/dust/code/norns.online; go build")
+  os.execute("cd "..CODE_DIR.."; go build")
   uimessage = ""
   redraw()
   if not util.file_exists(SERVER_FILE) then 
@@ -221,6 +222,7 @@ function start()
   if not util.file_exists(SERVER_FILE) then 
     update()
   end
+  make_start_sh()
   os.execute(START_FILE)
   redraw()
 end
@@ -230,6 +232,14 @@ function stop()
   redraw()
 end
 
+function make_start_sh()
+  startsh="#!/bin/bash\n"
+  startsh=startsh..CODE_DIR.."norns.online --config "..CODE_DIR.."config.json > /dev/null &\n"
+  f=io.open(START_FILE,"w")
+  f:write(startsh)
+  f:close(f)
+  os.execute("chmod +x "..START_FILE)
+end
 
 --
 -- utils
