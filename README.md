@@ -2,39 +2,39 @@
 
 ![111](https://user-images.githubusercontent.com/6550035/99736745-c470c180-2a7b-11eb-80d4-e9b2a02167cf.png)
 
-crowdsource the control of a [norns](https://monome.org/docs/norns/) from [norns.online](https://norns.online#infinitedigits).
+crowdsource the control of a [norns](https://monome.org/docs/norns/) from [norns.online](https://norns.online).
 
-## how does it work?
+norns runs a service that sends screenshots to `norns.online/<yourname>`. the website at `norns.online/<yourname>` sends inputs back to norns. norns listens to to inputs and runs the acceptable ones (adjustable with parameters).
 
-- norns runs a service that generates a screenshot at 10fps. screenshots are sent to special address on relay server ([duct.schollz.com](https://duct.schollz.com)). 
-- the relay serves as a multi-process, multi-consumer queue. opening the webpage with a special address (designated by "`#`") allows it to connect to the relay. the website can then consume screenshots and send input to the relay.
-- at the same time, the norns service listens to the relay for input commands from the website. it then sanitizes those commands as either "encoders" or "keys". those commands are then sent to matron via websockets.
+future directions:
 
-## instructions
+- fix all the 🐛🐛🐛
+- radio stream somehow? (anyone know how?)
 
-first SSH into the norns.
+### Requirements
 
+- norns 
+- internet connection
 
-### clone and build the program
+### Documentation 
 
-```
-> cd ~/dust
-> git clone https://github.com/schollz/norns.online
-> cd norns.online
-> go build -v
-> ./norns.online --name yourname --menu
-```
+- K3 toggles internet
+- K2 changes name
+- K1+K2 updates
+- more params in global menu
 
-make sure you choose `yourname` to whatever you want. anyone with knowledge of `yourname` can access your norns. allowing `--menu` allows menu diving.
+## my other norns
 
-### clone the norns
-
-open https://norns.online/#yourname. share it with others and let them control your norns.
-
-### optional: make stream
-
-i haven't figured out how to embed the music stream. until I do, make a twitch stream and it can link from click on the screen.
+- [barcode](https://github.com/schollz/barcode): replays a buffer six times, at different levels & pans & rates & positions, modulated by lfos on every parameter.
+- [blndr](https://github.com/schollz/blndr): a quantized delay with time morphing
+- [clcks](https://github.com/schollz/clcks): a tempo-locked repeater
+- [oooooo](https://github.com/schollz/oooooo): digital tape loops
+- [piwip](https://github.com/schollz/piwip): play instruments while instruments play.
+- [glitchlets](https://github.com/schollz/glitchlets): 
+add glitching to everything.
+- [abacus](https://github.com/schollz/abacus): 
+sampler sequencer.
 
 ## license
 
-MIT
+mit
