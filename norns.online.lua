@@ -21,7 +21,7 @@ SERVER_FILE=CODE_DIR.."norns.online"
 LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v0.0.1/norns.online"
 
 -- default settings
-settings = {
+settings={
   name=randomString(5),
   allowmenu=false,
   allowencs=true,
@@ -30,9 +30,9 @@ settings = {
   keepawake=false,
   framerate=5,
 }
-uimessage = ""
-ui = 1
-uishift=false 
+uimessage=""
+ui=1
+uishift=false
 
 function init()
   load_settings()
@@ -42,32 +42,32 @@ end
 
 function key(n,z)
   if n==2 then
-    uishift = z==1
+    uishift=z==1
   elseif n==3 and z==1 and uishift then
-    if ui==1 then 
+    if ui==1 then
       textentry.enter(ui.name)
-    elseif ui==2 then 
-      if util.file_exists(KILL_FILE) then 
+    elseif ui==2 then
+      if util.file_exists(KILL_FILE) then
         stop()
       else
         start()
       end
     elseif ui==3 then
-      settings.allowmenu = not settings.allowmenu 
+      settings.allowmenu=not settings.allowmenu
     elseif ui==4 then
-      settings.allowkeys = not settings.allowkeys 
+      settings.allowkeys=not settings.allowkeys
     elseif ui==5 then
-      settings.allowencs = not settings.allowencs 
+      settings.allowencs=not settings.allowencs
     elseif ui==6 then
-      settings.allowtwitch = not settings.allowtwitch
+      settings.allowtwitch=not settings.allowtwitch
     elseif ui==7 then
-      settings.keepawake = not settings.keepawake
-    elseif ui==8 then 
-      settings.framerate = settings.framerate + 1 
-      if settings.framerate > 12 then 
-        settings.framerate = 1 
-      end 
-    elseif ui==9 then 
+      settings.keepawake=not settings.keepawake
+    elseif ui==8 then
+      settings.framerate=settings.framerate+1
+      if settings.framerate>12 then
+        settings.framerate=1
+      end
+    elseif ui==9 then
       update()
     end
     write_settings()
@@ -75,109 +75,109 @@ function key(n,z)
   redraw()
 end
 
-function enc(n,z) 
-  ui = util.clamp(ui+sign(z),1,8)
+function enc(n,z)
+  ui=util.clamp(ui+sign(z),1,8)
 end
 
 function redraw()
   screen.move(1,1)
-  if ui==1 then 
-	  screen.level(15)
-  else 
-  		screen.level(4)
+  if ui==1 then
+    screen.level(15)
+  else
+    screen.level(4)
   end
   screen.text("norns.online/"..settings.name)
 
-  uistuff = {}
+  uistuff={}
   local i=1
-  uistuff[i] = {
+  uistuff[i]={
     position={1,1},
-    name = "norns.online/"..settings.name,
+    name="norns.online/"..settings.name,
   }
-  i = i + 1
-  uistuff[i] = {
+  i=i+1
+  uistuff[i]={
     position={9,1},
-    name = "start",
+    name="start",
   }
   if util.file_exists(KILL_FILE) then
-    uistuff[i].name = "stop"
+    uistuff[i].name="stop"
   end
-  i = i + 1
-  uistuff[i] = {
+  i=i+1
+  uistuff[i]={
     position={17,1},
     name="menu: disabled",
   }
-  if settings.allowmenu then 
+  if settings.allowmenu then
     uistuff[i].name="menu: enabled"
   end
-  i = i + 1
-  uistuff[i] = {
+  i=i+1
+  uistuff[i]={
     position={25,1},
     name="keys: disabled",
   }
-  if settings.allowmenu then 
+  if settings.allowmenu then
     uistuff[i].name="keys: enabled"
   end
-  i = i + 1
-  uistuff[i] = {
+  i=i+1
+  uistuff[i]={
     position={33,1},
     name="encs: disabled",
   }
-  if settings.allowencs then 
+  if settings.allowencs then
     uistuff[i].name="encs: enabled"
   end
-  i = i + 1
-  uistuff[i] = {
+  i=i+1
+  uistuff[i]={
     position={33,1},
     name="twitch: disabled",
   }
-  if settings.allowtwitch then 
+  if settings.allowtwitch then
     uistuff[i].name="twitch: enabled"
   end
-  i = i + 1
-  uistuff[i] = {
+  i=i+1
+  uistuff[i]={
     position={40,1},
     name="awake: disabled",
   }
-  if settings.keepawake then 
+  if settings.keepawake then
     uistuff[i].name="awake: enabled"
   end
-  i = i + 1
-  uistuff[i] = {
+  i=i+1
+  uistuff[i]={
     position={48,1},
     name="framerate: "..settings.framerate,
   }
-  i = i + 1
-  uistuff[i] = {
+  i=i+1
+  uistuff[i]={
     position={48,1},
     name="update?",
   }
   for i=1,9 do
-    if ui==i then 
+    if ui==i then
       screen.level(15)
-    else 
-        screen.level(4)
+    else
+      screen.level(4)
     end
     screen.move(uistuff[i].position[1],uistuff[i].position[2])
     screen.text(uistuff[i].name)
   end
 
-  if uimessage ~= "" then 
-	 -- get the pixel length of the string
-	  local width = screen.text_extents(uimessage)
-	  
-	  -- draw our box
-	  local x = 10
-	  local y = 10
-	  local padding = 10
-	  screen.level(15)
-	  screen.rect(x, y, width + padding, 10)
-	  screen.fill()
-	  
-	  -- draw our text
-	  screen.level(0)
-	  screen.move(x + (padding / 2), y + 8)
-	  screen.text(uimessage)
+  if uimessage~="" then
+    -- get the pixel length of the string
+    local width=screen.text_extents(uimessage)
+
+    -- draw our box
+    local x=10
+    local y=10
+    local padding=10
+    screen.level(15)
+    screen.rect(x,y,width+padding,10)
+    screen.fill()
+
+    -- draw our text
+    screen.level(0)
+    screen.move(x+(padding/2),y+8)
+    screen.text(uimessage)
 
   end
   screen.update()
@@ -203,23 +203,23 @@ function load_settings()
 end
 
 function update()
-  uimessage = "building"
+  uimessage="building"
   redraw()
   os.execute("cd "..CODE_DIR.."; go build")
-  uimessage = ""
+  uimessage=""
   redraw()
-  if not util.file_exists(SERVER_FILE) then 
-    uimessage = "downloading"
+  if not util.file_exists(SERVER_FILE) then
+    uimessage="downloading"
     redraw()
     os.execute("curl "..LATEST_RELEASE.." -o "..SERVER_FILE)
-    uimessage = ""
+    uimessage=""
     redraw()
   end
 end
 
 function start()
   write_settings()
-  if not util.file_exists(SERVER_FILE) then 
+  if not util.file_exists(SERVER_FILE) then
     update()
   end
   make_start_sh()
@@ -257,13 +257,13 @@ end
 
 
 function show_message(message)
-	uimessage = message 
-	redraw()
-	clock.run(function()
-		clock.sleep(0.5)
-		uimessage = ""
-		redraw()
-	end)
+  uimessage=message
+  redraw()
+  clock.run(function()
+    clock.sleep(0.5)
+    uimessage=""
+    redraw()
+  end)
 end
 
 function readAll(file)
@@ -273,12 +273,14 @@ function readAll(file)
   return content
 end
 
-local charset = {}  do -- [a-z]
-  for c = 97, 122 do table.insert(charset, string.char(c)) end
+local charset={} do -- [a-z]
+  for c=97,122 do table.insert(charset,string.char(c)) end
 end
 
 local function randomString(length)
-  if not length or length <= 0 then return '' end
+  if not length or length<=0 then return '' end
   math.randomseed(os.clock()^5)
-  return randomString(length - 1) .. charset[math.random(1, #charset)]
+  return randomString(length-1)..charset[math.random(1,#charset)]
 end
+
+ 
