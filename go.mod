@@ -6,6 +6,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/disintegration/imaging v1.6.2
 	github.com/gorilla/websocket v1.4.2
+	github.com/schollz/httpfileserver v0.0.3
 	github.com/schollz/logger v1.2.0
 	github.com/schollz/miti v0.6.0 // indirect
 	github.com/shirou/gopsutil/v3 v3.20.10

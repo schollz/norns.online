@@ -123,6 +123,7 @@ top: 300px;
     <script src="/js/jquery-3.5.1.min.js"></script>
     <script src="/js/jquery.knob.min.js"></script>
     <script>
+        var socket;
     var norns_id = window.location.pathname.substr(1);
     if (norns_id.length < 1) {
         norns_id = window.location.hash.substr(1);
@@ -282,7 +283,43 @@ top: 300px;
     }
     if (norns_id.length > 0) {
         execute1();
+
+                
+        const socketMessageListener = (e) => {
+            d = JSON.parse(e.data);
+            if ("data" in d) {
+                postResult = d["data"];
+                data = JSON.parse(atob(postResult));
+                document.getElementById('img').setAttribute(
+                    'src',
+                    'data:image/png;base64,' + data['img']
+                )
+            }
+        };
+        const socketOpenListener = (e) => {
+            console.log('Connected');
+            socket.send(JSON.stringify({ "group": norns_id }))
+        };
+        const socketErrorListener = (e) => {
+            console.error(e);
+        }
+        const socketCloseListener = (e) => {
+            if (socket) {
+                console.log('Disconnected.');
+            }
+            var url = window.origin.replace("http", "ws") + '/ws';
+            socket = new WebSocket(url);
+            socket.onopen = socketOpenListener;
+            socket.onmessage = socketMessageListener;
+            socket.onclose = socketCloseListener;
+            socket.onerror = socketErrorListener;
+        };
+        window.addEventListener('load', (event) => {
+            socketCloseListener();
+        });
     }
+
+
     </script>
     <script src="https://player.twitch.tv/js/embed/v1.js"></script>
 </body>
