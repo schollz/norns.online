@@ -188,7 +188,7 @@ top: 300px;
                     z = -1 * multiplier;
                     console.log(i + " decreased " + z)
                 }
-                if (norns_id.length > 3) {
+                if (norns_id.length > 0) {
                     $.post("https://duct.schollz.com/norns.online." + norns_id + "?pubsub=true", btoa(JSON.stringify({ kind: "enc", n: i + 1, z: z })))
                 }
             },
@@ -220,7 +220,7 @@ top: 300px;
                     fast_clicked = false
                 }
                 last_time = currentTime();
-                if (norns_id.length > 3) {
+                if (norns_id.length > 0) {
                     if (i == 0) {
                         $.post("https://duct.schollz.com/norns.online." + norns_id, btoa(JSON.stringify({ kind: "key", n: i + 1, z: value, fast: fast_clicked })));
                     } else if (value > 0) {
@@ -262,8 +262,6 @@ top: 300px;
             if ('twitch' in data) {
                 if (data['twitch']) {
                     await $("#livestream").removeClass("hidden");
-                } else {
-                    await $("#livestream").addClass("hidden");
                     if (!twitchActivated) {
                         $(".twitch").attr("href", "https://www.twitch.tv/" + norns_id)
                         var options = {
@@ -275,11 +273,13 @@ top: 300px;
                         var player = new Twitch.Player("playerdiv", options);
                         player.setVolume(0.5);
                     }
+                } else {
+                    await $("#livestream").addClass("hidden");
                 }
             }
         }
     }
-    if (norns_id.length > 3) {
+    if (norns_id.length > 0) {
         execute1();
     }
     </script>
