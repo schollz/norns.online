@@ -169,14 +169,14 @@ top: 300px;
                     dif = (v - value);
                 }
                 value = v;
-                if (currentTime() - last_time < 500) {
+                if (currentTime() - last_time < 250) {
                     consecutive_turns = consecutive_turns + dif;
                     return
                 }
                 var multiplier = 1;
-                if (Math.abs(consecutive_turns) > 64) {
+                if (Math.abs(consecutive_turns) > 32) {
                     multiplier = 3;
-                } else if (Math.abs(consecutive_turns) > 30) {
+                } else if (Math.abs(consecutive_turns) > 15) {
                     multiplier = 2;
                 }
                 consecutive_turns = 0;
