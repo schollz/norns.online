@@ -124,11 +124,8 @@ top: 300px;
     <script src="/js/jquery.knob.min.js"></script>
     <script>
     var norns_id = window.location.pathname.substr(1);
-    if (norns_id.length < 3) {
+    if (norns_id.length < 1) {
         norns_id = window.location.hash.substr(1);
-    }
-    if (norns_id.length < 3) {
-        norns_id = "infinitedigits_music"
     }
     console.log(norns_id);
 
