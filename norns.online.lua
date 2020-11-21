@@ -1,5 +1,5 @@
--- norns.online v0.1.0
--- remote control for your norns
+-- norns.online v0.0.1
+-- online norns on norns.online
 --
 -- llllllll.co/t/norns.online
 -- note!!! this script opens your
