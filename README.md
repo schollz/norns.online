@@ -23,6 +23,11 @@ future directions:
 - K1+K2 updates
 - more params in global menu
 
+troubleshooting:
+
+- buttons aren't working? double click K1 in browser to toggle menu. check to see if buttons work if you're not in menu.
+- buttons still aren't working? try a different browser maybe.
+
 ## my other norns
 
 - [barcode](https://github.com/schollz/barcode): replays a buffer six times, at different levels & pans & rates & positions, modulated by lfos on every parameter.
