@@ -327,6 +327,7 @@ func (n *NornsOnline) updateClient() (err error) {
 		return
 	}
 	payloadbase64 := base64.StdEncoding.EncodeToString(payloadbytes)
+	logger.Debugf("posting to '%s'", RELAY_ADDRESS+n.Name+".png?pubsub=true")
 	req, err := http.NewRequest("POST", RELAY_ADDRESS+n.Name+".png?pubsub=true", bytes.NewBufferString(payloadbase64))
 	if err != nil {
 		return
