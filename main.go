@@ -316,7 +316,7 @@ type Message struct {
 	N      int    `json:"n"`
 	Z      int    `json:"z"`
 	Fast   bool   `json:"fast,omitempty"`
-	Twitch bool   `json:"twitch,omitempty"`
+	Twitch bool   `json:"twitch"`
 }
 
 // processMessage only lets certain k inds of messages through
