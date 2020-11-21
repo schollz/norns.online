@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
@@ -10,8 +9,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net"
-	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
@@ -97,7 +94,9 @@ type NornsOnline struct {
 	configFileHash []byte
 	active         bool
 	inMenu         bool
-	client         *http.Client
+	norns          *websocket.Conn
+	ws             *websocket.Conn
+
 	sync.Mutex
 }
 
@@ -110,43 +109,7 @@ func New(configFile string) (n *NornsOnline, err error) {
 	n.KeepAwake = false
 	n.FrameRate = 4
 	_, err = n.Load()
-
-	// setup dialer for fast DNS resolution
-	var (
-		dnsResolverIP        = "1.1.1.1:53" // Google DNS resolver.
-		dnsResolverProto     = "udp"        // Protocol to use for the DNS resolver
-		dnsResolverTimeoutMs = 5000         // Timeout (ms) for the DNS resolver (optional)
-	)
-
-	dialer := &net.Dialer{
-		Resolver: &net.Resolver{
-			PreferGo: true,
-			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				d := net.Dialer{
-					Timeout: time.Duration(dnsResolverTimeoutMs) * time.Millisecond,
-				}
-				return d.DialContext(ctx, dnsResolverProto, dnsResolverIP)
-			},
-		},
-	}
-
-	dialContext := func(ctx context.Context, network, addr string) (net.Conn, error) {
-		return dialer.DialContext(ctx, network, addr)
-	}
-
-	http.DefaultTransport.(*http.Transport).DialContext = dialContext
-	n.client = &http.Client{
-		Transport: &http.Transport{
-			Proxy:                 http.ProxyFromEnvironment,
-			DialContext:           dialContext,
-			MaxIdleConnsPerHost:   3,
-			MaxIdleConns:          100,
-			IdleConnTimeout:       9000 * time.Second,
-			TLSHandshakeTimeout:   1000 * time.Second,
-			ExpectContinueTimeout: 3000 * time.Second,
-		},
-		Timeout: 30000 * time.Second,
-	}
+	go n.connectToWebsockets()
 	return
 }
 
@@ -173,13 +136,67 @@ func (n *NornsOnline) Load() (updated bool, err error) {
 	return
 }
 
+func (n *NornsOnline) connectToWebsockets() (err error) {
+	for {
+		if n.ws != nil {
+			n.ws.Close()
+			time.Sleep(500 * time.Millisecond)
+		}
+		//wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
+		wsURL := url.URL{Scheme: "wss", Host: "norns.online", Path: "/ws"}
+		logger.Debugf("connecting to %s as %s", wsURL, n.Name)
+		n.ws, _, err = websocket.DefaultDialer.Dial(wsURL.String(), nil)
+		if err != nil {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		n.ws.WriteJSON(Message{
+			Group: n.Name,
+			Name:  "norns", // specify that i am the norns
+		})
+		pings := 0
+		for {
+			var m Message
+			err = n.ws.ReadJSON(&m)
+			if err != nil {
+				logger.Debug(err)
+				return
+			}
+			logger.Debugf("got message: %+v", m)
+
+			cmd, err := n.processMessage(m)
+			if err != nil {
+				continue
+			}
+			n.Lock()
+			logger.Debugf("running command: '%s'", cmd)
+			err = n.norns.WriteMessage(websocket.TextMessage, []byte(cmd+"\n"))
+			if err != nil {
+				logger.Error(err)
+				continue
+			}
+			pings++
+			if pings%20 == 0 && n.KeepAwake {
+				err = n.norns.WriteMessage(websocket.TextMessage, []byte(`screen.ping()`+"\n"))
+				if err != nil {
+					logger.Error(err)
+					continue
+				}
+			}
+			n.Unlock()
+
+		}
+	}
+	return
+}
+
 // Run forever
 func (n *NornsOnline) Run() (err error) {
-
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	u := url.URL{Scheme: "ws", Host: "192.168.0.82:5555", Path: "/"}
+	// bind to internal address
+	u := url.URL{Scheme: "ws", Host: "localhost:5555", Path: "/"}
 	logger.Infof("connecting to %s", u.String())
 	var cstDialer = websocket.Dialer{
 		Subprotocols:     []string{"bus.sp.nanomsg.org"},
@@ -188,62 +205,14 @@ func (n *NornsOnline) Run() (err error) {
 		HandshakeTimeout: 3 * time.Second,
 	}
 
-	c, _, err := cstDialer.Dial(u.String(), nil)
+	n.norns, _, err = cstDialer.Dial(u.String(), nil)
 	if err != nil {
 		logger.Error(err)
 		os.Exit(1)
 	}
-	defer c.Close()
+	defer n.norns.Close()
 
 	done := make(chan struct{})
-
-	go func() {
-		pings := 0
-		for {
-			response, err := func() (response string, err error) {
-				resp, err := n.client.Get(RELAY_ADDRESS + n.Name)
-				if err != nil {
-					return
-				}
-				defer resp.Body.Close()
-				data, err := ioutil.ReadAll(resp.Body)
-				if err != nil {
-					return
-				}
-				response = string(data)
-				return
-			}()
-			if err != nil {
-				logger.Error(err)
-				continue
-			}
-			logger.Debugf("got command: '%s'", response)
-			cmd, err := n.processMessage(response)
-			if err != nil {
-				logger.Error(err)
-				continue
-			}
-			if cmd == "" {
-				continue
-			}
-			n.Lock()
-			logger.Debugf("running command: '%s'", cmd)
-			err = c.WriteMessage(websocket.TextMessage, []byte(cmd+"\n"))
-			if err != nil {
-				logger.Error(err)
-				continue
-			}
-			pings++
-			if pings%20 == 0 && n.KeepAwake {
-				err = c.WriteMessage(websocket.TextMessage, []byte(`screen.ping()`+"\n"))
-				if err != nil {
-					logger.Error(err)
-					continue
-				}
-			}
-			n.Unlock()
-		}
-	}()
 
 	logger.Info("connected")
 	ticker := time.NewTicker(1 * time.Second)
@@ -259,6 +228,7 @@ func (n *NornsOnline) Run() (err error) {
 		case <-done:
 			return
 		case _ = <-ticker2.C:
+			currentName := n.Name
 			updated, _ := n.Load()
 			if updated {
 				ticker.Stop()
@@ -267,10 +237,15 @@ func (n *NornsOnline) Run() (err error) {
 				} else {
 					ticker = time.NewTicker(time.Duration(1000/n.FrameRate) * time.Millisecond)
 				}
+				if n.Name != currentName {
+					// restart websockets with new name
+					n.ws.Close()
+					go n.connectToWebsockets()
+				}
 			}
 		case _ = <-ticker.C:
 			n.Lock()
-			err = c.WriteMessage(websocket.TextMessage, []byte(`_norns.screen_export_png("/tmp/screenshot.png")`+"\n"))
+			err = n.norns.WriteMessage(websocket.TextMessage, []byte(`_norns.screen_export_png("/tmp/screenshot.png")`+"\n"))
 			if err != nil {
 				logger.Debugf("write: %w", err)
 				return
@@ -284,7 +259,7 @@ func (n *NornsOnline) Run() (err error) {
 
 			// Cleanly close the connection by sending a close message and then
 			// waiting (with timeout) for the server to close the connection.
-			err = c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			err = n.norns.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
 				logger.Info("write close:", err)
 				return
@@ -297,11 +272,6 @@ func (n *NornsOnline) Run() (err error) {
 		}
 	}
 	return
-}
-
-type Payload struct {
-	Img    string `json:"img"`
-	Twitch bool   `json:"twitch"`
 }
 
 func (n *NornsOnline) updateClient() (err error) {
@@ -325,52 +295,32 @@ func (n *NornsOnline) updateClient() (err error) {
 	}
 	base64data := base64.StdEncoding.EncodeToString(b)
 
-	payload := Payload{
-		Img:    base64data,
-		Twitch: n.AllowTwitch,
-	}
-	payloadbytes, err := json.Marshal(payload)
-	if err != nil {
-		return
-	}
-	payloadbase64 := base64.StdEncoding.EncodeToString(payloadbytes)
 	tsent := time.Now()
-	req, err := http.NewRequest("POST", RELAY_ADDRESS+n.Name+".png?pubsub=true", bytes.NewBufferString(payloadbase64))
-	if err != nil {
-		return
+	if n.ws != nil {
+		n.ws.WriteJSON(Message{
+			Img:    base64data,
+			Twitch: n.AllowTwitch,
+		})
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	resp, err := n.client.Do(req)
-	if err != nil {
-		return
-	}
-	logger.Debugf("sent data in %s", time.Since(tsent))
-	defer resp.Body.Close()
+	logger.Tracef("sent data in %s", time.Since(tsent))
 	return
 }
 
 type Message struct {
-	Kind string
-	N    int
-	Z    int
-	Fast bool
+	Name      string `json:"name,omitempty"`
+	Group     string `json:"group,omitempty"`
+	Recipient string `json:"recipient,omitempty"`
+
+	Img    string `json:"img,omitempty"`
+	Kind   string `json:"kind,omitempty"`
+	N      int    `json:"n"`
+	Z      int    `json:"z"`
+	Fast   bool   `json:"fast,omitempty"`
+	Twitch bool   `json:"twitch,omitempty"`
 }
 
 // processMessage only lets certain k inds of messages through
-func (n *NornsOnline) processMessage(s string) (cmd string, err error) {
-	b, err := base64.StdEncoding.DecodeString(s)
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	var m Message
-	err = json.Unmarshal(b, &m)
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-
+func (n *NornsOnline) processMessage(m Message) (cmd string, err error) {
 	if m.Kind == "enc" {
 		if n.AllowEncs {
 			cmd = fmt.Sprintf("enc(%d,%d)", sanitizeIndex(m.N), sanitizeEnc(m.Z))
