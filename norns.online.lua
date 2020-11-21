@@ -23,7 +23,7 @@ LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v0.0.1
 -- default settings
 settings={
   name="",
-  allowmenu=false,
+  allowmenu=true,
   allowencs=true,
   allowkeys=true,
   allowtwitch=false,
@@ -52,13 +52,13 @@ function key(n,z)
     uishift=z
   elseif uishift==1 and n==3 then
     update()
-  elseif n==2 then
+  elseif n==3 then
     textentry.enter(function(x)
       if x~=nil then
         settings.name=x
       end
     end,settings.name,"norns.online/")
-  elseif n==3 and z==1 then
+  elseif n==2 and z==1 then
     toggle()
   end
   redraw()
