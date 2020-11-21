@@ -2,7 +2,7 @@
 
 ![111](https://user-images.githubusercontent.com/6550035/99736745-c470c180-2a7b-11eb-80d4-e9b2a02167cf.png)
 
-crowdsource the control of a [norns](https://monome.org/docs/norns/) from [norns.online](https://norns.online).
+online [norns](https://monome.org/docs/norns/) on [norns.online](https://norns.online).
 
 norns runs a service that sends screenshots to `norns.online/<yourname>`. the website at `norns.online/<yourname>` sends inputs back to norns. norns listens to to inputs and runs the acceptable ones (adjustable with parameters).
 
