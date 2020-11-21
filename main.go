@@ -19,12 +19,12 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/schollz/logger"
 	"github.com/shirou/gopsutil/v3/process"
-	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var RELAY_ADDRESS = "http://duct.schollz.com/norns.online."
 
 var config = flag.String("config", "", "config file to use")
+var debugMode = flag.Bool("debug", false, "debug mode")
 
 func main() {
 	// first make sure its not already running an instance
@@ -55,15 +55,11 @@ rm -- "$0"
 	fmt.Printf("%d\n", pid)
 
 	// setup logger
-	logger.SetOutput(&lumberjack.Logger{
-		Filename:   "/tmp/norns.online.log",
-		MaxSize:    10, // megabytes
-		MaxBackups: 3,
-		MaxAge:     28,    //days
-		Compress:   false, // disabled by default
-	})
-	logger.SetLevel("debug")
 	flag.Parse()
+	logger.SetLevel("error")
+	if *debugMode {
+		logger.SetLevel("debug")
+	}
 
 	if *config == "" {
 		logger.Error("need config, use --config")
