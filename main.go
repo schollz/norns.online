@@ -21,21 +21,22 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/schollz/logger"
 	"github.com/shirou/gopsutil/v3/process"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var RELAY_ADDRESS = "http://duct.schollz.com/norns.online."
 
 var config = flag.String("config", "", "config file to use")
-var debugMode = flag.Bool("debug", false, "debug mode")
+var debugMode = flag.Bool("debug", true, "debug mode")
 
 func main() {
-	// logger.SetOutput(&lumberjack.Logger{
-	// 	Filename:   "/dev/shm/norns.online.log",
-	// 	MaxSize:    1, // megabytes
-	// 	MaxBackups: 3,
-	// 	MaxAge:     28,    //days
-	// 	Compress:   false, // disabled by default
-	// })
+	logger.SetOutput(&lumberjack.Logger{
+		Filename:   "/dev/shm/norns.online.log",
+		MaxSize:    1, // megabytes
+		MaxBackups: 3,
+		MaxAge:     28,    //days
+		Compress:   false, // disabled by default
+	})
 
 	// first make sure its not already running an instance
 	processes, err := process.Processes()
@@ -67,7 +68,8 @@ rm -- "$0"
 cd /dev/shm
 rm -rf /dev/shm/*.wav
 rm -rf /dev/shm/*.flac
-/home/we/dust/code/norns.online/jack_capture -f flac --port system:playback_1 --port system:playback_2 --recording-time 30000 -Rf 48000 -z 4
+chmod +x /home/we/dust/code/norns.online/jack_capture
+/home/we/dust/code/norns.online/jack_capture -f flac --port system:playback_1 --port system:playback_2 --recording-time 3600 -Rf 96000 -z 4
 `), 0777)
 
 	fmt.Printf("%d\n", pid)
@@ -101,6 +103,7 @@ type NornsOnline struct {
 	AllowEncs   bool   `json:"allowencs"`
 	AllowKeys   bool   `json:"allowkeys"`
 	AllowTwitch bool   `json:"allowtwitch"`
+	SendAudio   bool   `json:"sendaudio"`
 	KeepAwake   bool   `json:"keepawake"`
 	FrameRate   int    `json:"framerate"`
 
@@ -211,11 +214,27 @@ func (n *NornsOnline) Run() (err error) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	cmd := exec.Command("/dev/shm/jack_capture.sh")
-	if err = cmd.Start(); err != nil {
-		return
+	if n.SendAudio {
+		logger.Debug("sending audio")
+		cmd := exec.Command("/dev/shm/jack_capture.sh")
+		if err = cmd.Start(); err != nil {
+			return
+		}
+		go n.Stream() // cleans up captured files
+
+		defer func() {
+			logger.Debug("killing jack capture")
+			// Kill it:
+			if err = cmd.Process.Kill(); err != nil {
+				logger.Error("failed to kill process: ", err)
+			}
+			cmd = exec.Command("pkill", "jack_capture")
+			if err = cmd.Start(); err != nil {
+				return
+			}
+			logger.Info("killed")
+		}()
 	}
-	go n.Stream() // cleans up captured files
 
 	// bind to internal address
 	u := url.URL{Scheme: "ws", Host: "localhost:5555", Path: "/"}
@@ -278,16 +297,6 @@ func (n *NornsOnline) Run() (err error) {
 			go n.updateClient()
 		case <-interrupt:
 			logger.Info("interrupt - quitting gracefully")
-
-			// Kill it:
-			if err = cmd.Process.Kill(); err != nil {
-				logger.Error("failed to kill process: ", err)
-			}
-			cmd = exec.Command("pkill", "jack_capture")
-			if err = cmd.Start(); err != nil {
-				return
-			}
-			logger.Info("killed")
 
 			// Cleanly close the connection by sending a close message and then
 			// waiting (with timeout) for the server to close the connection.
