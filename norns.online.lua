@@ -1,4 +1,4 @@
--- norns.online v0.0.1
+-- norns.online v0.1.0
 -- online norns on norns.online
 --
 -- llllllll.co/t/norns-online
@@ -10,6 +10,8 @@
 -- K2 changes name
 -- K1+K2 updates
 -- more params in global menu
+-- if you enable audio, make sure
+-- to restart norns.online
 
 local json=include("lib/json")
 local textentry=require 'textentry'
