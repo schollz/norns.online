@@ -20,6 +20,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/schollz/logger"
 	"github.com/shirou/gopsutil/v3/process"
+	wav "github.com/youpy/go-wav"
 )
 
 var RELAY_ADDRESS = "http://duct.schollz.com/norns.online."
@@ -28,7 +29,8 @@ var config = flag.String("config", "", "config file to use")
 var debugMode = flag.Bool("debug", false, "debug mode")
 
 func main() {
-	FindChangingFile("/home/we/dust/audio/tape")
+	filename, _ := FindChangingFile("/home/we/dust/audio/tape")
+	SpliceEndOfWavFile(filename, "/tmp/test.wav",12)
 	// first make sure its not already running an instance
 	processes, err := process.Processes()
 	if err != nil {
@@ -390,15 +392,56 @@ func MD5HashFile(fname string) (hash256 []byte, err error) {
 	return
 }
 
+// FindChangingFile returns the name of the file that's changing
+// (the one that's being recorded)
 func FindChangingFile(folder string) (filename string, err error) {
 	files, err := ioutil.ReadDir(folder)
 	if err != nil {
 		return
 	}
+	if len(files) == 0 {
+		return
+	}
 	sort.Slice(files[:], func(i, j int) bool {
 		return files[i].ModTime().After(files[j].ModTime())
 	})
-	fmt.Println(files[0])
+	filename = files[0].Name()
 	return
+}
 
+// SpliceEndOfWavFile will splice out the last part of a file
+func SpliceEndOfWavFile(filename string, outfilename string, minFromEnd float64) (err error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	reader := wav.NewReader(f)
+	fm, err := reader.Format()
+	if err != nil {
+		return
+	}
+	fmt.Printf("fm: %+v", fm)
+	start := uint32(48000 * 1)
+	end := uint32(start + 48000*3)
+	_, err = reader.ReadSamples(start)
+	if err != nil {
+		return
+	}
+	fmt.Println(end)
+
+	outfile, err := os.Create(outfilename)
+	if err != nil {
+		return
+	}
+	defer outfile.Close()
+
+	writer := wav.NewWriter(outfile, end-start, fm.NumChannels, fm.SampleRate, fm.BitsPerSample)
+	samples, err := reader.ReadSamples(end - start)
+	if err != nil {
+		return
+	}
+	err = writer.WriteSamples(samples)
+	return
 }
