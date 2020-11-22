@@ -14,7 +14,6 @@ access your norns, or someone else's from the browser.
 future directions:
 
 - fix all the 🐛🐛🐛
-- radio stream somehow? (anyone know how?)
 
 ### Requirements
 
@@ -30,6 +29,7 @@ future directions:
 
 possible uses:
 
+- radio stream!
 - twitch plays norns (params -> twitch to enable livestream)
 - control multiple norns simultaneously
 - make demos
