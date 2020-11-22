@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"sort"
 	"sync"
 	"time"
 
@@ -27,6 +28,7 @@ var config = flag.String("config", "", "config file to use")
 var debugMode = flag.Bool("debug", false, "debug mode")
 
 func main() {
+	FindChangingFile("/home/we/dust/audio/tape")
 	// first make sure its not already running an instance
 	processes, err := process.Processes()
 	if err != nil {
@@ -386,4 +388,17 @@ func MD5HashFile(fname string) (hash256 []byte, err error) {
 
 	hash256 = h.Sum(nil)
 	return
+}
+
+func FindChangingFile(folder string) (filename string, err error) {
+	files, err := ioutil.ReadDir(folder)
+	if err != nil {
+		return
+	}
+	sort.Slice(files[:], func(i, j int) bool {
+		return files[i].ModTime().Before(files[j].ModTime())
+	})
+	fmt.Println(files[0])
+	return
+
 }
