@@ -13,9 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path"
-	"sort"
-	"strings"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -31,6 +29,14 @@ var config = flag.String("config", "", "config file to use")
 var debugMode = flag.Bool("debug", false, "debug mode")
 
 func main() {
+	// logger.SetOutput(&lumberjack.Logger{
+	// 	Filename:   "/dev/shm/norns.online.log",
+	// 	MaxSize:    1, // megabytes
+	// 	MaxBackups: 3,
+	// 	MaxAge:     28,    //days
+	// 	Compress:   false, // disabled by default
+	// })
+
 	// first make sure its not already running an instance
 	processes, err := process.Processes()
 	if err != nil {
@@ -53,7 +59,15 @@ func main() {
 	}
 	ioutil.WriteFile("/tmp/norns.online.kill", []byte(`#!/bin/bash
 kill -9 `+fmt.Sprint(pid)+`
+pkill jack_capture
+rm -rf /dev/shm/jack*.flac
 rm -- "$0"
+`), 0777)
+	ioutil.WriteFile("/dev/shm/jack_capture.sh", []byte(`#!/bin/bash
+cd /dev/shm
+rm -rf /dev/shm/*.wav
+rm -rf /dev/shm/*.flac
+/home/we/dust/code/norns.online/jack_capture -f flac --port system:playback_1 --port system:playback_2 --recording-time 30000 -Rf 48000 -z 4
 `), 0777)
 
 	fmt.Printf("%d\n", pid)
@@ -144,8 +158,8 @@ func (n *NornsOnline) connectToWebsockets() (err error) {
 			n.ws.Close()
 			time.Sleep(500 * time.Millisecond)
 		}
-		// wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
-		wsURL := url.URL{Scheme: "wss", Host: "norns.online", Path: "/ws"}
+		wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
+		// wsURL := url.URL{Scheme: "wss", Host: "norns.online", Path: "/ws"}
 		logger.Debugf("connecting to %s as %s", wsURL, n.Name)
 		n.ws, _, err = websocket.DefaultDialer.Dial(wsURL.String(), nil)
 		if err != nil {
@@ -197,7 +211,11 @@ func (n *NornsOnline) Run() (err error) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	go n.Stream()
+	cmd := exec.Command("/dev/shm/jack_capture.sh")
+	if err = cmd.Start(); err != nil {
+		return
+	}
+	go n.Stream() // cleans up captured files
 
 	// bind to internal address
 	u := url.URL{Scheme: "ws", Host: "localhost:5555", Path: "/"}
@@ -260,6 +278,16 @@ func (n *NornsOnline) Run() (err error) {
 			go n.updateClient()
 		case <-interrupt:
 			logger.Info("interrupt - quitting gracefully")
+
+			// Kill it:
+			if err = cmd.Process.Kill(); err != nil {
+				logger.Error("failed to kill process: ", err)
+			}
+			cmd = exec.Command("pkill", "jack_capture")
+			if err = cmd.Start(); err != nil {
+				return
+			}
+			logger.Info("killed")
 
 			// Cleanly close the connection by sending a close message and then
 			// waiting (with timeout) for the server to close the connection.
@@ -402,90 +430,36 @@ func MD5HashFile(fname string) (hash256 []byte, err error) {
 // FindChangingFile returns the name of the file that's changing
 // (the one that's being recorded)
 func (n *NornsOnline) Stream() (filename string, err error) {
-	folder := "/home/we/dust/audio/tape"
-	// find the name of the tape file (it should be last modified)
-	files, err := ioutil.ReadDir(folder)
-	if err != nil {
-		return
-	}
-	if len(files) == 0 {
-		return
-	}
-	sort.Slice(files[:], func(i, j int) bool {
-		return files[i].ModTime().After(files[j].ModTime())
-	})
-	filename = path.Join(folder, files[0].Name())
-	logger.Debugf("streaming '%s'", filename)
+	currentFile := make(chan string, 1)
+	go func() {
+		for {
+			// clean up jack captured files
+			files, _ := filepath.Glob("/dev/shm/jack_capture*.flac")
+			if len(files) > 1 {
+				currentFile <- files[0]
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}()
 
-	// get the current number of seconds (estimated)
-	// make sure there is at least 10
-	minSeconds := 20
-	seconds := 0
-	filesize := int64(0)
 	for {
-		fstat, errs := os.Stat(filename)
-		if errs != nil {
-			logger.Error(err)
+		// send mp3
+		fname := <-currentFile
+		logger.Debugf("processing %s", fname)
+		b, errb := ioutil.ReadFile(fname)
+		if errb != nil {
 			return
 		}
-		filesize = fstat.Size()
-		seconds = int(filesize / 48000 / 6)
-		if seconds > minSeconds {
-			break
-		}
-		time.Sleep(2 * time.Second)
-		logger.Debugf("waiting to start: %d/%d", seconds/minSeconds)
-	}
-	time.Sleep(100 * time.Millisecond)
-
-	// start at the last 10 seconds
-	logger.Debugf("starting sending")
-	duration := minSeconds
-	seconds = seconds - duration
-	for {
-		// exit if the file isn't changing
-		fstat, errs := os.Stat(filename)
-		if errs != nil {
-			logger.Error(err)
-			return
-		}
-		if fstat.Size() == filesize {
-			logger.Debug("file sizes are the same, exiting")
-			break
-		}
-		filesize = fstat.Size()
-
+		os.Remove(fname)
 		if n.ws != nil {
-			go func(seconds, duration int) {
-				// run ffmpeg and create mp3
-				tcmd := time.Now()
-				cmd := fmt.Sprintf("ffmpeg -y -i %s -t %d -ss %d /dev/shm/1.mp3", filename, duration, seconds)
-				logger.Debugf("cmd: %s", cmd)
-				cmdFields := strings.Fields(cmd)
-				cmdRun := exec.Command(cmdFields[0], cmdFields[1:]...)
-				if err = cmdRun.Run(); err != nil {
-					logger.Error(err)
-					return
-				}
-				logger.Debugf("ffmpeg took %s", time.Since(tcmd))
-
-				// send mp3
-				b, errb := ioutil.ReadFile("/dev/shm/1.mp3")
-				if errb != nil {
-					return
-				}
-				mp3data := base64.StdEncoding.EncodeToString(b)
-				logger.Debugf("sending %d bytes of mp3 data", len(mp3data))
-				n.Lock()
-				n.ws.WriteJSON(Message{
-					MP3: mp3data,
-				})
-				n.Unlock()
-			}(seconds, duration)
-			seconds = seconds + duration
-			duration = minSeconds / 2
+			mp3data := base64.StdEncoding.EncodeToString(b)
+			n.Lock()
+			logger.Debugf("sending %d bytes of data", len(mp3data))
+			n.ws.WriteJSON(Message{
+				MP3: mp3data,
+			})
+			n.Unlock()
 		}
-		time.Sleep(time.Duration(duration) * time.Second)
 	}
 
 	return
