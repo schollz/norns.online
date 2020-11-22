@@ -75,6 +75,7 @@ type Message struct {
 	Z      int    `json:"z"`
 	Fast   bool   `json:"fast,omitempty"`
 	Twitch bool   `json:"twitch"`
+	MP3    string `json:"mp3"`
 }
 
 func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {

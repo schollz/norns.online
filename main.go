@@ -11,8 +11,11 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"os/exec"
 	"os/signal"
+	"path"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -20,7 +23,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/schollz/logger"
 	"github.com/shirou/gopsutil/v3/process"
-	wav "github.com/youpy/go-wav"
 )
 
 var RELAY_ADDRESS = "http://duct.schollz.com/norns.online."
@@ -29,11 +31,6 @@ var config = flag.String("config", "", "config file to use")
 var debugMode = flag.Bool("debug", false, "debug mode")
 
 func main() {
-	filename, _ := FindChangingFile("/home/we/dust/audio/tape")
-	err := SpliceEndOfWavFile(filename, "/tmp/test.wav",12)
-	if err != nil {
-		panic(err)
-	}
 	// first make sure its not already running an instance
 	processes, err := process.Processes()
 	if err != nil {
@@ -99,6 +96,8 @@ type NornsOnline struct {
 	inMenu         bool
 	norns          *websocket.Conn
 	ws             *websocket.Conn
+
+	streamPosition int
 
 	sync.Mutex
 }
@@ -197,6 +196,8 @@ func (n *NornsOnline) connectToWebsockets() (err error) {
 func (n *NornsOnline) Run() (err error) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
+
+	go n.Stream()
 
 	// bind to internal address
 	u := url.URL{Scheme: "ws", Host: "localhost:5555", Path: "/"}
@@ -320,6 +321,7 @@ type Message struct {
 	Z      int    `json:"z"`
 	Fast   bool   `json:"fast,omitempty"`
 	Twitch bool   `json:"twitch"`
+	MP3    string `json:"mp3"`
 }
 
 // processMessage only lets certain k inds of messages through
@@ -397,7 +399,9 @@ func MD5HashFile(fname string) (hash256 []byte, err error) {
 
 // FindChangingFile returns the name of the file that's changing
 // (the one that's being recorded)
-func FindChangingFile(folder string) (filename string, err error) {
+func (n *NornsOnline) Stream() (filename string, err error) {
+	folder := "/home/we/dust/audio/tape"
+	// find the name of the tape file (it should be last modified)
 	files, err := ioutil.ReadDir(folder)
 	if err != nil {
 		return
@@ -408,43 +412,76 @@ func FindChangingFile(folder string) (filename string, err error) {
 	sort.Slice(files[:], func(i, j int) bool {
 		return files[i].ModTime().After(files[j].ModTime())
 	})
-	filename = path.Join(folder,files[0].Name())
-	return
-}
+	filename = path.Join(folder, files[0].Name())
+	logger.Debugf("streaming '%s'", filename)
 
-// SpliceEndOfWavFile will splice out the last part of a file
-func SpliceEndOfWavFile(filename string, outfilename string, minFromEnd float64) (err error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return
+	// get the current number of seconds (estimated)
+	// make sure there is at least 10
+	seconds := 0
+	filesize := int64(0)
+	for {
+		fstat, errs := os.Stat(filename)
+		if errs != nil {
+			logger.Error(err)
+			return
+		}
+		filesize = fstat.Size()
+		seconds = int(filesize / 48000 / 6)
+		if seconds > 10 {
+			break
+		}
+		time.Sleep(2 * time.Second)
+		logger.Debug("waiting for 10 seconds")
 	}
-	defer f.Close()
+	time.Sleep(1 * time.Second)
 
-	reader := wav.NewReader(f)
-	fm, err := reader.Format()
-	if err != nil {
-		return
-	}
-	fmt.Printf("fm: %+v", fm)
-	start := uint32(48000 * 1)
-	end := uint32(start + 48000*3)
-	_, err = reader.ReadSamples(start)
-	if err != nil {
-		return
-	}
-	fmt.Println(end)
+	// start at the last 10 seconds
+	logger.Debugf("starting sending")
+	duration := 10
+	seconds = seconds - duration
+	for {
+		// exit if the file isn't changing
+		fstat, errs := os.Stat(filename)
+		if errs != nil {
+			logger.Error(err)
+			return
+		}
+		if fstat.Size() == filesize {
+			logger.Debug("file sizes are the same, exiting")
+			break
+		}
+		filesize = fstat.Size()
 
-	outfile, err := os.Create(outfilename)
-	if err != nil {
-		return
-	}
-	defer outfile.Close()
+		if n.ws != nil {
+			// run ffmpeg and create mp3
+			cmd := fmt.Sprintf("ffmpeg -y -i %s -t %d -ss %d /dev/shm/1.mp3", filename, duration, seconds)
+			logger.Debugf("cmd: %s", cmd)
+			cmdFields := strings.Fields(cmd)
+			cmdRun := exec.Command(cmdFields[0], cmdFields[1:]...)
+			if err = cmdRun.Run(); err != nil {
+				logger.Error(err)
+				return
+			}
+			seconds = seconds + duration
+			duration = 5
 
-	writer := wav.NewWriter(outfile, end-start, fm.NumChannels, fm.SampleRate, fm.BitsPerSample)
-	samples, err := reader.ReadSamples(end - start)
-	if err != nil {
-		return
+			go func() {
+				// send mp3
+				b, errb := ioutil.ReadFile("/dev/shm/1.mp3")
+				if errb != nil {
+					return
+				}
+				mp3data := base64.StdEncoding.EncodeToString(b)
+				logger.Debugf("sending %d bytes of mp3 data", len(mp3data))
+				n.Lock()
+				n.ws.WriteJSON(Message{
+					MP3: mp3data,
+				})
+				n.Unlock()
+			}()
+		}
+		time.Sleep(time.Duration(duration) * time.Second)
 	}
-	err = writer.WriteSamples(samples)
+
 	return
 }
