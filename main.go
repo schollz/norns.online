@@ -408,7 +408,7 @@ func FindChangingFile(folder string) (filename string, err error) {
 	sort.Slice(files[:], func(i, j int) bool {
 		return files[i].ModTime().After(files[j].ModTime())
 	})
-	filename = files[0].Name()
+	filename = path.Join(folder,files[0].Name())
 	return
 }
 
