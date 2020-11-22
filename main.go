@@ -144,7 +144,7 @@ func (n *NornsOnline) connectToWebsockets() (err error) {
 			n.ws.Close()
 			time.Sleep(500 * time.Millisecond)
 		}
-		//wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
+		// wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
 		wsURL := url.URL{Scheme: "wss", Host: "norns.online", Path: "/ws"}
 		logger.Debugf("connecting to %s as %s", wsURL, n.Name)
 		n.ws, _, err = websocket.DefaultDialer.Dial(wsURL.String(), nil)
@@ -301,10 +301,12 @@ func (n *NornsOnline) updateClient() (err error) {
 
 	tsent := time.Now()
 	if n.ws != nil {
+		n.Lock()
 		n.ws.WriteJSON(Message{
 			Img:    base64data,
 			Twitch: n.AllowTwitch,
 		})
+		n.Unlock()
 	}
 	logger.Tracef("sent data in %s", time.Since(tsent))
 	return
@@ -321,7 +323,7 @@ type Message struct {
 	Z      int    `json:"z"`
 	Fast   bool   `json:"fast,omitempty"`
 	Twitch bool   `json:"twitch"`
-	MP3    string `json:"mp3"`
+	MP3    string `json:"mp3,omitempty"`
 }
 
 // processMessage only lets certain k inds of messages through
@@ -417,6 +419,7 @@ func (n *NornsOnline) Stream() (filename string, err error) {
 
 	// get the current number of seconds (estimated)
 	// make sure there is at least 10
+	minSeconds := 20
 	seconds := 0
 	filesize := int64(0)
 	for {
@@ -427,17 +430,17 @@ func (n *NornsOnline) Stream() (filename string, err error) {
 		}
 		filesize = fstat.Size()
 		seconds = int(filesize / 48000 / 6)
-		if seconds > 10 {
+		if seconds > minSeconds {
 			break
 		}
 		time.Sleep(2 * time.Second)
-		logger.Debug("waiting for 10 seconds")
+		logger.Debugf("waiting to start: %d/%d", seconds/minSeconds)
 	}
-	time.Sleep(1 * time.Second)
+	time.Sleep(100 * time.Millisecond)
 
 	// start at the last 10 seconds
 	logger.Debugf("starting sending")
-	duration := 10
+	duration := minSeconds
 	seconds = seconds - duration
 	for {
 		// exit if the file isn't changing
@@ -453,19 +456,19 @@ func (n *NornsOnline) Stream() (filename string, err error) {
 		filesize = fstat.Size()
 
 		if n.ws != nil {
-			// run ffmpeg and create mp3
-			cmd := fmt.Sprintf("ffmpeg -y -i %s -t %d -ss %d /dev/shm/1.mp3", filename, duration, seconds)
-			logger.Debugf("cmd: %s", cmd)
-			cmdFields := strings.Fields(cmd)
-			cmdRun := exec.Command(cmdFields[0], cmdFields[1:]...)
-			if err = cmdRun.Run(); err != nil {
-				logger.Error(err)
-				return
-			}
-			seconds = seconds + duration
-			duration = 5
+			go func(seconds, duration int) {
+				// run ffmpeg and create mp3
+				tcmd := time.Now()
+				cmd := fmt.Sprintf("ffmpeg -y -i %s -t %d -ss %d /dev/shm/1.mp3", filename, duration, seconds)
+				logger.Debugf("cmd: %s", cmd)
+				cmdFields := strings.Fields(cmd)
+				cmdRun := exec.Command(cmdFields[0], cmdFields[1:]...)
+				if err = cmdRun.Run(); err != nil {
+					logger.Error(err)
+					return
+				}
+				logger.Debugf("ffmpeg took %s", time.Since(tcmd))
 
-			go func() {
 				// send mp3
 				b, errb := ioutil.ReadFile("/dev/shm/1.mp3")
 				if errb != nil {
@@ -478,7 +481,9 @@ func (n *NornsOnline) Stream() (filename string, err error) {
 					MP3: mp3data,
 				})
 				n.Unlock()
-			}()
+			}(seconds, duration)
+			seconds = seconds + duration
+			duration = minSeconds / 2
 		}
 		time.Sleep(time.Duration(duration) * time.Second)
 	}
