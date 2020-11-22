@@ -11,7 +11,9 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -19,6 +21,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/schollz/logger"
 	"github.com/shirou/gopsutil/v3/process"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 var RELAY_ADDRESS = "http://duct.schollz.com/norns.online."
@@ -27,6 +30,14 @@ var config = flag.String("config", "", "config file to use")
 var debugMode = flag.Bool("debug", false, "debug mode")
 
 func main() {
+	logger.SetOutput(&lumberjack.Logger{
+		Filename:   "/dev/shm/norns.online.log",
+		MaxSize:    1, // megabytes
+		MaxBackups: 3,
+		MaxAge:     28,    //days
+		Compress:   false, // disabled by default
+	})
+
 	// first make sure its not already running an instance
 	processes, err := process.Processes()
 	if err != nil {
@@ -49,7 +60,16 @@ func main() {
 	}
 	ioutil.WriteFile("/tmp/norns.online.kill", []byte(`#!/bin/bash
 kill -9 `+fmt.Sprint(pid)+`
+pkill jack_capture
+rm -rf /dev/shm/jack*.flac
 rm -- "$0"
+`), 0777)
+	ioutil.WriteFile("/dev/shm/jack_capture.sh", []byte(`#!/bin/bash
+cd /dev/shm
+rm -rf /dev/shm/*.wav
+rm -rf /dev/shm/*.flac
+chmod +x /home/we/dust/code/norns.online/jack_capture
+/home/we/dust/code/norns.online/jack_capture -f flac --port system:playback_1 --port system:playback_2 --recording-time 3600 -Rf 96000 -z 4
 `), 0777)
 
 	fmt.Printf("%d\n", pid)
@@ -83,6 +103,7 @@ type NornsOnline struct {
 	AllowEncs   bool   `json:"allowencs"`
 	AllowKeys   bool   `json:"allowkeys"`
 	AllowTwitch bool   `json:"allowtwitch"`
+	SendAudio   bool   `json:"sendaudio"`
 	KeepAwake   bool   `json:"keepawake"`
 	FrameRate   int    `json:"framerate"`
 
@@ -92,6 +113,8 @@ type NornsOnline struct {
 	inMenu         bool
 	norns          *websocket.Conn
 	ws             *websocket.Conn
+
+	streamPosition int
 
 	sync.Mutex
 }
@@ -138,7 +161,7 @@ func (n *NornsOnline) connectToWebsockets() (err error) {
 			n.ws.Close()
 			time.Sleep(500 * time.Millisecond)
 		}
-		//wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
+		// wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
 		wsURL := url.URL{Scheme: "wss", Host: "norns.online", Path: "/ws"}
 		logger.Debugf("connecting to %s as %s", wsURL, n.Name)
 		n.ws, _, err = websocket.DefaultDialer.Dial(wsURL.String(), nil)
@@ -190,6 +213,28 @@ func (n *NornsOnline) connectToWebsockets() (err error) {
 func (n *NornsOnline) Run() (err error) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
+
+	if n.SendAudio {
+		logger.Debug("sending audio")
+		cmd := exec.Command("/dev/shm/jack_capture.sh")
+		if err = cmd.Start(); err != nil {
+			return
+		}
+		go n.Stream() // cleans up captured files
+
+		defer func() {
+			logger.Debug("killing jack capture")
+			// Kill it:
+			if err = cmd.Process.Kill(); err != nil {
+				logger.Error("failed to kill process: ", err)
+			}
+			cmd = exec.Command("pkill", "jack_capture")
+			if err = cmd.Start(); err != nil {
+				return
+			}
+			logger.Info("killed")
+		}()
+	}
 
 	// bind to internal address
 	u := url.URL{Scheme: "ws", Host: "localhost:5555", Path: "/"}
@@ -293,10 +338,12 @@ func (n *NornsOnline) updateClient() (err error) {
 
 	tsent := time.Now()
 	if n.ws != nil {
+		n.Lock()
 		n.ws.WriteJSON(Message{
 			Img:    base64data,
 			Twitch: n.AllowTwitch,
 		})
+		n.Unlock()
 	}
 	logger.Tracef("sent data in %s", time.Since(tsent))
 	return
@@ -313,6 +360,7 @@ type Message struct {
 	Z      int    `json:"z"`
 	Fast   bool   `json:"fast,omitempty"`
 	Twitch bool   `json:"twitch"`
+	MP3    string `json:"mp3,omitempty"`
 }
 
 // processMessage only lets certain k inds of messages through
@@ -385,5 +433,43 @@ func MD5HashFile(fname string) (hash256 []byte, err error) {
 	}
 
 	hash256 = h.Sum(nil)
+	return
+}
+
+// FindChangingFile returns the name of the file that's changing
+// (the one that's being recorded)
+func (n *NornsOnline) Stream() (filename string, err error) {
+	currentFile := make(chan string, 1)
+	go func() {
+		for {
+			// clean up jack captured files
+			files, _ := filepath.Glob("/dev/shm/jack_capture*.flac")
+			if len(files) > 1 {
+				currentFile <- files[0]
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
+	for {
+		// send mp3
+		fname := <-currentFile
+		logger.Debugf("processing %s", fname)
+		b, errb := ioutil.ReadFile(fname)
+		if errb != nil {
+			return
+		}
+		os.Remove(fname)
+		if n.ws != nil {
+			mp3data := base64.StdEncoding.EncodeToString(b)
+			n.Lock()
+			logger.Debugf("sending %d bytes of data", len(mp3data))
+			n.ws.WriteJSON(Message{
+				MP3: mp3data,
+			})
+			n.Unlock()
+		}
+	}
+
 	return
 }

@@ -124,6 +124,8 @@ top: 300px;
     <script src="/js/jquery-3.5.1.min.js"></script>
     <script src="/js/jquery.knob.min.js"></script>
     <script>
+    var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+    var currentPlayingFinished = 0;
     var socket;
     var norns_id = window.location.pathname.substr(1);
     if (norns_id.length < 1) {
@@ -254,6 +256,43 @@ top: 300px;
         }
     }
 
+
+    function base64ToArrayBuffer(base64) {
+        var binary_string = window.atob(base64);
+        var len = binary_string.length;
+        var bytes = new Uint8Array(len);
+        for (var i = 0; i < len; i++) {
+            bytes[i] = binary_string.charCodeAt(i);
+        }
+        return bytes.buffer;
+    }
+
+
+    function playMP3(mp3data) {
+        audioCtx.decodeAudioData(base64ToArrayBuffer(mp3data), function(buffer) {
+            console.log(buffer);
+            // Get an AudioBufferSourceNode.
+            // This is the AudioNode to use when we want to play an AudioBuffer
+            var source = audioCtx.createBufferSource();
+
+            // set the buffer in the AudioBufferSourceNode
+            source.buffer = buffer;
+
+            // connect the AudioBufferSourceNode to the
+            // destination so we can hear the sound
+            source.connect(audioCtx.destination);
+
+            // start the source playing
+            console.log(currentPlayingFinished);
+            if (currentPlayingFinished <= audioCtx.currentTime) {
+                currentPlayingFinished = audioCtx.currentTime + 1
+            }
+            source.start(currentPlayingFinished);
+            currentPlayingFinished = currentPlayingFinished + buffer.duration;
+        })
+    }
+
+
     if (norns_id.length > 0) {
         const socketMessageListener = (e) => {
             data = JSON.parse(e.data);
@@ -262,6 +301,9 @@ top: 300px;
                     'src',
                     'data:image/png;base64,' + data['img']
                 )
+            }
+            if ('mp3' in data) {
+                playMP3(data['mp3'])
             }
             if ('twitch' in data) {
                 if (data['twitch']) {

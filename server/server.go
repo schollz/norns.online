@@ -14,6 +14,7 @@ import (
 
 var sockets map[string]map[*websocket.Conn]string
 var mutex sync.Mutex
+var wsmutex sync.Mutex
 
 func main() {
 	log.SetLevel("debug")
@@ -75,6 +76,7 @@ type Message struct {
 	Z      int    `json:"z"`
 	Fast   bool   `json:"fast,omitempty"`
 	Twitch bool   `json:"twitch"`
+	MP3    string `json:"mp3,omitempty"`
 }
 
 func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
@@ -134,7 +136,9 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 				continue
 			}
 			go func(c2 *websocket.Conn, m Message) {
+				wsmutex.Lock()
 				err := c2.WriteJSON(m)
+				wsmutex.Unlock()
 				if err != nil {
 					mutex.Lock()
 					delete(sockets[group], c2)
