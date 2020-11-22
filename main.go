@@ -27,7 +27,7 @@ import (
 var RELAY_ADDRESS = "http://duct.schollz.com/norns.online."
 
 var config = flag.String("config", "", "config file to use")
-var debugMode = flag.Bool("debug", true, "debug mode")
+var debugMode = flag.Bool("debug", false, "debug mode")
 
 func main() {
 	logger.SetOutput(&lumberjack.Logger{
@@ -161,8 +161,8 @@ func (n *NornsOnline) connectToWebsockets() (err error) {
 			n.ws.Close()
 			time.Sleep(500 * time.Millisecond)
 		}
-		wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
-		// wsURL := url.URL{Scheme: "wss", Host: "norns.online", Path: "/ws"}
+		// wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
+		wsURL := url.URL{Scheme: "wss", Host: "norns.online", Path: "/ws"}
 		logger.Debugf("connecting to %s as %s", wsURL, n.Name)
 		n.ws, _, err = websocket.DefaultDialer.Dial(wsURL.String(), nil)
 		if err != nil {
