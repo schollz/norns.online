@@ -30,7 +30,10 @@ var debugMode = flag.Bool("debug", false, "debug mode")
 
 func main() {
 	filename, _ := FindChangingFile("/home/we/dust/audio/tape")
-	SpliceEndOfWavFile(filename, "/tmp/test.wav",12)
+	err := SpliceEndOfWavFile(filename, "/tmp/test.wav",12)
+	if err != nil {
+		panic(err)
+	}
 	// first make sure its not already running an instance
 	processes, err := process.Processes()
 	if err != nil {
