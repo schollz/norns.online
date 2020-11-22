@@ -29,6 +29,7 @@ settings={
   allowencs=true,
   allowkeys=true,
   allowtwitch=false,
+  sendaudio=false,
   keepawake=false,
   framerate=5,
 }
@@ -37,6 +38,11 @@ ui=1
 uishift=false
 params:add_separator("norns.online")
 function init()
+  params:add_option("sendaudio","send audio",{"disabled","enabled"},1)
+  params:set_action("sendaudio",function(v)
+    settings.sendaudio=v==2
+    write_settings()
+  end)
   params:add_option("allowmenu","menu",{"disabled","enabled"},2)
   params:set_action("allowmenu",function(v)
     settings.allowmenu=v==2
@@ -173,6 +179,11 @@ function load_settings()
   data=readAll(CONFIG_FILE)
   settings=json.decode(data)
   tab.print(settings)
+  if settings.sendaudio then
+    params:set("sendaudio",2)
+  else
+    params:set("sendaudio",1)
+  end
   if settings.allowmenu then
     params:set("allowmenu",2)
   else
