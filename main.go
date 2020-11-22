@@ -396,7 +396,7 @@ func FindChangingFile(folder string) (filename string, err error) {
 		return
 	}
 	sort.Slice(files[:], func(i, j int) bool {
-		return files[i].ModTime().Before(files[j].ModTime())
+		return files[i].ModTime().After(files[j].ModTime())
 	})
 	fmt.Println(files[0])
 	return
