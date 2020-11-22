@@ -69,7 +69,7 @@ cd /dev/shm
 rm -rf /dev/shm/*.wav
 rm -rf /dev/shm/*.flac
 chmod +x /home/we/dust/code/norns.online/jack_capture
-/home/we/dust/code/norns.online/jack_capture -f flac --port system:playback_1 --port system:playback_2 --recording-time 3600 -Rf 96000 -z 4
+/home/we/dust/code/norns.online/jack_capture -f flac --port system:playback_1 --port system:playback_2 --recording-time 36000 -Rf 96000 -z 4
 `), 0777)
 
 	fmt.Printf("%d\n", pid)
