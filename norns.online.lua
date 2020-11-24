@@ -299,24 +299,16 @@ function install_prereqs()
   if not util.file_exists(SERVER_FILE) then
     update()
   end
-  out=os.capture("ffmpeg --help")
-  if not string.match(out,"Hyper fast") then
+  missingffmpeg=string.match(os.capture("ffmpeg --help"),"command not found")
+  missingmpv=string.match(os.capture("mpv --version"),"command not found")
+  if missingffmpeg or missingmpv then
     -- install ffmpeg
-    uimessage="installing ffmpeg"
+    uimessage="installing ffmpeg and mpv"
     redraw()
     os.execute("sudo apt update")
-    os.execute("sudo apt install -y ffmpeg")
-    uimessage=""
+    uimessage="please wait while installs..."
     redraw()
-  end
-  out=os.capture("mpv --version")
-  if not string.match(out,"mpv 0.") then
-    -- install mpv
-    uimessage="installing mpv"
-    redraw()
-    os.execute("sudo apt update")
-    os.execute("sudo apt purge -y samba-libs libwbclient0")
-    os.execute("sudo apt install -y mpv samba-libs libwbclient0")
+    os.execute("sudo apt install mpv ffmpeg")
     uimessage=""
     redraw()
   end
