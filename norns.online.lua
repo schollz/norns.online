@@ -312,6 +312,15 @@ function install_prereqs()
     uimessage=""
     redraw()
   end
+  missingffmpeg=string.match(os.capture("ffmpeg --help"),"command not found")
+  missingmpv=string.match(os.capture("mpv --version"),"command not found")
+  if missingffmpeg and missingmpv then 
+    show_message("still missing mpv and ffmpeg")
+  elseif missingmpv then 
+    show_message("still missing mpv")
+  elseif missingffmpeg then
+    show_message("still missing ffmpeg")
+  end
 end
 
 function update()
