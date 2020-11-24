@@ -6,7 +6,7 @@ online [norns](https://monome.org/docs/norns/) on [norns.online](https://norns.o
 
 **control your norns** and listen to it from the internet. 
 
-**share audio*** with other norns around the world.
+**share audio** with other norns around the world.
 
 ## quick start tutorial
 
@@ -19,12 +19,12 @@ online [norns](https://monome.org/docs/norns/) on [norns.online](https://norns.o
 - you can change `<yourname>` by pressing K2.
 - disable audio / change frame rate / adjust controls in global params
 
-## sharing audio tutorial
+## norns<->norns audio sharing tutorial
 
 ![parameters for sharing](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/audio_sharing.png)
 
 - go to gloal parameters and make sure both "`send audio`" and "`allow rooms`" are set to "`enabled`".
-- change the "`room`" to the room you want to share audio in
+- change the "`room`" to the room you want to share audio. make sure your norns partner uses the same room.
 - go to main screen and press K3 to go online. you should now be sharing audio with any other norns in that room (max 3 per room).
 
 ## faq

@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/schollz/logger"
-	"norns.online/src/models"
+	"github.com/schollz/norns.online/src/models"
 )
 
 func main() {
@@ -34,7 +34,7 @@ func sendAsNorns() (err error) {
 		Room:  "AA",              // tells it which audio group it wants to be in
 	})
 
-	b, err := ioutil.ReadFile("rach.mp3")
+	b, err := ioutil.ReadFile("rach.ogg")
 	if err != nil {
 		return
 	}
