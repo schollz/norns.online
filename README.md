@@ -53,7 +53,7 @@ future directions:
 
 ### faq
 
-<details><summary><strong>how does it work?</strong></summary>
+<details><summary><strong>how does webpage work?</strong></summary>
 norns runs a service that sends screenshots and audio to <code>norns.online/&lt;yourname&gt;</code>. the website at <code>norns.online/&lt;yourname&gt;</code> sends inputs back to norns. norns listens to to inputs and runs the acceptable ones (adjustable with parameters). what was <a href="https://llllllll.co/t/norns-online-crowdsource-your-norns/38492">just an idea</a> is now a norns script.
 </details>
 
@@ -68,7 +68,7 @@ if you are online, you have <a href="https://en.wikipedia.org/wiki/Security_thro
 
 
 <details><summary><strong>how much bandwidth does this use?</strong></summary>
-not too much. the norns sends out screenshots (~1.2 kB each) and ogg packets (~17.5 kB / second) periodically. if you use a fps of 4, then you are sending out ~22.3 kB / second, which is ~80 MB/hour. if you are in a room you will be receiving about that much for each norns in the room.
+not too much. the norns sends out screenshots (~1.2 kB each) and - if audio is enabled - the norns sends ogg packets (~17.5 kB / second) periodically. if you use a fps of 4 + audio enabled, then you are sending out ~22.3 kB / second, which is ~80 MB/hour. if you are audio-sharing a room you will be receiving about that much for each norns in the room.
 </details>
 
 <details><summary><strong>ogg vs mp3 vs flac?</strong></summary>
