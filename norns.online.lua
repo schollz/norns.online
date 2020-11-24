@@ -303,12 +303,12 @@ function install_prereqs()
   missingmpv=string.match(os.capture("mpv --version"),"command not found")
   if missingffmpeg or missingmpv then
     -- install ffmpeg
-    uimessage="installing ffmpeg and mpv"
+    uimessage="installing ffmpeg and mpv..."
     redraw()
     os.execute("sudo apt update")
     uimessage="please wait while installs..."
     redraw()
-    os.execute("sudo apt install mpv ffmpeg")
+    os.execute("sudo apt install -y mpv ffmpeg")
     uimessage=""
     redraw()
   end
@@ -333,7 +333,7 @@ function update()
   uimessage=""
   redraw()
   if not util.file_exists(SERVER_FILE) then
-    uimessage="downloading"
+    uimessage="downloading norns.online..."
     redraw()
     os.execute("curl -L "..LATEST_RELEASE.." -o "..SERVER_FILE)
     os.execute("chmod +x "..SERVER_FILE)
