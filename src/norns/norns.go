@@ -419,7 +419,7 @@ echo "loadfile ` + filename + ` append-play" > ` + n.mpvs[sender])
 	if err = cmd.Start(); err != nil {
 		return
 	}
-	cmd = exec.Command(file.Name())
+	cmd = exec.Command("/bin/bash", file.Name())
 	if err = cmd.Start(); err != nil {
 		return
 	}
