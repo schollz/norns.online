@@ -114,6 +114,7 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 			break
 		}
 		mutex.Lock()
+		m.Sender = name // update the sender information
 		if m.Audio != "" {
 			log.Debugf("got audio from %s in group %s and room %s", name, group, room)
 		}

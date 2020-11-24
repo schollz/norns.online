@@ -21,6 +21,8 @@ import (
 	"norns.online/src/utils"
 )
 
+const MAX_NORNS_INPUTS = 3
+
 type Norns struct {
 	Name        string `json:"name"`
 	Room        string `json:"room"` // designates where it wants to receive audio\
@@ -39,6 +41,7 @@ type Norns struct {
 	inMenu         bool
 	norns          *websocket.Conn
 	ws             *websocket.Conn
+	mpvs           map[string]string // map sender to filename
 
 	streamPosition int
 
@@ -63,6 +66,7 @@ rm -- "$0"
 	`), 0777)
 
 	n = new(Norns)
+	n.mpvs = make(map[string]string)
 	n.configFile = configFile
 	n.AllowEncs = true
 	n.AllowKeys = true
@@ -84,13 +88,14 @@ rm -rf /dev/shm/mpv*
 	if n.Room != "" && n.AllowRoom {
 		startsh += `	
 # launch playback server
-mkfifo /dev/shm/mpv1
-mkfifo /dev/shm/mpv2
-mkfifo /dev/shm/mpv3
-mpv --jack-port="system:playback_(1|2)" --input-file=/dev/shm/mpv1 --idle &
-mpv --jack-port="system:playback_(1|2)" --input-file=/dev/shm/mpv2 --idle &
-mpv --jack-port="system:playback_(1|2)" --input-file=/dev/shm/mpv3 --idle &
 `
+		for i := 0; i < MAX_NORNS_INPUTS; i++ {
+			startsh += `
+mkfifo /dev/shm/mpv` + fmt.Sprint(i) + `
+mpv --jack-port="system:playback_(1|2)" --input-file=/dev/shm/mpv` + fmt.Sprint(i) + ` --idle &
+`
+		}
+
 	}
 	ioutil.WriteFile("/dev/shm/norns.online.start.sh", []byte(startsh), 0777)
 
@@ -339,10 +344,66 @@ func (n *Norns) processMessage(m models.Message) (cmd string, err error) {
 		} else {
 			logger.Debug("keys disabled")
 		}
+	} else if m.Audio != "" {
+		// got some audio!
+		go func(sender, audio string) {
+			errF := n.processAudio(sender, audio)
+			if errF != nil {
+				logger.Error(errF)
+			}
+		}(m.Sender, m.Audio)
 	}
 	if n.inMenu {
 		cmd = "_menu." + cmd
 	}
+
+	return
+}
+
+func (n *Norns) processAudio(sender, audioData string) (err error) {
+	// first write the audio to a file
+	audioBytes, err := base64.StdEncoding.DecodeString(audioData)
+	if err != nil {
+		return
+	}
+	audioFile, err := ioutil.TempFile("/dev/shm", "input.*.flac")
+	if err != nil {
+		return
+	}
+	filename := audioFile.Name()
+
+	defer func() {
+		// remove file after 2.5 seconds
+		time.Sleep(2500 * time.Millisecond)
+		os.Remove(filename)
+	}()
+
+	audioFile.Write(audioBytes)
+	audioFile.Close()
+
+	// figure out which mpv to use
+	if _, ok := n.mpvs[sender]; !ok {
+		if len(n.mpvs) == MAX_NORNS_INPUTS {
+			err = fmt.Errorf("can't support any more in room")
+			return
+		}
+		n.mpvs[sender] = fmt.Sprintf("/dev/shm/mpv%d", len(n.mpvs))
+	}
+	fstat, err := os.Stat(n.mpvs[sender])
+	if err != nil {
+		return
+	}
+	if fstat.Size() == 0 {
+		// buffer for 1 second
+		time.Sleep(1000 * time.Millisecond)
+	}
+	f, err := os.OpenFile(n.mpvs[sender], os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return
+	}
+
+	defer f.Close()
+	f.WriteString("loadfile " + filename + " append-play")
 
 	return
 }

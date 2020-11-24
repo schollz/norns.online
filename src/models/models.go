@@ -1,14 +1,14 @@
 package models
 
 type Message struct {
-	Name string `json:"name,omitempty"` // only sent in initial message
-
-	// group and room sent with message to designate targets
+	// server should be initialized with these
+	Name  string `json:"name,omitempty"`  // only sent in initial message
 	Group string `json:"group,omitempty"` // usually for control data / screenshots OR audio
 	Room  string `json:"room,omitempty"`  // usually for audio
 
 	// Message data
-	Recipient string `json:"recipient"`
+	Sender    string `json:"sender,omitempty"`
+	Recipient string `json:"recipient,omitempty"`
 	Kind      string `json:"kind,omitempty"`
 	N         int    `json:"n"`
 	Z         int    `json:"z"`
