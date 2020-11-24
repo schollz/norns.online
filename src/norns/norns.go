@@ -94,7 +94,7 @@ chmod +x /home/we/dust/code/norns.online/jack_capture
 		for i := 0; i < MAX_NORNS_INPUTS; i++ {
 			startsh += `
 mkfifo /dev/shm/mpv` + fmt.Sprint(i) + `
-mpv --jack-port="system:playback_(1|2)" --input-file=/dev/shm/mpv` + fmt.Sprint(i) + ` --idle &
+# mpv --jack-port="system:playback_(1|2)" --input-file=/dev/shm/mpv` + fmt.Sprint(i) + ` --idle &
 `
 		}
 
