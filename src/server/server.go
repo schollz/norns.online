@@ -136,6 +136,7 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 			}
 			if sendData {
 				go func(name2 string, c2 *websocket.Conn, m models.Message) {
+					c2.SetWriteDeadline(time.Now().Add(1 * time.Second))
 					wsmutex.Lock()
 					err := c2.WriteJSON(m)
 					wsmutex.Unlock()
