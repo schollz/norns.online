@@ -129,6 +129,7 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 				sendData = true
 			}
 			if sendData {
+				log.Debugf("sending data from %s to %s", name, name2)
 				go func(name2 string, c2 *websocket.Conn, m models.Message) {
 					wsmutex.Lock()
 					err := c2.WriteJSON(m)
