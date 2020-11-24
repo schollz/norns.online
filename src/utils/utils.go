@@ -11,7 +11,7 @@ import (
 // ConvertToMP3 converts to mp3 and removes the original
 func ConvertToMP3(fname string) (newfname string, err error) {
 	newfname = fname + ".mp3"
-	cmd := exec.Command("ffmpeg", "-i", fname,"-codec:a","libmp3lame","-qscale:a","2",newfname)
+	cmd := exec.Command("ffmpeg", "-i", fname,"-codec:a","libmp3lame","-qscale:a","4",newfname)
 	err = cmd.Run()
 	os.Remove(fname) // remove original
 	return
