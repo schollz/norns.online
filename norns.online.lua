@@ -42,6 +42,7 @@ ui=1
 uishift=false
 params:add_separator("norns.online")
 function init()
+  startup = true
   params:add_option("allowmenu","menu",{"disabled","enabled"},2)
   params:set_action("allowmenu",function(v)
     settings.allowmenu=v==2
@@ -78,24 +79,31 @@ function init()
   params:add_separator("audio sharing")
   params:add_option("sendaudio","send audio",{"disabled","enabled"},1)
   params:set_action("sendaudio",function(v)
+    if not startup then os.execute(KILL_FILE) end
     settings.sendaudio=v==2
     write_settings()
+    redraw()
   end)
   params:add_option("allowroom","allow rooms",{"disabled","enabled"},1)
   params:set_action("allowroom",function(v)
+    if not startup then os.execute(KILL_FILE) end
     settings.allowroom=v==2
     write_settings()
+    redraw()
   end)
   params:add_text("roomname","room","")
   params:set_action("roomname",function(v)
+    if not startup then os.execute(KILL_FILE) end
     settings.room=v
     write_settings()
+    redraw()
   end)
   
   settings.name=randomString(5)
   load_settings()
   write_settings()
   redraw()
+  startup = false
 end
 
 function key(n,z)
@@ -225,6 +233,7 @@ function load_settings()
   else
     params:set("allowroom",1)
   end
+  params:set("roomname",settings.room)
   params:set("framerate",settings.framerate)
 end
 
