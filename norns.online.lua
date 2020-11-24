@@ -359,7 +359,7 @@ function show_message(message)
   uimessage=message
   redraw()
   clock.run(function()
-    clock.sleep(3)
+    clock.sleep(1)
     uimessage=""
     redraw()
   end)
