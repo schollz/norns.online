@@ -154,7 +154,11 @@ func (n *Norns) connectToWebsockets() (err error) {
 				logger.Debug(err)
 				return
 			}
-			logger.Debugf("got models.Message: %+v", m)
+			if m.Audio != "" {
+				logger.Debugf("got models.Message from %s: %+v", m.Sender, m)
+			} else {
+				logger.Debugf("got message with %d bytes of audio from %s", len(m.Audio), m.Sender)
+			}
 
 			cmd, err := n.processMessage(m)
 			if err != nil {
@@ -401,7 +405,6 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 	if err != nil {
 		return
 	}
-
 	defer f.Close()
 	f.WriteString("loadfile " + filename + " append-play")
 
