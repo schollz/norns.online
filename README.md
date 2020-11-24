@@ -8,9 +8,20 @@ online [norns](https://monome.org/docs/norns/) on [norns.online](https://norns.o
 
 **share audio*** with other norns around the world.
 
+## quick start tutorial
 
+- install `norns.online` and then run it. the first time you run it will install `ffmpeg` and `mpv`.
+- press K3. you are now "online" and can access your norns by opening a webpage to `norns.online/<yourname>`. you should hear audio and be able to use the inputs.
+- you can change `<yourname>` by pressing K2.
+- disable audio / change frame rate / adjust controls in global params
 
-### inner workings
+## sharing audio tutorial
+
+- go to gloal parameters and make sure both "`send audio`" and "`allow rooms`" are set to "`enabled`".
+- change the "`room`" to the room you want to share audio in
+- go to main screen and press K3 to go online. you should now be sharing audio with any other norns in that room.
+
+## inner workings
 
 **how does it work?** norns runs a service that sends screenshots and audio to `norns.online/<yourname>`. the website at `norns.online/<yourname>` sends inputs back to norns. norns listens to to inputs and runs the acceptable ones (adjustable with parameters). what was [just an idea](https://llllllll.co/t/norns-online-crowdsource-your-norns/38492) is now a norns script.
 

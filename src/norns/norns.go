@@ -22,7 +22,7 @@ import (
 	"github.com/schollz/norns.online/src/utils"
 )
 
-const MAX_NORNS_INPUTS = 1
+const MAX_NORNS_INPUTS = 2
 
 type Norns struct {
 	Name        string `json:"name"`
