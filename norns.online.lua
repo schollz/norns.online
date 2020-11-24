@@ -33,7 +33,7 @@ settings={
   allowencs=true,
   allowkeys=true,
   allowtwitch=false,
-  sendaudio=false,
+  sendaudio=true,
   keepawake=false,
   framerate=5,
 }
@@ -77,7 +77,7 @@ function init()
   end)
   
   params:add_separator("audio sharing")
-  params:add_option("sendaudio","send audio",{"disabled","enabled"},1)
+  params:add_option("sendaudio","send audio",{"disabled","enabled"},2)
   params:set_action("sendaudio",function(v)
     if not startup then os.execute(KILL_FILE) end
     settings.sendaudio=v==2
@@ -115,6 +115,8 @@ function key(n,z)
     textentry.enter(function(x)
       if x~=nil then
         settings.name=x
+        os.execute(KILL_FILE)
+        redraw()
       end
     end,settings.name,"norns.online/")
   elseif n==3 and z==1 then
@@ -275,6 +277,7 @@ function start()
   make_start_sh()
   os.execute(START_FILE)
   redraw()
+  show_message("you are online, you can play!")
 end
 
 function stop()
@@ -356,7 +359,7 @@ function show_message(message)
   uimessage=message
   redraw()
   clock.run(function()
-    clock.sleep(0.5)
+    clock.sleep(1.0)
     uimessage=""
     redraw()
   end)
