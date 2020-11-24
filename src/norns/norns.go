@@ -169,12 +169,14 @@ func (n *Norns) connectToWebsockets() (err error) {
 			}
 			n.Lock()
 			if cmd == "" {
+				n.Unlock()
 				continue
 			}
 			logger.Debugf("running command: '%s'", cmd)
 			err = n.norns.WriteMessage(websocket.TextMessage, []byte(cmd+"\n"))
 			if err != nil {
 				logger.Error(err)
+				n.Unlock()
 				continue
 			}
 			pings++
@@ -182,6 +184,7 @@ func (n *Norns) connectToWebsockets() (err error) {
 				err = n.norns.WriteMessage(websocket.TextMessage, []byte(`screen.ping()`+"\n"))
 				if err != nil {
 					logger.Error(err)
+					n.Unlock()
 					continue
 				}
 			}
