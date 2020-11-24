@@ -304,6 +304,7 @@ function install_prereqs()
     -- install ffmpeg
     uimessage="installing ffmpeg"
     redraw()
+    os.execute("sudo apt update")
     os.execute("sudo apt install -y ffmpeg")
     uimessage=""
     redraw()
@@ -313,7 +314,9 @@ function install_prereqs()
     -- install mpv
     uimessage="installing mpv"
     redraw()
-    os.execute("sudo apt install -y mpv")
+    os.execute("sudo apt update")
+    os.execute("sudo apt purge -y samba-libs libwbclient0")
+    os.execute("sudo apt install -y mpv samba-libs libwbclient0")
     uimessage=""
     redraw()
   end
