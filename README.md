@@ -59,7 +59,7 @@ norns runs a service that sends screenshots and audio to <code>norns.online/&lt;
 
 
 <details><summary><strong>how does audio streaming work?</strong></summary>
-a pre-compiled <a href="https://github.com/kmatheussen/jack_capture"><code>jack_capture</code></a> periodically captures the norns output into 4-second files into the <code>/dev/shm</code> temp directory. these are converted to ogg-format are read and sent via websockets to the browser. the norns then deletes old files so excess memory is not used. expect a lag of at least 4 seconds. when in a room, audio from other norns is piped into your norns via <code>mpv</code>. the combined audio should only be accessible from the output of your norns (not on the browser).
+a pre-compiled <a href="https://github.com/kmatheussen/jack_capture"><code>jack_capture</code></a> periodically captures the norns output into 4-second files into the <code>/dev/shm</code> temp directory. these are converted to ogg-format are read and sent via websockets to the browser. the norns then deletes old files so excess memory is not used. expect a lag of at least 4 seconds. when in a room, audio from other norns is piped into your norns via <code>mpv</code>. the incoming audio from other norns is added at the very end of the signal chain so (currently) it cannot be used as input to norns engines.
 </details>
 
 <details><summary><strong>is this secure?</strong></summary>
