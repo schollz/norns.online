@@ -210,28 +210,6 @@ function load_settings()
   params:set("framerate",settings.framerate)
 end
 
-function update()
-  uimessage="updating"
-  redraw()
-  os.execute("cd "..CODE_DIR.." && git pull")
-  uimessage="building"
-  redraw()
-  os.execute("cd "..CODE_DIR.."; /usr/local/go/bin/go build")
-  uimessage=""
-  redraw()
-  if not util.file_exists(SERVER_FILE) then
-    uimessage="downloading"
-    redraw()
-    os.execute("curl -L "..LATEST_RELEASE.." -o "..SERVER_FILE)
-    os.execute("chmod +x "..SERVER_FILE)
-    uimessage=""
-    redraw()
-  end
-  if util.file_exists(SERVER_FILE) then
-    show_message("updated.")
-  end
-end
-
 function toggle()
   if util.file_exists(KILL_FILE) then
     uimessage="stopping"
@@ -266,9 +244,7 @@ end
 
 function start()
   write_settings()
-  if not util.file_exists(SERVER_FILE) then
-    update()
-  end
+  install_prereqs()
   make_start_sh()
   os.execute(START_FILE)
   redraw()
@@ -286,6 +262,53 @@ function make_start_sh()
   f:write(startsh)
   f:close(f)
   os.execute("chmod +x "..START_FILE)
+end
+
+function install_prereqs()
+  -- install the main program
+  if not util.file_exists(SERVER_FILE) then
+    update()
+  end
+  out=os.capture("ffmpeg")
+  if not string.match(out,"ffmpeg version") then
+    -- install ffmpeg
+    uimessage="installing ffmpeg"
+    redraw()
+    os.execute("sudo apt install -y ffmpeg")
+    uimessage=""
+    redraw()
+  end
+  out=os.capture("mpv --version")
+  if not string.match(out,"mpv 0.") then
+    -- install mpv
+    uimessage="installing mpv"
+    redraw()
+    os.execute("sudo apt install -y mpv")
+    uimessage=""
+    redraw()
+  end
+end
+
+function update()
+  uimessage="updating"
+  redraw()
+  os.execute("cd "..CODE_DIR.." && git pull")
+  uimessage="building"
+  redraw()
+  os.execute("cd "..CODE_DIR.."; /usr/local/go/bin/go build")
+  uimessage=""
+  redraw()
+  if not util.file_exists(SERVER_FILE) then
+    uimessage="downloading"
+    redraw()
+    os.execute("curl -L "..LATEST_RELEASE.." -o "..SERVER_FILE)
+    os.execute("chmod +x "..SERVER_FILE)
+    uimessage=""
+    redraw()
+  end
+  if util.file_exists(SERVER_FILE) then
+    show_message("updated.")
+  end
 end
 
 --
@@ -327,4 +350,11 @@ function randomString(length)
   if not length or length<=0 then return '' end
   math.randomseed(os.clock()^5)
   return randomString(length-1)..charset[math.random(1,#charset)]
+end
+
+function os.capture(cmd)
+  local f=assert(io.popen(cmd,'r'))
+  local s=assert(f:read('*a'))
+  f:close()
+  return s
 end
