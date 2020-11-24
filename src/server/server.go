@@ -146,6 +146,7 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 						delete(sockets, name2)
 						mutex.Unlock()
 					}
+					log.Debugf("sent data to %s", name2)
 				}(name2, client.conn, m)
 			}
 		}
