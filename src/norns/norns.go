@@ -397,14 +397,7 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 			return
 		}
 		n.mpvs[sender] = fmt.Sprintf("/dev/shm/mpv%d", len(n.mpvs))
-	}
-	fstat, err := os.Stat(n.mpvs[sender])
-	if err != nil {
-		return
-	}
-	if fstat.Size() == 0 {
-		// buffer for 1 second
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(2 * time.Second) //buffer time
 	}
 
 	file, err := ioutil.TempFile("/dev/shm", "input*.sh")
@@ -417,10 +410,12 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 echo "loadfile ` + filename + ` append-play" > ` + n.mpvs[sender])
 	file.Close()
 
+	logger.Debug("chmoding")
 	cmd := exec.Command("chmod", "+x", file.Name())
 	if err = cmd.Start(); err != nil {
 		return
 	}
+	logger.Debug("running")
 	cmd = exec.Command("/bin/bash", file.Name())
 	if err = cmd.Start(); err != nil {
 		return
