@@ -63,6 +63,7 @@ pkill mpv
 rm -rf /dev/shm/jack*.flac
 rm -rf /dev/shm/input*.flac
 rm -rf /dev/shm/input*.sh
+rm -rf /dev/sh/mpv*
 rm -- "$0"
 	`), 0777)
 

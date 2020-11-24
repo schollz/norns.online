@@ -141,6 +141,7 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 					err := c2.WriteJSON(m)
 					wsmutex.Unlock()
 					if err != nil {
+						log.Error(err)
 						mutex.Lock()
 						delete(sockets, name2)
 						mutex.Unlock()
