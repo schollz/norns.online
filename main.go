@@ -6,12 +6,10 @@ import (
 	"os"
 
 	"github.com/schollz/logger"
-	"github.com/shirou/gopsutil/v3/process"
 	"github.com/schollz/norns.online/src/norns"
 	"github.com/schollz/norns.online/src/server"
+	"github.com/shirou/gopsutil/v3/process"
 )
-
-var RELAY_ADDRESS = "http://duct.schollz.com/norns.online."
 
 var config = flag.String("config", "", "config file to use")
 var debugMode = flag.Bool("debug", false, "debug mode")
