@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -16,13 +16,13 @@ var sockets map[string]map[*websocket.Conn]string
 var mutex sync.Mutex
 var wsmutex sync.Mutex
 
-func main() {
+func Run() (err error) {
 	log.SetLevel("debug")
 	sockets = make(map[string]map[*websocket.Conn]string)
 	port := 8098
 	log.Infof("listening on :%d", port)
 	http.HandleFunc("/", handler)
-	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
