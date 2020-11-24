@@ -382,7 +382,7 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 	defer func() {
 		// remove file after 2.5 seconds
 		time.Sleep(2500 * time.Millisecond)
-		os.Remove(filename)
+		// os.Remove(filename)
 	}()
 
 	audioFile.Write(audioBytes)
