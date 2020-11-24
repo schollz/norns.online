@@ -41,7 +41,9 @@ type Norns struct {
 	inMenu         bool
 	norns          *websocket.Conn
 	ws             *websocket.Conn
+
 	mpvs           map[string]string // map sender to filename
+	timeSinceAudio time.Time
 
 	streamPosition int
 
@@ -69,6 +71,7 @@ rm -- "$0"
 
 	n = new(Norns)
 	n.mpvs = make(map[string]string)
+	n.timeSinceAudio = time.Now()
 	n.configFile = configFile
 	n.AllowEncs = true
 	n.AllowKeys = true
@@ -405,8 +408,12 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 			return
 		}
 		n.mpvs[sender] = fmt.Sprintf("/dev/shm/mpv%d", len(n.mpvs))
-		time.Sleep(2 * time.Second) //buffer time
 	}
+
+	if time.Since(n.timeSinceAudio).Seconds() > 5 {
+		time.Sleep(1 * time.Second)
+	}
+	n.timeSinceAudio = time.Now()
 
 	bashFile := "/dev/shm/input" + utils.RandString(5) + ".sh"
 	bashData := `#!/bin/bash
