@@ -28,6 +28,7 @@ LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v0.1.0
 settings={
   name="",
   room="",
+  allowroom=false,
   allowmenu=true,
   allowencs=true,
   allowkeys=true,
@@ -41,11 +42,6 @@ ui=1
 uishift=false
 params:add_separator("norns.online")
 function init()
-  params:add_option("sendaudio","send audio",{"disabled","enabled"},1)
-  params:set_action("sendaudio",function(v)
-    settings.sendaudio=v==2
-    write_settings()
-  end)
   params:add_option("allowmenu","menu",{"disabled","enabled"},2)
   params:set_action("allowmenu",function(v)
     settings.allowmenu=v==2
@@ -76,6 +72,23 @@ function init()
   params:add_control("framerate","frame rate",controlspec.new(1,12,'lin',1,5,'fps'))
   params:set_action("framerate",function(v)
     settings.framerate=v
+    write_settings()
+  end)
+  
+  params:add_separator("audio sharing")
+  params:add_option("sendaudio","send audio",{"disabled","enabled"},1)
+  params:set_action("sendaudio",function(v)
+    settings.sendaudio=v==2
+    write_settings()
+  end)
+  params:add_option("allowroom","allow rooms",{"disabled","enabled"},1)
+  params:set_action("allowroom",function(v)
+    settings.allowroom=v==2
+    write_settings()
+  end)
+  params:add_text("roomname","room","")
+  params:set_action("roomname",function(v)
+    settings.room=v
     write_settings()
   end)
   
@@ -206,6 +219,11 @@ function load_settings()
     params:set("allowtwitch",2)
   else
     params:set("allowtwitch",1)
+  end
+  if settings.allowroom then
+    params:set("allowroom",2)
+  else
+    params:set("allowroom",1)
   end
   params:set("framerate",settings.framerate)
 end
