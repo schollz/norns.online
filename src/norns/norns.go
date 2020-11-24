@@ -328,7 +328,7 @@ func (n *Norns) updateClient() (err error) {
 		return
 	}
 
-	src = imaging.Resize(src, 522, 0, imaging.NearestNeighbor) // full width is 550, padding is added
+	src = imaging.Resize(src, 510, 0, imaging.NearestNeighbor) // full width is 550, padding is added
 	src = imaging.AdjustGamma(src, 1.25)
 	src = imaging.OverlayCenter(n.srcbkg, src, 1)
 	err = imaging.Save(src, "/dev/shm/norns.online.screenshot2.png")
