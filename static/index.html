@@ -347,6 +347,7 @@
         if (norns_id.length > 0) {
             const socketMessageListener = (e) => {
                 data = JSON.parse(e.data);
+                console.log(data);
                 if ('img' in data) {
                     document.getElementById('img').setAttribute(
                         'src',

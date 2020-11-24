@@ -95,6 +95,7 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 		Room:  m.Room,
 		conn:  c,
 	}
+	log.Debugf("have %d sockets", len(sockets))
 	mutex.Unlock()
 
 	defer func() {
