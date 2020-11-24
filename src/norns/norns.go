@@ -136,6 +136,7 @@ func (n *Norns) connectToWebsockets() (err error) {
 			continue
 		}
 		n.ws.WriteJSON(models.Message{
+			Name:  n.Name, // the norns goes by its name in its group
 			Group: n.Name, // a norns designates a group by its name
 			Room:  n.Room, // tells it which audio group it wants to be in
 		})
