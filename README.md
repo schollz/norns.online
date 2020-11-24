@@ -17,6 +17,8 @@ online [norns](https://monome.org/docs/norns/) on [norns.online](https://norns.o
 
 ## sharing audio tutorial
 
+![parameters for sharing](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/audio_sharing.png)
+
 - go to gloal parameters and make sure both "`send audio`" and "`allow rooms`" are set to "`enabled`".
 - change the "`room`" to the room you want to share audio in
 - go to main screen and press K3 to go online. you should now be sharing audio with any other norns in that room.
