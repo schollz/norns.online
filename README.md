@@ -32,7 +32,7 @@ future directions:
 - press K3. open browser to `norns.online/<yourname>`
 - use norns normally!
 
-### norns↔norns audio sharing tutorial
+### norns↔norns audio sharing
 
 ![parameters for sharing](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/audio_sharing.png)
 
