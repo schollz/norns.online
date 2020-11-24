@@ -8,6 +8,7 @@ online [norns](https://monome.org/docs/norns/) on [norns.online](https://norns.o
 
 **share audio** with other norns around the world.
 
+what was <a href="https://llllllll.co/t/norns-online-crowdsource-your-norns/38492">just an idea</a> is now a reality
 
 future directions:
 
@@ -53,8 +54,8 @@ future directions:
 
 ### faq
 
-<details><summary><strong>how does webpage work?</strong></summary>
-norns runs a service that sends screenshots and audio to <code>norns.online/&lt;yourname&gt;</code>. the website at <code>norns.online/&lt;yourname&gt;</code> sends inputs back to norns. norns listens to to inputs and runs the acceptable ones (adjustable with parameters). what was <a href="https://llllllll.co/t/norns-online-crowdsource-your-norns/38492">just an idea</a> is now a norns script.
+<details><summary><strong>how does the norns.online webpage work?</strong></summary>
+norns runs a service that sends screenshots to <code>norns.online/&lt;yourname&gt;</code>. the website at <code>norns.online/&lt;yourname&gt;</code> sends inputs back to norns. norns listens to to inputs and runs the acceptable ones (adjustable with parameters). if enabled, norns will also stream packets of audio and send those to the website. the website will buffer them and play them so anyone with your address can hear your norns.
 </details>
 
 
