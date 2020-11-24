@@ -277,7 +277,7 @@ func (n *Norns) Run() (err error) {
 			}
 		case _ = <-ticker.C:
 			n.Lock()
-			err = n.norns.WriteMessage(websocket.TextMessage, []byte(`_norns.screen_export_png("/dev/shm/screenshot.png")`+"\n"))
+			err = n.norns.WriteMessage(websocket.TextMessage, []byte(`_norns.screen_export_png("/dev/shm/norns.onlin.screenshot.png")`+"\n"))
 			n.Unlock()
 			if err != nil {
 				logger.Debugf("write: %w", err)
