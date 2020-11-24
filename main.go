@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/schollz/logger"
@@ -58,43 +57,14 @@ func main() {
 	}
 
 	if *relayMode {
-		err = runRelay()
+		err = server.Run()
 	} else {
-		err = runNornsServer(pid)
+		n, err := norns.New(*config, pid)
+		if err == nil {
+			err = n.Run()
+		}
 	}
 	if err != nil {
 		logger.Error(err)
 	}
-}
-
-func runRelay() (err error) {
-	err = server.Run()
-	return
-}
-
-func runNornsServer(pid int32) (err error) {
-	ioutil.WriteFile("/tmp/norns.online.kill", []byte(`#!/bin/bash
-kill -9 `+fmt.Sprint(pid)+`
-pkill jack_capture
-rm -rf /dev/shm/jack*.flac
-rm -- "$0"
-`), 0777)
-	ioutil.WriteFile("/dev/shm/jack_capture.sh", []byte(`#!/bin/bash
-cd /dev/shm
-rm -rf /dev/shm/*.wav
-rm -rf /dev/shm/*.flac
-chmod +x /home/we/dust/code/norns.online/jack_capture
-/home/we/dust/code/norns.online/jack_capture -f flac --port system:playback_1 --port system:playback_2 --recording-time 36000 -Rf 96000 -z 4
-`), 0777)
-	if *config == "" {
-		logger.Error("need config, use --config")
-		os.Exit(1)
-	}
-	n, err := norns.New(*config)
-	if err != nil {
-		logger.Error(err)
-		os.Exit(1)
-	}
-	err = n.Run()
-	return
 }

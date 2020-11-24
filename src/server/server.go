@@ -119,10 +119,10 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 				continue
 			}
 			sendData := false
-			if m.Room == client.Room && m.Audio != "" {
+			if m.Room == client.Room && m.Audio != "" && client.Room != "" {
 				sendData = true
 			}
-			if m.Group == client.Group {
+			if m.Group == client.Group && client.Group != "" {
 				sendData = true
 			}
 			if m.Recipient == name2 {

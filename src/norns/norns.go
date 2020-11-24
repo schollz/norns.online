@@ -22,16 +22,16 @@ import (
 )
 
 type Norns struct {
-	Name string `json:"name"`
-	Room string `json:"room"`
-
-	AllowMenu   bool `json:"allowmenu"`
-	AllowEncs   bool `json:"allowencs"`
-	AllowKeys   bool `json:"allowkeys"`
-	AllowTwitch bool `json:"allowtwitch"`
-	SendAudio   bool `json:"sendaudio"`
-	KeepAwake   bool `json:"keepawake"`
-	FrameRate   int  `json:"framerate"`
+	Name        string `json:"name"`
+	Room        string `json:"room"` // designates where it wants to receive audio\
+	AllowMenu   bool   `json:"allowmenu"`
+	AllowEncs   bool   `json:"allowencs"`
+	AllowKeys   bool   `json:"allowkeys"`
+	AllowTwitch bool   `json:"allowtwitch"`
+	AllowRoom   bool   `json:"allowroom"`
+	SendAudio   bool   `json:"sendaudio"`
+	KeepAwake   bool   `json:"keepawake"`
+	FrameRate   int    `json:"framerate"`
 
 	configFile     string
 	configFileHash []byte
@@ -46,7 +46,22 @@ type Norns struct {
 }
 
 // New returns a new instance
-func New(configFile string) (n *Norns, err error) {
+func New(configFile string, pid int32) (n *Norns, err error) {
+	if configFile == "" {
+		err = fmt.Errorf("need config file!")
+		return
+	}
+	// write scripts
+	ioutil.WriteFile("/dev/shm/norns.online.kill.sh", []byte(`#!/bin/bash
+# this script is meant to kill norns.online tasks
+kill -9 `+fmt.Sprint(pid)+`
+pkill jack_capture
+pkill mpv
+rm -rf /dev/shm/jack*.flac
+rm -rf /dev/shm/input*.flac
+rm -- "$0"
+	`), 0777)
+
 	n = new(Norns)
 	n.configFile = configFile
 	n.AllowEncs = true
@@ -54,6 +69,31 @@ func New(configFile string) (n *Norns, err error) {
 	n.KeepAwake = false
 	n.FrameRate = 4
 	_, err = n.Load()
+	if err != nil {
+		return
+	}
+
+	startsh := `#!/bin/bash
+cd /dev/shm
+rm -rf /dev/shm/*.wav
+rm -rf /dev/shm/*.flac
+chmod +x /home/we/dust/code/norns.online/jack_capture
+/home/we/dust/code/norns.online/jack_capture -f flac --port crone:output_1 --port crone:output_2 --recording-time 36000 -Rf 96000 -z 4 &
+rm -rf /dev/shm/mpv*
+`
+	if n.Room != "" && n.AllowRoom {
+		startsh += `	
+# launch playback server
+mkfifo /dev/shm/mpv1
+mkfifo /dev/shm/mpv2
+mkfifo /dev/shm/mpv3
+mpv --jack-port="system:playback_(1|2)" --input-file=/dev/shm/mpv1 --idle &
+mpv --jack-port="system:playback_(1|2)" --input-file=/dev/shm/mpv2 --idle &
+mpv --jack-port="system:playback_(1|2)" --input-file=/dev/shm/mpv3 --idle &
+`
+	}
+	ioutil.WriteFile("/dev/shm/norns.online.start.sh", []byte(startsh), 0777)
+
 	go n.connectToWebsockets()
 	return
 }
@@ -87,9 +127,9 @@ func (n *Norns) connectToWebsockets() (err error) {
 			n.ws.Close()
 			time.Sleep(500 * time.Millisecond)
 		}
-		// wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
-		wsURL := url.URL{Scheme: "wss", Host: "norns.online", Path: "/ws"}
-		logger.Debugf("connecting to %s as %s", wsURL, n.Name)
+		wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
+		// wsURL := url.URL{Scheme: "wss", Host: "norns.online", Path: "/ws"}
+		logger.Debugf("connecting to %s as %s", wsURL.String(), n.Name)
 		n.ws, _, err = websocket.DefaultDialer.Dial(wsURL.String(), nil)
 		if err != nil {
 			time.Sleep(1 * time.Second)
@@ -97,7 +137,7 @@ func (n *Norns) connectToWebsockets() (err error) {
 		}
 		n.ws.WriteJSON(models.Message{
 			Group: n.Name, // a norns designates a group by its name
-			Room:  n.Room,
+			Room:  n.Room, // tells it which audio group it wants to be in
 		})
 		pings := 0
 		for {
@@ -142,7 +182,7 @@ func (n *Norns) Run() (err error) {
 
 	if n.SendAudio {
 		logger.Debug("sending audio")
-		cmd := exec.Command("/dev/shm/jack_capture.sh")
+		cmd := exec.Command("/dev/shm/norns.online.start.sh")
 		if err = cmd.Start(); err != nil {
 			return
 		}
@@ -150,14 +190,14 @@ func (n *Norns) Run() (err error) {
 
 		defer func() {
 			logger.Debug("killing jack capture")
-			// Kill it:
+			// Kill it just in case it iddn't get killed
 			if err = cmd.Process.Kill(); err != nil {
 				logger.Error("failed to kill process: ", err)
 			}
 			cmd = exec.Command("pkill", "jack_capture")
-			if err = cmd.Start(); err != nil {
-				return
-			}
+			cmd.Start()
+			cmd = exec.Command("pkill", "mpv")
+			cmd.Start()
 			logger.Info("killed")
 		}()
 	}

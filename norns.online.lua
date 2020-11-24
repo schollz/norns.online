@@ -19,7 +19,7 @@ local textentry=require 'textentry'
 -- default files / directories
 CODE_DIR="/home/we/dust/code/norns.online/"
 CONFIG_FILE=CODE_DIR.."config.json"
-KILL_FILE="/tmp/norns.online.kill"
+KILL_FILE="/dev/shm/norns.online.kill.sh"
 START_FILE=CODE_DIR.."start.sh"
 SERVER_FILE=CODE_DIR.."norns.online"
 LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v0.1.0/norns.online"
@@ -27,6 +27,7 @@ LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v0.1.0
 -- default settings
 settings={
   name="",
+  room="",
   allowmenu=true,
   allowencs=true,
   allowkeys=true,
