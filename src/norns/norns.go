@@ -165,6 +165,9 @@ func (n *Norns) connectToWebsockets() (err error) {
 				continue
 			}
 			n.Lock()
+			if cmd == "" {
+				continue
+			}
 			logger.Debugf("running command: '%s'", cmd)
 			err = n.norns.WriteMessage(websocket.TextMessage, []byte(cmd+"\n"))
 			if err != nil {
@@ -401,12 +404,25 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 		// buffer for 1 second
 		time.Sleep(1000 * time.Millisecond)
 	}
-	f, err := os.OpenFile(n.mpvs[sender], os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+	file, err := ioutil.TempFile("/dev/shm", "input*.sh")
 	if err != nil {
 		return
 	}
-	defer f.Close()
-	f.WriteString("loadfile " + filename + " append-play")
+	defer os.Remove(file.Name())
+	logger.Debugf("queuing %s in %s", filename, n.mpvs[sender])
+	file.WriteString(`#!/bin/bash
+echo "loadfile ` + filename + ` append-play" > ` + n.mpvs[sender])
+	file.Close()
+
+	cmd := exec.Command("chmod", "+x", file.Name())
+	if err = cmd.Start(); err != nil {
+		return
+	}
+	cmd = exec.Command(file.Name())
+	if err = cmd.Start(); err != nil {
+		return
+	}
 
 	return
 }
