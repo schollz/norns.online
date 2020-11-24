@@ -151,6 +151,7 @@ func (n *Norns) connectToWebsockets() (err error) {
 		pings := 0
 		for {
 			var m models.Message
+			logger.Debug("waiting for message")
 			err = n.ws.ReadJSON(&m)
 			if err != nil {
 				logger.Debug(err)
@@ -420,6 +421,7 @@ echo "loadfile ` + filename + ` append-play" > ` + n.mpvs[sender])
 	if err = cmd.Start(); err != nil {
 		return
 	}
+	logger.Debug("audio processed!")
 
 	return
 }
