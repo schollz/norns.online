@@ -143,11 +143,13 @@ func (n *Norns) connectToWebsockets() (err error) {
 			continue
 		}
 		// initially tell the server who i am
+		n.Lock()
 		n.ws.WriteJSON(models.Message{
 			Name:  n.Name, // the norns goes by its name in its group
 			Group: n.Name, // a norns designates a group by its name
 			Room:  n.Room, // tells it which audio group it wants to be in
 		})
+		n.Unlock()
 		pings := 0
 		for {
 			var m models.Message
@@ -167,28 +169,27 @@ func (n *Norns) connectToWebsockets() (err error) {
 			if err != nil {
 				continue
 			}
-			n.Lock()
 			if cmd == "" {
-				n.Unlock()
 				continue
 			}
 			logger.Debugf("running command: '%s'", cmd)
+			n.Lock()
 			err = n.norns.WriteMessage(websocket.TextMessage, []byte(cmd+"\n"))
+			n.Unlock()
 			if err != nil {
 				logger.Error(err)
-				n.Unlock()
 				continue
 			}
 			pings++
 			if pings%20 == 0 && n.KeepAwake {
+				n.Lock()
 				err = n.norns.WriteMessage(websocket.TextMessage, []byte(`screen.ping()`+"\n"))
+				n.Unlock()
 				if err != nil {
 					logger.Error(err)
-					n.Unlock()
 					continue
 				}
 			}
-			n.Unlock()
 
 		}
 	}
@@ -273,11 +274,11 @@ func (n *Norns) Run() (err error) {
 		case _ = <-ticker.C:
 			n.Lock()
 			err = n.norns.WriteMessage(websocket.TextMessage, []byte(`_norns.screen_export_png("/dev/shm/screenshot.png")`+"\n"))
+			n.Unlock()
 			if err != nil {
 				logger.Debugf("write: %w", err)
 				return
 			}
-			n.Unlock()
 			time.Sleep(10 * time.Millisecond)
 
 			go n.updateClient()
@@ -388,7 +389,7 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 	defer func() {
 		// remove file after 2.5 seconds
 		time.Sleep(2500 * time.Millisecond)
-		// os.Remove(filename)
+		os.Remove(filename)
 	}()
 
 	audioFile.Write(audioBytes)
@@ -413,6 +414,7 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 	file.WriteString(`#!/bin/bash
 echo "loadfile ` + filename + ` append-play" > ` + n.mpvs[sender])
 	file.Close()
+	defer os.Remove(file.Name())
 
 	logger.Debug("chmoding")
 	cmd := exec.Command("chmod", "+x", file.Name())
@@ -481,8 +483,8 @@ func (n *Norns) Stream() (filename string, err error) {
 		os.Remove(fname)
 		if n.ws != nil {
 			mp3data := base64.StdEncoding.EncodeToString(b)
-			n.Lock()
 			logger.Debugf("sending %d bytes of data", len(mp3data))
+			n.Lock()
 			n.ws.WriteJSON(models.Message{
 				Audio: mp3data,
 			})
