@@ -64,7 +64,8 @@ pkill jack_capture
 pkill mpv
 rm -rf /dev/shm/norns.online*.flac
 rm -rf /dev/shm/jack_capture*.flac
-rm -rf /dev/sh/norns.online.mpv*
+rm -rf /dev/shm/norns.online.mpv*
+rm -rf /dev/shm/norns.online.screenshot*
 rm -rf /dev/shm/norns.online.*sh
 rm -- "$0"
 	`), 0777)
