@@ -266,6 +266,7 @@ function toggle()
         end
         clock.sleep(0.1)
       end
+      show_message("you are online, you can play!")
     end)
     start()
   end
@@ -277,7 +278,6 @@ function start()
   make_start_sh()
   os.execute(START_FILE)
   redraw()
-  show_message("you are online, you can play!")
 end
 
 function stop()
