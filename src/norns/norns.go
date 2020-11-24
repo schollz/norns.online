@@ -62,10 +62,10 @@ func New(configFile string, pid int32) (n *Norns, err error) {
 kill -9 `+fmt.Sprint(pid)+`
 pkill jack_capture
 pkill mpv
-rm -rf /dev/shm/jack*.flac
-rm -rf /dev/shm/input*.flac
-rm -rf /dev/shm/input*.sh
-rm -rf /dev/sh/mpv*
+rm -rf /dev/shm/norns.online*.flac
+rm -rf /dev/shm/jack_capture*.flac
+rm -rf /dev/sh/norns.online.mpv*
+rm -rf /dev/shm/norns.online.*sh
 rm -- "$0"
 	`), 0777)
 
@@ -84,12 +84,11 @@ rm -- "$0"
 
 	startsh := `#!/bin/bash
 cd /dev/shm
-rm -rf /dev/shm/*.wav
-rm -rf /dev/shm/*.flac
-rm -rf /dev/shm/mpv*
-rm -rf /dev/shm/input*.sh
+rm -rf /dev/shm/norns.online*.flac
+rm -rf /dev/shm/jack_capture*.flac
+rm -rf /dev/sh/norns.online.mpv*
 chmod +x /home/we/dust/code/norns.online/jack_capture
-/home/we/dust/code/norns.online/jack_capture -f flac --port crone:output_1 --port crone:output_2 --recording-time 36000 -Rf 96000 -z 4 &
+/home/we/dust/code/norns.online/jack_capture -f flac --port crone:output_1 --port crone:output_2 --recording-time 36000 -Rf ` + fmt.Sprint(models.AUDIO_PACKET_SECONDS*48000) + ` -z 4 &
 `
 	if n.Room != "" && n.AllowRoom {
 		startsh += `	
@@ -97,9 +96,9 @@ chmod +x /home/we/dust/code/norns.online/jack_capture
 `
 		for i := 0; i < MAX_NORNS_INPUTS; i++ {
 			startsh += `
-mkfifo /dev/shm/mpv` + fmt.Sprint(i) + `
+mkfifo /dev/shm/norns.online.mpv` + fmt.Sprint(i) + `
 sleep 1
-mpv --jack-port="system:playback_(1|2)" --input-file=/dev/shm/mpv` + fmt.Sprint(i) + ` --idle &
+mpv --jack-port="system:playback_(1|2)" --input-file=/dev/shm/norns.online.mpv` + fmt.Sprint(i) + ` --idle &
 `
 		}
 
@@ -309,7 +308,7 @@ func (n *Norns) Run() (err error) {
 
 func (n *Norns) updateClient() (err error) {
 	// open dumped image
-	src, err := imaging.Open("/dev/shm/screenshot.png")
+	src, err := imaging.Open("/dev/shm/norns.online.screenshot.png")
 	if err != nil {
 		return
 	}
@@ -317,12 +316,12 @@ func (n *Norns) updateClient() (err error) {
 	// Resize the cropped image to width = 200px preserving the aspect ratio.
 	src = imaging.Resize(src, 550, 0, imaging.NearestNeighbor)
 	src = imaging.AdjustGamma(src, 1.25)
-	err = imaging.Save(src, "/dev/shm/screenshot2.png")
+	err = imaging.Save(src, "/dev/shm/norns.online.screenshot2.png")
 	if err != nil {
 		return
 	}
 
-	b, err := ioutil.ReadFile("/dev/shm/screenshot2.png")
+	b, err := ioutil.ReadFile("/dev/shm/norns.online.screenshot2.png")
 	if err != nil {
 		return
 	}
@@ -385,7 +384,7 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 	if err != nil {
 		return
 	}
-	audioFile, err := ioutil.TempFile("/dev/shm", "input.*.flac")
+	audioFile, err := ioutil.TempFile("/dev/shm", "norns.online.incoming.*.flac")
 	if err != nil {
 		return
 	}
@@ -407,15 +406,16 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 			err = fmt.Errorf("can't support any more in room")
 			return
 		}
-		n.mpvs[sender] = fmt.Sprintf("/dev/shm/mpv%d", len(n.mpvs))
+		n.mpvs[sender] = fmt.Sprintf("/dev/shm/norns.online.mpv%d", len(n.mpvs))
 	}
 
-	if time.Since(n.timeSinceAudio).Seconds() > 5 {
-		time.Sleep(1 * time.Second)
+	if time.Since(n.timeSinceAudio).Seconds() > models.AUDIO_PACKET_SECONDS {
+		// buffer for half a packet size
+		time.Sleep(time.Duration(models.AUDIO_PACKET_SECONDS/2*1000) * time.Millisecond)
 	}
 	n.timeSinceAudio = time.Now()
 
-	bashFile := "/dev/shm/input" + utils.RandString(5) + ".sh"
+	bashFile := "/dev/shm/norns.online.input" + utils.RandString(5) + ".sh"
 	bashData := `#!/bin/bash
 echo "loadfile ` + filename + ` append-play" > ` + n.mpvs[sender] + `
 `

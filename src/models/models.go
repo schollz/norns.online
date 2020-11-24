@@ -1,5 +1,7 @@
 package models
 
+const AUDIO_PACKET_SECONDS = 2
+
 type Message struct {
 	// server should be initialized with these
 	Name  string `json:"name,omitempty"`  // only sent in initial message
