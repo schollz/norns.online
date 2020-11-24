@@ -409,7 +409,7 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 	if err != nil {
 		return
 	}
-	defer os.Remove(file.Name())
+	// defer os.Remove(file.Name())
 	logger.Debugf("queuing %s in %s", filename, n.mpvs[sender])
 	file.WriteString(`#!/bin/bash
 echo "loadfile ` + filename + ` append-play" > ` + n.mpvs[sender])
