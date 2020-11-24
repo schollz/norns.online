@@ -287,8 +287,8 @@ function install_prereqs()
   if not util.file_exists(SERVER_FILE) then
     update()
   end
-  out=os.capture("ffmpeg")
-  if not string.match(out,"ffmpeg version") then
+  out=os.capture("ffmpeg --help")
+  if not string.match(out,"Hyper fast") then
     -- install ffmpeg
     uimessage="installing ffmpeg"
     redraw()
