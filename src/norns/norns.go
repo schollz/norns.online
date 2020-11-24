@@ -21,7 +21,7 @@ import (
 	"norns.online/src/utils"
 )
 
-const MAX_NORNS_INPUTS = 3
+const MAX_NORNS_INPUTS = 1
 
 type Norns struct {
 	Name        string `json:"name"`
@@ -62,6 +62,7 @@ pkill jack_capture
 pkill mpv
 rm -rf /dev/shm/jack*.flac
 rm -rf /dev/shm/input*.flac
+rm -rf /dev/shm/input*.sh
 rm -- "$0"
 	`), 0777)
 
@@ -81,9 +82,10 @@ rm -- "$0"
 cd /dev/shm
 rm -rf /dev/shm/*.wav
 rm -rf /dev/shm/*.flac
+rm -rf /dev/shm/mpv*
+rm -rf /dev/shm/input*.sh
 chmod +x /home/we/dust/code/norns.online/jack_capture
 /home/we/dust/code/norns.online/jack_capture -f flac --port crone:output_1 --port crone:output_2 --recording-time 36000 -Rf 96000 -z 4 &
-rm -rf /dev/shm/mpv*
 `
 	if n.Room != "" && n.AllowRoom {
 		startsh += `	
