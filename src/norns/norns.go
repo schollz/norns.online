@@ -395,8 +395,8 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 
 	defer func() {
 		go func() {
-			// remove file after 2.5 seconds
-			time.Sleep(5500 * time.Millisecond)
+			// remove file after 6 seconds
+			time.Sleep(6000 * time.Millisecond)
 			os.Remove(filename)
 		}()
 	}()
@@ -411,8 +411,8 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 	}
 
 	if time.Since(n.timeSinceAudio).Seconds() > models.AUDIO_PACKET_SECONDS {
-		// buffer for half a packet size
-		time.Sleep(time.Duration(models.AUDIO_PACKET_SECONDS/2*1000) * time.Millisecond)
+		// buffer for packet size
+		time.Sleep(models.AUDIO_PACKET_SECONDS * time.Second)
 	}
 	n.timeSinceAudio = time.Now()
 
