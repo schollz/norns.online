@@ -299,8 +299,10 @@ function install_prereqs()
   if not util.file_exists(SERVER_FILE) then
     update()
   end
-  missingffmpeg=string.match(os.capture("ffmpeg --help"),"not found")
-  missingmpv=string.match(os.capture("mpv --version"),"not found")
+  print(os.capture("ffmpeg --help 2>&1"))
+  print(os.capture("mpv --version 2>&1"))
+  missingffmpeg=string.match(os.capture("ffmpeg --help 2>&1"),"not found")
+  missingmpv=string.match(os.capture("mpv --version 2>&1"),"not found")
   if missingffmpeg or missingmpv then
     -- install ffmpeg
     uimessage="installing ffmpeg and mpv..."
@@ -312,8 +314,8 @@ function install_prereqs()
     uimessage=""
     redraw()
   end
-  missingffmpeg=string.match(os.capture("ffmpeg --help"),"not found")
-  missingmpv=string.match(os.capture("mpv --version"),"not found")
+  missingffmpeg=string.match(os.capture("ffmpeg --help 2>&1"),"not found")
+  missingmpv=string.match(os.capture("mpv --version 2>&1"),"not found")
   if missingffmpeg and missingmpv then 
     show_message("still missing mpv and ffmpeg")
   elseif missingmpv then 
