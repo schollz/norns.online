@@ -1,6 +1,6 @@
 package models
 
-const AUDIO_PACKET_SECONDS = 2
+const AUDIO_PACKET_SECONDS = 4
 
 type Message struct {
 	// server should be initialized with these

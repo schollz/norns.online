@@ -64,6 +64,8 @@ pkill jack_capture
 pkill mpv
 rm -rf /dev/shm/norns.online*.flac
 rm -rf /dev/shm/jack_capture*.flac
+rm -rf /dev/shm/norns.online*.mp3
+rm -rf /dev/shm/jack_capture*.mp3
 rm -rf /dev/shm/norns.online.mpv*
 rm -rf /dev/shm/norns.online.screenshot*
 rm -rf /dev/shm/norns.online.*sh
@@ -87,6 +89,8 @@ rm -- "$0"
 cd /dev/shm
 rm -rf /dev/shm/norns.online*.flac
 rm -rf /dev/shm/jack_capture*.flac
+rm -rf /dev/shm/norns.online*.mp3
+rm -rf /dev/shm/jack_capture*.mp3
 rm -rf /dev/sh/norns.online.mpv*
 chmod +x /home/we/dust/code/norns.online/jack_capture
 /home/we/dust/code/norns.online/jack_capture -f flac --port crone:output_1 --port crone:output_2 --recording-time 36000 -Rf ` + fmt.Sprint(models.AUDIO_PACKET_SECONDS*48000) + ` -z 4 &
@@ -385,7 +389,7 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 	if err != nil {
 		return
 	}
-	audioFile, err := ioutil.TempFile("/dev/shm", "norns.online.incoming.*.flac")
+	audioFile, err := ioutil.TempFile("/dev/shm", "norns.online.incoming.*.mp3")
 	if err != nil {
 		return
 	}
@@ -478,8 +482,14 @@ func (n *Norns) Stream() (filename string, err error) {
 	}()
 
 	for {
-		// send mp3
 		fname := <-currentFile
+		// convert to mp3
+		fname, err = utils.ConvertToMP3(fname)
+		if err != nil {
+			logger.Error(err)
+			os.Remove(fname)
+			continue
+		}
 		logger.Debugf("processing %s", fname)
 		b, errb := ioutil.ReadFile(fname)
 		if errb != nil {

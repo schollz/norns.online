@@ -5,7 +5,17 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"os/exec"
 )
+
+// ConvertToMP3 converts to mp3 and removes the original
+func ConvertToMP3(fname string) (newfname string, err error) {
+	newfname = fname + ".mp3"
+	cmd := exec.Command("ffmpeg", "-i", fname, newfname)
+	err = cmd.Run()
+	os.Remove(fname) // remove original
+	return
+}
 
 // MD5HashFile returns MD5 hash
 func MD5HashFile(fname string) (hash256 []byte, err error) {
