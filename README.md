@@ -57,7 +57,10 @@ future directions:
 
 #### faq
 
-**how does it work?** norns runs a service that sends screenshots and audio to `norns.online/<yourname>`. the website at `norns.online/<yourname>` sends inputs back to norns. norns listens to to inputs and runs the acceptable ones (adjustable with parameters). what was [just an idea](https://llllllll.co/t/norns-online-crowdsource-your-norns/38492) is now a norns script.
+<details><summary><strong>how does it work?</strong></summary>
+norns runs a service that sends screenshots and audio to <code>norns.online/&lt;yourname&gt;</code>. the website at <code>norns.online/&lt;yourname&gt;</code> sends inputs back to norns. norns listens to to inputs and runs the acceptable ones (adjustable with parameters). what was <a href="https://llllllll.co/t/norns-online-crowdsource-your-norns/38492">just an idea</a> is now a norns script.
+</details>
+
 
 **how does audio streaming work?** a pre-compiled [`jack_capture`](https://github.com/kmatheussen/jack_capture) periodically captures the norns output into 4-second files into the `/dev/shm` temp directory. these are converted to ogg-format are read and sent via websockets to the browser. the norns then deletes old files so excess memory is not used. expect a lag of at least 4 seconds. when in a room, audio from other norns is piped into your norns via `mpv`. the combined audio should only be accessible from the output of your norns (not on the browser).
 
