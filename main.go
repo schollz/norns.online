@@ -8,7 +8,6 @@ import (
 
 	"github.com/schollz/logger"
 	"github.com/shirou/gopsutil/v3/process"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"norns.online/src/norns"
 	"norns.online/src/server"
 )
@@ -20,13 +19,13 @@ var debugMode = flag.Bool("debug", false, "debug mode")
 var relayMode = flag.Bool("relay", false, "run relay")
 
 func main() {
-	logger.SetOutput(&lumberjack.Logger{
-		Filename:   "/dev/shm/norns.online.log",
-		MaxSize:    1, // megabytes
-		MaxBackups: 3,
-		MaxAge:     28,    //days
-		Compress:   false, // disabled by default
-	})
+	// logger.SetOutput(&lumberjack.Logger{
+	// 	Filename:   "/dev/shm/norns.online.log",
+	// 	MaxSize:    1, // megabytes
+	// 	MaxBackups: 3,
+	// 	MaxAge:     28,    //days
+	// 	Compress:   false, // disabled by default
+	// })
 
 	// first make sure its not already running an instance
 	processes, err := process.Processes()
@@ -53,7 +52,7 @@ func main() {
 
 	// setup logger
 	flag.Parse()
-	logger.SetLevel("error")
+	logger.SetLevel("info")
 	if *debugMode {
 		logger.SetLevel("debug")
 	}

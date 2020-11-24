@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"math/rand"
 	"net/http"
 	"strings"
 	"sync"
@@ -10,15 +9,21 @@ import (
 
 	"github.com/gorilla/websocket"
 	log "github.com/schollz/logger"
+	"norns.online/src/models"
 )
 
-var sockets map[string]map[*websocket.Conn]string
+var sockets map[string]Client
 var mutex sync.Mutex
 var wsmutex sync.Mutex
 
+type Client struct {
+	Group string
+	Room  string
+	conn  *websocket.Conn
+}
+
 func Run() (err error) {
-	log.SetLevel("debug")
-	sockets = make(map[string]map[*websocket.Conn]string)
+	sockets = make(map[string]Client)
 	port := 8098
 	log.Infof("listening on :%d", port)
 	http.HandleFunc("/", handler)
@@ -47,10 +52,10 @@ func handle(w http.ResponseWriter, r *http.Request) (err error) {
 			err = nil
 		}
 	} else {
-		if strings.HasPrefix(r.URL.Path, "/js/") || strings.HasPrefix(r.URL.Path, "/img/") {
+		if strings.HasPrefix(r.URL.Path, "/static/") {
 			http.FileServer(http.Dir(".")).ServeHTTP(w, r)
 		} else {
-			http.ServeFile(w, r, "index.html")
+			http.ServeFile(w, r, "static/index.html")
 		}
 	}
 
@@ -65,113 +70,78 @@ var wsupgrader = websocket.Upgrader{
 	},
 }
 
-type Message struct {
-	Name      string `json:"name,omitempty"`
-	Group     string `json:"group,omitempty"`
-	Recipient string `json:"recipient,omitempty"`
-
-	Img    string `json:"img,omitempty"`
-	Kind   string `json:"kind,omitempty"`
-	N      int    `json:"n"`
-	Z      int    `json:"z"`
-	Fast   bool   `json:"fast,omitempty"`
-	Twitch bool   `json:"twitch"`
-	MP3    string `json:"mp3,omitempty"`
-}
-
 func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 	c, errUpgrade := wsupgrader.Upgrade(w, r, nil)
 	if errUpgrade != nil {
 		return errUpgrade
 	}
 	defer c.Close()
-	var m Message
+	var m models.Message
 	err = c.ReadJSON(&m)
 	if err != nil {
 		log.Error(err)
 		return
 	}
+
 	log.Debugf("initial m: %+v", m)
-	group := m.Group
-	if group == "" {
+	name := m.Name
+	if name == "" || (m.Group == "" && m.Room == "") {
 		return
 	}
-	name := m.Name
-	if name == "" {
-		name = RandString(5)
-	}
+
 	mutex.Lock()
-	if _, ok := sockets[group]; !ok {
-		sockets[group] = make(map[*websocket.Conn]string)
+	sockets[name] = Client{
+		Group: m.Group,
+		Room:  m.Room,
+		conn:  c,
 	}
-	sockets[group][c] = name
-	log.Debugf("%d connected in %s", len(sockets[group]), group)
 	mutex.Unlock()
 
 	defer func() {
 		mutex.Lock()
-		delete(sockets[group], c)
-		if len(sockets[group]) == 0 {
-			delete(sockets, group)
-		}
-		log.Debugf("%d connected in %s", len(sockets[group]), group)
+		delete(sockets, name)
 		mutex.Unlock()
+
 	}()
 
 	for {
-		m = Message{}
+		m = models.Message{}
 		err = c.ReadJSON(&m)
 		if err != nil {
 			break
 		}
-		// send out to others
 		mutex.Lock()
-		for c2, k := range sockets[group] {
-			if k == sockets[group][c] {
-				// never send to self
+
+		// send out audio data / img data to browser
+		for name2, client := range sockets {
+			if name == name2 {
+				// never send back to self
 				continue
 			}
-			if k != m.Recipient && m.Recipient != "" {
-				// skip unless its recipient
-				continue
+			sendData := false
+			if m.Room == client.Room && m.Audio != "" {
+				sendData = true
 			}
-			go func(c2 *websocket.Conn, m Message) {
-				wsmutex.Lock()
-				err := c2.WriteJSON(m)
-				wsmutex.Unlock()
-				if err != nil {
-					mutex.Lock()
-					delete(sockets[group], c2)
-					mutex.Unlock()
-				}
-			}(c2, m)
+			if m.Group == client.Group {
+				sendData = true
+			}
+			if m.Recipient == name2 {
+				sendData = true
+			}
+			if sendData {
+				go func(name2 string, c2 *websocket.Conn, m models.Message) {
+					wsmutex.Lock()
+					err := c2.WriteJSON(m)
+					wsmutex.Unlock()
+					if err != nil {
+						mutex.Lock()
+						delete(sockets, name2)
+						mutex.Unlock()
+					}
+				}(name2, client.conn, m)
+			}
 		}
 		mutex.Unlock()
 	}
 	return
-}
-
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-const (
-	letterIdxBits = 6                    // 6 bits to represent a letter index
-	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
-)
-
-func RandString(n int) string {
-	b := make([]byte, n)
-	// A rand.Int63() generates 63 random bits, enough for letterIdxMax letters!
-	for i, cache, remain := n-1, rand.Int63(), letterIdxMax; i >= 0; {
-		if remain == 0 {
-			cache, remain = rand.Int63(), letterIdxMax
-		}
-		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
-			b[i] = letterBytes[idx]
-			i--
-		}
-		cache >>= letterIdxBits
-		remain--
-	}
-
-	return string(b)
 }

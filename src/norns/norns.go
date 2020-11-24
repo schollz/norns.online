@@ -22,14 +22,16 @@ import (
 )
 
 type Norns struct {
-	Name        string `json:"name"`
-	AllowMenu   bool   `json:"allowmenu"`
-	AllowEncs   bool   `json:"allowencs"`
-	AllowKeys   bool   `json:"allowkeys"`
-	AllowTwitch bool   `json:"allowtwitch"`
-	SendAudio   bool   `json:"sendaudio"`
-	KeepAwake   bool   `json:"keepawake"`
-	FrameRate   int    `json:"framerate"`
+	Name string `json:"name"`
+	Room string `json:"room"`
+
+	AllowMenu   bool `json:"allowmenu"`
+	AllowEncs   bool `json:"allowencs"`
+	AllowKeys   bool `json:"allowkeys"`
+	AllowTwitch bool `json:"allowtwitch"`
+	SendAudio   bool `json:"sendaudio"`
+	KeepAwake   bool `json:"keepawake"`
+	FrameRate   int  `json:"framerate"`
 
 	configFile     string
 	configFileHash []byte
@@ -94,8 +96,8 @@ func (n *Norns) connectToWebsockets() (err error) {
 			continue
 		}
 		n.ws.WriteJSON(models.Message{
-			Group: n.Name,
-			Name:  "norns", // specify that i am the norns
+			Group: n.Name, // a norns designates a group by its name
+			Room:  n.Room,
 		})
 		pings := 0
 		for {
@@ -264,6 +266,7 @@ func (n *Norns) updateClient() (err error) {
 	if n.ws != nil {
 		n.Lock()
 		n.ws.WriteJSON(models.Message{
+			Group:  n.Name, // a norns designates a group by its name
 			Img:    base64data,
 			Twitch: n.AllowTwitch,
 		})
@@ -358,7 +361,9 @@ func (n *Norns) Stream() (filename string, err error) {
 			n.Lock()
 			logger.Debugf("sending %d bytes of data", len(mp3data))
 			n.ws.WriteJSON(models.Message{
-				MP3: mp3data,
+				Group: n.Name, // a norns designates a group by its name
+				Room:  n.Room,
+				Audio: mp3data,
 			})
 			n.Unlock()
 		}
