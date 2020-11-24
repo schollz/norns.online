@@ -25,18 +25,14 @@ future directions:
 - K1+K2 updates
 - more params in global menu
 
-#### quick start tutorial
+### quick start
 
 ![parameters for online](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/online.png)
 
-- install `norns.online` and then run it. 
-- at the main screen press K3 to start/stop being online.
-- the first time you run it will install `ffmpeg` and `mpv` and the `norns.online` server.
-- when online, you can access your norns by opening a webpage to `norns.online/<yourname>`. you should hear audio and be able to use the inputs.
-- you can change `<yourname>` by pressing K2.
-- disable audio / change frame rate / adjust controls in global params
+- press K3. open browser to `norns.online/<yourname>`
+- use norns normally!
 
-#### norns<->norns audio sharing tutorial
+### norns<->norns audio sharing tutorial
 
 ![parameters for sharing](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/audio_sharing.png)
 
