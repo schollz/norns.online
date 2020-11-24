@@ -31,7 +31,7 @@ future directions:
 ![parameters for online](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/online.png)
 
 - press K3. open browser to `norns.online/<yourname>`
-- use norns normally!
+- use norns normally, your norns will stay online in the background.
 
 ### norns↔norns audio sharing
 
