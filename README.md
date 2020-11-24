@@ -10,7 +10,9 @@ online [norns](https://monome.org/docs/norns/) on [norns.online](https://norns.o
 
 ## quick start tutorial
 
-- install `norns.online` and then run it. the first time you run it will install `ffmpeg` and `mpv`.
+![parameters for online](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/online.png)
+
+- install `norns.online` and then run it. the first time you run it will install `ffmpeg` and `mpv` and the `norns.online` server.
 - press K3. you are now "online" and can access your norns by opening a webpage to `norns.online/<yourname>`. you should hear audio and be able to use the inputs.
 - you can change `<yourname>` by pressing K2.
 - disable audio / change frame rate / adjust controls in global params
