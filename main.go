@@ -7,8 +7,8 @@ import (
 
 	"github.com/schollz/logger"
 	"github.com/shirou/gopsutil/v3/process"
-	"norns.online/src/norns"
-	"norns.online/src/server"
+	"github.com/schollz/norns.online/src/norns"
+	"github.com/schollz/norns.online/src/server"
 )
 
 var RELAY_ADDRESS = "http://duct.schollz.com/norns.online."

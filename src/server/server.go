@@ -9,7 +9,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	log "github.com/schollz/logger"
-	"norns.online/src/models"
+	"github.com/schollz/norns.online/src/models"
 )
 
 var sockets map[string]Client

@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"image"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -17,8 +18,8 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/gorilla/websocket"
 	"github.com/schollz/logger"
-	"norns.online/src/models"
-	"norns.online/src/utils"
+	"github.com/schollz/norns.online/src/models"
+	"github.com/schollz/norns.online/src/utils"
 )
 
 const MAX_NORNS_INPUTS = 1
@@ -35,6 +36,7 @@ type Norns struct {
 	KeepAwake   bool   `json:"keepawake"`
 	FrameRate   int    `json:"framerate"`
 
+	srcbkg         image.Image 
 	configFile     string
 	configFileHash []byte
 	active         bool
@@ -80,6 +82,10 @@ rm -- "$0"
 	n.AllowKeys = true
 	n.KeepAwake = false
 	n.FrameRate = 4
+	n.srcbkg, err = imaging.Open("/home/we/dust/code/norns.online/static/background.png")
+	if err != nil {
+		return
+	}
 	_, err = n.Load()
 	if err != nil {
 		return
@@ -319,8 +325,9 @@ func (n *Norns) updateClient() (err error) {
 	}
 
 	// Resize the cropped image to width = 200px preserving the aspect ratio.
-	src = imaging.Resize(src, 550, 0, imaging.NearestNeighbor)
+	src = imaging.Resize(src, 522, 0, imaging.NearestNeighbor)
 	src = imaging.AdjustGamma(src, 1.25)
+	src = imaging.OverlayCenter(n.srcbkg, src, 1)
 	err = imaging.Save(src, "/dev/shm/norns.online.screenshot2.png")
 	if err != nil {
 		return
