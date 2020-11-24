@@ -1,4 +1,4 @@
--- norns.online v0.1.0
+-- norns.online v0.2.0
 -- online norns on norns.online
 --
 -- llllllll.co/t/norns-online
@@ -19,14 +19,16 @@ local textentry=require 'textentry'
 -- default files / directories
 CODE_DIR="/home/we/dust/code/norns.online/"
 CONFIG_FILE=CODE_DIR.."config.json"
-KILL_FILE="/tmp/norns.online.kill"
+KILL_FILE="/dev/shm/norns.online.kill.sh"
 START_FILE=CODE_DIR.."start.sh"
 SERVER_FILE=CODE_DIR.."norns.online"
-LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v0.1.0/norns.online"
+LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v0.2.0/norns.online"
 
 -- default settings
 settings={
   name="",
+  room="",
+  allowroom=false,
   allowmenu=true,
   allowencs=true,
   allowkeys=true,
@@ -40,11 +42,6 @@ ui=1
 uishift=false
 params:add_separator("norns.online")
 function init()
-  params:add_option("sendaudio","send audio",{"disabled","enabled"},1)
-  params:set_action("sendaudio",function(v)
-    settings.sendaudio=v==2
-    write_settings()
-  end)
   params:add_option("allowmenu","menu",{"disabled","enabled"},2)
   params:set_action("allowmenu",function(v)
     settings.allowmenu=v==2
@@ -75,6 +72,23 @@ function init()
   params:add_control("framerate","frame rate",controlspec.new(1,12,'lin',1,5,'fps'))
   params:set_action("framerate",function(v)
     settings.framerate=v
+    write_settings()
+  end)
+  
+  params:add_separator("audio sharing")
+  params:add_option("sendaudio","send audio",{"disabled","enabled"},1)
+  params:set_action("sendaudio",function(v)
+    settings.sendaudio=v==2
+    write_settings()
+  end)
+  params:add_option("allowroom","allow rooms",{"disabled","enabled"},1)
+  params:set_action("allowroom",function(v)
+    settings.allowroom=v==2
+    write_settings()
+  end)
+  params:add_text("roomname","room","")
+  params:set_action("roomname",function(v)
+    settings.room=v
     write_settings()
   end)
   
@@ -206,29 +220,12 @@ function load_settings()
   else
     params:set("allowtwitch",1)
   end
+  if settings.allowroom then
+    params:set("allowroom",2)
+  else
+    params:set("allowroom",1)
+  end
   params:set("framerate",settings.framerate)
-end
-
-function update()
-  uimessage="updating"
-  redraw()
-  os.execute("cd "..CODE_DIR.." && git pull")
-  uimessage="building"
-  redraw()
-  os.execute("cd "..CODE_DIR.."; /usr/local/go/bin/go build")
-  uimessage=""
-  redraw()
-  if not util.file_exists(SERVER_FILE) then
-    uimessage="downloading"
-    redraw()
-    os.execute("curl -L "..LATEST_RELEASE.." -o "..SERVER_FILE)
-    os.execute("chmod +x "..SERVER_FILE)
-    uimessage=""
-    redraw()
-  end
-  if util.file_exists(SERVER_FILE) then
-    show_message("updated.")
-  end
 end
 
 function toggle()
@@ -265,9 +262,7 @@ end
 
 function start()
   write_settings()
-  if not util.file_exists(SERVER_FILE) then
-    update()
-  end
+  install_prereqs()
   make_start_sh()
   os.execute(START_FILE)
   redraw()
@@ -285,6 +280,53 @@ function make_start_sh()
   f:write(startsh)
   f:close(f)
   os.execute("chmod +x "..START_FILE)
+end
+
+function install_prereqs()
+  -- install the main program
+  if not util.file_exists(SERVER_FILE) then
+    update()
+  end
+  out=os.capture("ffmpeg")
+  if not string.match(out,"ffmpeg version") then
+    -- install ffmpeg
+    uimessage="installing ffmpeg"
+    redraw()
+    os.execute("sudo apt install -y ffmpeg")
+    uimessage=""
+    redraw()
+  end
+  out=os.capture("mpv --version")
+  if not string.match(out,"mpv 0.") then
+    -- install mpv
+    uimessage="installing mpv"
+    redraw()
+    os.execute("sudo apt install -y mpv")
+    uimessage=""
+    redraw()
+  end
+end
+
+function update()
+  uimessage="updating"
+  redraw()
+  os.execute("cd "..CODE_DIR.." && git pull")
+  uimessage="building"
+  redraw()
+  os.execute("cd "..CODE_DIR.."; /usr/local/go/bin/go build")
+  uimessage=""
+  redraw()
+  if not util.file_exists(SERVER_FILE) then
+    uimessage="downloading"
+    redraw()
+    os.execute("curl -L "..LATEST_RELEASE.." -o "..SERVER_FILE)
+    os.execute("chmod +x "..SERVER_FILE)
+    uimessage=""
+    redraw()
+  end
+  if util.file_exists(SERVER_FILE) then
+    show_message("updated.")
+  end
 end
 
 --
@@ -326,4 +368,11 @@ function randomString(length)
   if not length or length<=0 then return '' end
   math.randomseed(os.clock()^5)
   return randomString(length-1)..charset[math.random(1,#charset)]
+end
+
+function os.capture(cmd)
+  local f=assert(io.popen(cmd,'r'))
+  local s=assert(f:read('*a'))
+  f:close()
+  return s
 end

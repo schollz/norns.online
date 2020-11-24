@@ -39,6 +39,11 @@ possible uses:
 - tech support other people's norns
 - !?!?!?
 
+
+### rooms
+
+norns can belong to rooms. rooms can contain up to 3 norns. each norns will send its audio to everyone else in the room.
+
 ## my other norns
 
 - [barcode](https://github.com/schollz/barcode): replays a buffer six times, at different levels & pans & rates & positions, modulated by lfos on every parameter.
