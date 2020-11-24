@@ -385,15 +385,14 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 		return
 	}
 	filename := audioFile.Name()
+	audioFile.Write(audioBytes)
+	audioFile.Close()
 
 	defer func() {
 		// remove file after 2.5 seconds
-		time.Sleep(2500 * time.Millisecond)
+		time.Sleep(5500 * time.Millisecond)
 		os.Remove(filename)
 	}()
-
-	audioFile.Write(audioBytes)
-	audioFile.Close()
 
 	// figure out which mpv to use
 	if _, ok := n.mpvs[sender]; !ok {
@@ -409,7 +408,7 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 	if err != nil {
 		return
 	}
-	// defer os.Remove(file.Name())
+	defer os.Remove(file.Name())
 	logger.Debugf("queuing %s in %s", filename, n.mpvs[sender])
 	file.WriteString(`#!/bin/bash
 echo "loadfile ` + filename + ` append-play" > ` + n.mpvs[sender])
