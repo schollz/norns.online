@@ -8,10 +8,14 @@ import (
 	"os/exec"
 )
 
-// ConvertToMP3 converts to mp3 and removes the original
-func ConvertToMP3(fname string) (newfname string, err error) {
-	newfname = fname + ".mp3"
-	cmd := exec.Command("ffmpeg", "-i", fname,"-codec:a","libmp3lame","-qscale:a","4",newfname)
+// ConvertAudio converts to something else and removes the original
+func ConvertAudio(fname string) (newfname string, err error) {
+	//newfname = fname 
+	//return
+	newfname = fname + ".ogg"
+	cmd := exec.Command("ffmpeg", "-i", fname,"-codec:a","libvorbis","-qscale:a","7",newfname)
+	//newfname = fname + ".mp3"
+	//cmd := exec.Command("ffmpeg", "-i", fname,"-codec:a","libmp3lame","-b:a","320k",newfname)
 	//cmd := exec.Command("ffmpeg", "-i", fname,"-codec:a","libmp3lame","-qscale:a","4","-af","silenceremove=start_periods=1:start_duration=0.01:start_threshold=-30dB:detection=peak,aformat=dblp,areverse,silenceremove=start_periods=1:start_duration=0.01:start_threshold=-30dB:detection=peak,aformat=dblp,areverse",newfname)
 	//cmd := exec.Command("ffmpeg", "-i", fname,"-codec:a","libmp3lame","-qscale:a","4","-af","afade=t=in:st=0:d=0.01,afade=t=out:st=3.99:d=0.01",newfname)
 	err = cmd.Run()
