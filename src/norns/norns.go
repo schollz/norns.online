@@ -404,25 +404,18 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 		time.Sleep(2 * time.Second) //buffer time
 	}
 
-	file, err := ioutil.TempFile("/dev/shm", "input*.sh")
+	bashFile := "/dev/shm/input" + utils.RandString(5) + ".sh"
+	bashData := `#!/bin/bash
+echo "loadfile ` + filename + ` append-play" > ` + n.mpvs[sender] + `
+`
+	err = ioutil.WriteFile(bashFile, []byte(bashData), 0777)
 	if err != nil {
 		return
 	}
-	defer os.Remove(file.Name())
-	logger.Debugf("queuing %s in %s", filename, n.mpvs[sender])
-	file.WriteString(`#!/bin/bash
-echo "loadfile ` + filename + ` append-play" > ` + n.mpvs[sender])
-	file.Close()
-	defer os.Remove(file.Name())
 
-	logger.Debug("chmoding")
-	cmd := exec.Command("chmod", "+x", file.Name())
-	if err = cmd.Start(); err != nil {
-		return
-	}
-	logger.Debug("running")
-	cmd = exec.Command("/bin/bash", file.Name())
-	if err = cmd.Start(); err != nil {
+	logger.Debugf("queuing %s in %s", filename, n.mpvs[sender])
+	cmd := exec.Command(bashFile)
+	if err = cmd.Run(); err != nil {
 		return
 	}
 	logger.Debug("audio processed!")
