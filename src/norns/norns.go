@@ -82,12 +82,14 @@ rm -- "$0"
 	n.AllowKeys = true
 	n.KeepAwake = false
 	n.FrameRate = 4
-	n.srcbkg, err = imaging.Open("/home/we/dust/code/norns.online/static/background.png")
+	n.srcbkg, err = imaging.Open("/home/we/dust/code/norns.online/static/img/background.png")
 	if err != nil {
+		logger.Error(err)
 		return
 	}
 	_, err = n.Load()
 	if err != nil {
+		logger.Error(err)
 		return
 	}
 
@@ -311,9 +313,11 @@ func (n *Norns) Run() (err error) {
 			case <-done:
 			case <-time.After(time.Second):
 			}
+			logger.Debug("returning")
 			return
 		}
 	}
+	logger.Debug("exiting")
 	return
 }
 
