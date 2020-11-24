@@ -85,7 +85,9 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 
 	log.Debugf("initial m: %+v", m)
 	name := m.Name
-	if name == "" || (m.Group == "" && m.Room == "") {
+	group := m.Group
+	room := m.Room
+	if name == "" || (group == "" && room == "") {
 		return
 	}
 
@@ -112,6 +114,9 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 			break
 		}
 		mutex.Lock()
+		if m.Audio != "" {
+			log.Debugf("got audio from %s in group %s and room %s", name, group, room)
+		}
 
 		// send out audio data / img data to browser
 		for name2, client := range sockets {
@@ -120,17 +125,16 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 				continue
 			}
 			sendData := false
-			if m.Room == client.Room && m.Audio != "" && client.Room != "" {
+			if room == client.Room && m.Audio != "" && client.Room != "" {
 				sendData = true
 			}
-			if m.Group == client.Group && client.Group != "" {
+			if group == client.Group && client.Group != "" {
 				sendData = true
 			}
 			if m.Recipient == name2 {
 				sendData = true
 			}
 			if sendData {
-				log.Debugf("sending data from %s to %s", name, name2)
 				go func(name2 string, c2 *websocket.Conn, m models.Message) {
 					wsmutex.Lock()
 					err := c2.WriteJSON(m)
