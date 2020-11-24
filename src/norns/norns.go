@@ -389,9 +389,11 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 	audioFile.Close()
 
 	defer func() {
-		// remove file after 2.5 seconds
-		time.Sleep(5500 * time.Millisecond)
-		os.Remove(filename)
+		go func() {
+			// remove file after 2.5 seconds
+			time.Sleep(5500 * time.Millisecond)
+			os.Remove(filename)
+		}()
 	}()
 
 	// figure out which mpv to use
@@ -419,6 +421,7 @@ echo "loadfile ` + filename + ` append-play" > ` + n.mpvs[sender] + `
 		return
 	}
 	logger.Debug("audio processed!")
+	os.Remove(bashFile)
 
 	return
 }
