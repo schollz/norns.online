@@ -27,13 +27,17 @@ online [norns](https://monome.org/docs/norns/) on [norns.online](https://norns.o
 - change the "`room`" to the room you want to share audio in
 - go to main screen and press K3 to go online. you should now be sharing audio with any other norns in that room (max 3 per room).
 
-## inner workings
+## faq
 
 **how does it work?** norns runs a service that sends screenshots and audio to `norns.online/<yourname>`. the website at `norns.online/<yourname>` sends inputs back to norns. norns listens to to inputs and runs the acceptable ones (adjustable with parameters). what was [just an idea](https://llllllll.co/t/norns-online-crowdsource-your-norns/38492) is now a norns script.
 
-**how does audio streaming work?** a pre-compiled [`jack_capture`](https://github.com/kmatheussen/jack_capture) periodically captures the norns output into 4-second mp3 files into the `/dev/shm` temp directory. these mp3s are read and sent via websockets to the browser. the norns then deletes old files so excess memory is not used. expect a lag of at least 4 seconds. when in a room, audio from other norns is piped into your norns via `mpv`. the combined audio should only be accessible from the output of your norns (not on the browser).
+**how does audio streaming work?** a pre-compiled [`jack_capture`](https://github.com/kmatheussen/jack_capture) periodically captures the norns output into 4-second files into the `/dev/shm` temp directory. these are converted to ogg-format are read and sent via websockets to the browser. the norns then deletes old files so excess memory is not used. expect a lag of at least 4 seconds. when in a room, audio from other norns is piped into your norns via `mpv`. the combined audio should only be accessible from the output of your norns (not on the browser).
 
-**note of caution:** if you are using this and your norns is "online", then *anyone* with the url `norns.online/<yourname>` can access your norns. even though the inputs are sanitized on the norns so that only `enc()` and `key()` and `_menu.setmode()` functions are available, even with these functions someone could reset your norns / make some havoc. if this concerns you, don't share `<yourname>` with anyone or avoid using this script.
+**is this secure?** if you are online, you have [security through obscurity](https://en.wikipedia.org/wiki/Security_through_obscurity). that means that *anyone* with the url `norns.online/<yourname>` can access your norns so you can make `<yourname>` complicated to be more secure. code injection is not possible, as i took precations to make sure the inputs are sanitized on the norns so that only `enc()` and `key()` and `_menu.setmode()` functions are available. but, even with these functions someone could reset your norns / make some havoc. if this concerns you, don't share `<yourname>` with anyone or avoid using this script entirely.
+
+**how much bandwidth does this use?** not too much. the norns sends out screenshots (~1.2 kB each) and ogg packets (~17.5 kB / second) periodically. if you use a fps of 4, then you are sending out ~22.3 kB / second, which is ~80 MB/hour. if you are in a room you will be receiving about that much for each norns in the room.
+
+**ogg vs mp3 vs flac?** audio sharing uses ogg. through flac is lossless (and therefore the best theoretical quality), ogg sounds really good (to me) 10x less bandwidth. i tried mp3, but for some reason the mp3s will consistenly cause popping when the buffer switches over to the next packet, even at 320 kbps - this did not occur for ogg.
 
 
 future directions:
