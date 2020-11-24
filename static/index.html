@@ -347,15 +347,14 @@
         if (norns_id.length > 0) {
             const socketMessageListener = (e) => {
                 data = JSON.parse(e.data);
-                console.log(data);
                 if ('img' in data) {
                     document.getElementById('img').setAttribute(
                         'src',
                         'data:image/png;base64,' + data['img']
                     )
                 }
-                if ('mp3' in data) {
-                    playMP3(data['mp3'])
+                if ('audio' in data) {
+                    playMP3(data['audio'])
                 }
                 if ('twitch' in data) {
                     if (data['twitch']) {

@@ -135,6 +135,7 @@ func (n *Norns) connectToWebsockets() (err error) {
 			time.Sleep(1 * time.Second)
 			continue
 		}
+		// initially tell the server who i am
 		n.ws.WriteJSON(models.Message{
 			Name:  n.Name, // the norns goes by its name in its group
 			Group: n.Name, // a norns designates a group by its name
@@ -307,7 +308,6 @@ func (n *Norns) updateClient() (err error) {
 	if n.ws != nil {
 		n.Lock()
 		n.ws.WriteJSON(models.Message{
-			Group:  n.Name, // a norns designates a group by its name
 			Img:    base64data,
 			Twitch: n.AllowTwitch,
 		})
@@ -402,8 +402,6 @@ func (n *Norns) Stream() (filename string, err error) {
 			n.Lock()
 			logger.Debugf("sending %d bytes of data", len(mp3data))
 			n.ws.WriteJSON(models.Message{
-				Group: n.Name, // a norns designates a group by its name
-				Room:  n.Room,
 				Audio: mp3data,
 			})
 			n.Unlock()
