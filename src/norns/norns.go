@@ -148,7 +148,9 @@ func (n *Norns) Load() (updated bool, err error) {
 func (n *Norns) connectToWebsockets() (err error) {
 	for {
 		if n.ws != nil {
+			// close connection and try reconnecting
 			n.ws.Close()
+			n.ws = nil
 			time.Sleep(500 * time.Millisecond)
 		}
 		// wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
@@ -174,7 +176,7 @@ func (n *Norns) connectToWebsockets() (err error) {
 			err = n.ws.ReadJSON(&m)
 			if err != nil {
 				logger.Debug(err)
-				return
+				break
 			}
 			if m.Audio == "" {
 				logger.Debugf("got models.Message from %s: %+v", m.Sender, m)
