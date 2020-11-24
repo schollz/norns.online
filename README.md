@@ -37,7 +37,7 @@ online [norns](https://monome.org/docs/norns/) on [norns.online](https://norns.o
 
 **how much bandwidth does this use?** not too much. the norns sends out screenshots (~1.2 kB each) and ogg packets (~17.5 kB / second) periodically. if you use a fps of 4, then you are sending out ~22.3 kB / second, which is ~80 MB/hour. if you are in a room you will be receiving about that much for each norns in the room.
 
-**ogg vs mp3 vs flac?** audio sharing uses ogg. through flac is lossless (and therefore the best theoretical quality), ogg sounds really good (to me) 10x less bandwidth. i tried mp3, but for some reason the mp3s will consistenly cause popping when the buffer switches over to the next packet, even at 320 kbps - this did not occur for ogg.
+**ogg vs mp3 vs flac?** audio sharing uses ogg. through flac is lossless (and therefore the best theoretical quality), ogg sounds really good (to me) for 10x less bandwidth. i tried mp3, but for some reason the mp3s will consistenly cause popping when the buffer switches over to the next packet, even at 320 kbps - this did not occur for ogg.
 
 
 future directions:
