@@ -36,7 +36,7 @@ type Norns struct {
 	KeepAwake   bool   `json:"keepawake"`
 	FrameRate   int    `json:"framerate"`
 
-	srcbkg         image.Image 
+	srcbkg         image.Image
 	configFile     string
 	configFileHash []byte
 	active         bool
@@ -324,8 +324,7 @@ func (n *Norns) updateClient() (err error) {
 		return
 	}
 
-	// Resize the cropped image to width = 200px preserving the aspect ratio.
-	src = imaging.Resize(src, 522, 0, imaging.NearestNeighbor)
+	src = imaging.Resize(src, 522, 0, imaging.NearestNeighbor) // full width is 550, padding is added
 	src = imaging.AdjustGamma(src, 1.25)
 	src = imaging.OverlayCenter(n.srcbkg, src, 1)
 	err = imaging.Save(src, "/dev/shm/norns.online.screenshot2.png")
