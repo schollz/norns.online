@@ -154,7 +154,7 @@ func (n *Norns) connectToWebsockets() (err error) {
 				logger.Debug(err)
 				return
 			}
-			if m.Audio != "" {
+			if m.Audio == "" {
 				logger.Debugf("got models.Message from %s: %+v", m.Sender, m)
 			} else {
 				logger.Debugf("got message with %d bytes of audio from %s", len(m.Audio), m.Sender)
