@@ -39,6 +39,7 @@ settings={
   buffertime=1000,
   roomsize=1,
   packetsize=2,
+  roomvolume=80,
 }
 uimessage=""
 ui=1
@@ -131,19 +132,22 @@ function init()
 
   params:add_control("roomvolume","room vol",controlspec.new(0,100,'lin',10,80,''))
   params:set_action("roomvolume",function(x)
-    if settings.allowroom and settings.room ~= "" then 
-      for i=0,4 do
-        if util.file_exists("/dev/shm/norns.online.mpv"..i) then
-          file = io.open("/dev/shm/setvol", "w")
-          file:write("#!/bin/bash", "\n")
-          file:write("echo 'set_property volume "..x.."'  > /dev/shm/norns.online.mpv"..i, "\n")
-          file:close()
-          os.execute("chmod +x /dev/shm/setvol")
-          os.execute("/dev/shm/setvol")
-          -- os.execute("rm /dev/shm/setvol")
-        end
-      end
-    end
+    settings.roomvolume=v
+    write_settings()
+    redraw()
+    -- if settings.allowroom and settings.room ~= "" then 
+    --   for i=0,4 do
+    --     if util.file_exists("/dev/shm/norns.online.mpv"..i) then
+    --       file = io.open("/dev/shm/setvol", "w")
+    --       file:write("#!/bin/bash", "\n")
+    --       file:write("echo 'set_property volume "..x.."'  > /dev/shm/norns.online.mpv"..i, "\n")
+    --       file:close()
+    --       os.execute("chmod +x /dev/shm/setvol")
+    --       os.execute("/dev/shm/setvol")
+    --       -- os.execute("rm /dev/shm/setvol")
+    --     end
+    --   end
+    -- end
   end)
   
   settings.name=randomString(5)
@@ -287,6 +291,7 @@ function load_settings()
   params:set("framerate",settings.framerate)
   params:set("buffertime",settings.buffertime)
   params:set("packetsize",settings.packetsize)
+  params:set("roomvolume",settings.roomvolume)
 end
 
 function toggle()

@@ -35,7 +35,8 @@ type Norns struct {
 	FrameRate   int    `json:"framerate"`
 	PacketSize  int    `json:"packetsize"`
 	BufferTime  int    `json:"buffertime"`
-	RoomSize    int    `json:"roomsize`
+	RoomSize    int    `json:"roomsize"`
+	RoomVolume  int    `json:"roomvolume"`
 
 	srcbkg         image.Image
 	configFile     string
@@ -102,6 +103,9 @@ rm -- "$0"
 	if n.RoomSize < 1 {
 		n.RoomSize = 1
 	}
+	if n.RoomVolume == 0 {
+		n.RoomVolume = 80
+	}
 
 	startsh := `#!/bin/bash
 cd /dev/shm
@@ -120,8 +124,11 @@ chmod +x /home/we/dust/code/norns.online/jack_capture
 		for i := 0; i < n.RoomSize; i++ {
 			startsh += `
 mkfifo /dev/shm/norns.online.mpv` + fmt.Sprint(i) + `
-sleep 1
+sleep 0.1
 mpv --merge-files=yes --gapless-audio=yes --no-video --jack-port="system:playback_(1|2)" --input-file=/dev/shm/norns.online.mpv` + fmt.Sprint(i) + ` --idle &
+sleep 0.6
+echo "set_property volume ` + fmt.Sprint(n.RoomVolume) + `" > /dev/shm/norns.online.mpv` + fmt.Sprint(i) + `
+sleep 0.3
 `
 		}
 
@@ -299,6 +306,12 @@ func (n *Norns) Run() (err error) {
 					n.ws.Close()
 					go n.connectToWebsockets()
 				}
+				// update the volume
+				if n.Room != "" && n.AllowRoom {
+					for i := 0; i < n.RoomSize; i++ {
+						sendCommandToMPV("set_property volume "+fmt.Sprint(n.RoomVolume), "/dev/shm/norns.online.mpv"+fmt.Sprint(i))
+					}
+				}
 			}
 		case _ = <-ticker.C:
 			n.Lock()
@@ -443,23 +456,26 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 	}
 	n.timeSinceAudio = time.Now()
 
+	err = sendCommandToMPV("loadfile "+filename+" append-play", n.mpvs[sender])
+	logger.Debug("audio processed!")
+
+	return
+}
+
+func sendCommandToMPV(command, fifofile string) (err error) {
 	bashFile := "/dev/shm/norns.online.input" + utils.RandString(5) + ".sh"
+	defer os.Remove(bashFile)
 	bashData := `#!/bin/bash
-echo "loadfile ` + filename + ` append-play" > ` + n.mpvs[sender] + `
+echo "` + command + `" > ` + fifofile + `
 `
 	err = ioutil.WriteFile(bashFile, []byte(bashData), 0777)
 	if err != nil {
 		return
 	}
 
-	logger.Debugf("queuing %s in %s", filename, n.mpvs[sender])
+	logger.Debugf("sending command %s to %s", command, fifofile)
 	cmd := exec.Command(bashFile)
-	if err = cmd.Run(); err != nil {
-		return
-	}
-	logger.Debug("audio processed!")
-	os.Remove(bashFile)
-
+	err = cmd.Run()
 	return
 }
 
