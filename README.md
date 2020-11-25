@@ -32,7 +32,7 @@ _note:_ this app requires `ffmpeg` and `mpv`, which are automatically installed 
 
 ![parameters for online](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/online.png)
 
-- press K3. open browser to `norns.online/<yourname>`
+- press K3. open browser to `norns.online/<yourname>`. if this is the first time running, wait for the `mpv` and `ffmpeg` programs to be installed.
 - use norns normally, your norns will stay online in the background.
 
 ### norns↔norns audio sharing
