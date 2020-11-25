@@ -6,7 +6,7 @@ online [norns](https://monome.org/docs/norns/) on [norns.online](https://norns.o
 
 **control your norns** and listen to it from the internet. just open a browser to `norns.online/<yourname>` and you'll see your norns!
 
-**share audio** with other norns around the world. play with other people as if you are 1/4 mile apart (where sound takes ~4 seconds to reach the other person).
+**share audio** with other norns around the world. currently the time-lag between browsers/norns is ~4 seconds (so its asif you are playing 1/4 mile apart).
 
 what was <a href="https://llllllll.co/t/norns-online-crowdsource-your-norns/38492">just an idea</a> is now a reality
 
@@ -62,7 +62,7 @@ norns runs a service that sends screenshots to <code>norns.online/&lt;yourname&g
 
 
 <details><summary><strong>how does audio streaming work?</strong></summary>
-a pre-compiled <a href="https://github.com/kmatheussen/jack_capture"><code>jack_capture</code></a> periodically captures the norns output into 4-second files into the <code>/dev/shm</code> temp directory. these are converted to ogg-format are read and sent via websockets to the browser. the norns then deletes old files so excess memory is not used. expect a lag of at least 4 seconds. when in a room, audio from other norns is piped into your norns via <code>mpv</code>. the incoming audio from other norns is added at the very end of the signal chain so (currently) it cannot be used as input to norns engines.
+a pre-compiled <a href="https://github.com/kmatheussen/jack_capture"><code>jack_capture</code></a> periodically captures the norns output into 2-second flac files into a <code>/dev/shm</code> temp directory. each new flac packet is immediately sent out via websockets and then deleted. because of buffering, expect a lag of at least 4 seconds. when in a room, audio from other norns is piped into your norns via <code>mpv</code>. the incoming audio from other norns is added at the very end of the signal chain so (currently) it cannot be used as input to norns engines.
 </details>
 
 <details><summary><strong>is this secure?</strong></summary>
@@ -71,15 +71,7 @@ if you are online, you have <a href="https://en.wikipedia.org/wiki/Security_thro
 
 
 <details><summary><strong>how much bandwidth does this use?</strong></summary>
-not too much. the norns sends out screenshots (~1.2 kB each) and - if audio is enabled - the norns sends flac packets (~170 kB / second) periodically. if you use a fps of 4 + audio enabled, then you are sending out ~171 kB / second, which is ~616 MB/hour. if you are audio-sharing a room you will be receiving about that much for each norns in the room.
-</details>
-
-
-<details><summary><strong>how do i prevent audible pops?</strong></summary>
-the audible pops in playback on the browser or norns are from badly switched buffers. i've found that upgrading the norns greatly helps to reduce this:<pre>
-> ssh we@norns.local
-> sudo apt upgrade
-</pre>
+if audio is enabled, a fair amount. the norns sends out screenshots periodically, but at the highest fps this is only ~18 kB/s.  however, if audio is enabled - the norns sends flac packets periodically (~170 kB/s = ~616 MB/hr). if you are audio-sharing a room you will be receiving about that much for each norns in the room. i tried reducing bandwidth by using lossy audio (ogg) however the gapless audio playback only worked without pops when using flac or wav.
 </details>
 
 

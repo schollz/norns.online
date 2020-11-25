@@ -87,13 +87,13 @@ function init()
     redraw()
   end)
 
-  params:add_control("packetsize","packet size",controlspec.new(1,30,'lin',1,2,'s'))
-  params:set_action("packetsize",function(v)
-    if not startup then os.execute(KILL_FILE) end
-    settings.packetsize=v
-    write_settings()
-    redraw()
-  end)
+  -- params:add_control("packetsize","packet size",controlspec.new(1,30,'lin',1,2,'s'))
+  -- params:set_action("packetsize",function(v)
+  --   if not startup then os.execute(KILL_FILE) end
+  --   settings.packetsize=v
+  --   write_settings()
+  --   redraw()
+  -- end)
   
   params:add_separator("norns<->norns")
   params:add_option("allowroom","allow rooms",{"disabled","enabled"},1)
@@ -120,13 +120,13 @@ function init()
     redraw()
   end)
 
-  params:add_control("buffertime","room buffer time",controlspec.new(100,3000,'lin',100,1000,'ms'))
-  params:set_action("buffertime",function(v)
-    if not startup then os.execute(KILL_FILE) end
-    settings.buffertime=v
-    write_settings()
-    redraw()
-  end)
+  -- params:add_control("buffertime","room buffer time",controlspec.new(100,3000,'lin',100,1000,'ms'))
+  -- params:set_action("buffertime",function(v)
+  --   if not startup then os.execute(KILL_FILE) end
+  --   settings.buffertime=v
+  --   write_settings()
+  --   redraw()
+  -- end)
 
   params:add_control("roomvolume","room vol",controlspec.new(0,100,'lin',10,80,''))
   params:set_action("roomvolume",function(x)
