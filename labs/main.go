@@ -64,7 +64,7 @@ func sendAsNorns() (err error) {
 	for {
 		for i := 0; i < 60; i++ {
 			var b []byte
-			b, err = ioutil.ReadFile(fmt.Sprintf("pp/philip.ogg.%d.opus", i))
+			b, err = ioutil.ReadFile(fmt.Sprintf("pp/philip.ogg.%d.flac", i))
 			if err != nil {
 				return
 			}

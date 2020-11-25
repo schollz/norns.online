@@ -411,7 +411,7 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 	if err != nil {
 		return
 	}
-	audioFile, err := ioutil.TempFile("/dev/shm", "norns.online.incoming.*.opus")
+	audioFile, err := ioutil.TempFile("/dev/shm", "norns.online.incoming.*.flac")
 	if err != nil {
 		return
 	}
