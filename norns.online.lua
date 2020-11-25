@@ -36,7 +36,7 @@ settings={
   sendaudio=true,
   keepawake=false,
   framerate=5,
-  buffertime=1000,
+  buffertime=2000,
   roomsize=1,
   packetsize=2,
   roomvolume=80,
@@ -122,7 +122,7 @@ function init()
     redraw()
   end)
 
-  params:add_control("buffertime","room buffer time",controlspec.new(100,3000,'lin',100,1000,'ms'))
+  params:add_control("buffertime","room buffer time",controlspec.new(100,3000,'lin',100,2000,'ms'))
   params:set_action("buffertime",function(v)
     if not startup then os.execute(KILL_FILE) end
     settings.buffertime=v
