@@ -16,7 +16,7 @@ import (
 func main() {
 	var err error
 	// err = splitAudio("philip.ogg", 60, 1)
-	err := sendAsNorns()
+	err = sendAsNorns()
 	if err != nil {
 		panic(err)
 	}
@@ -49,7 +49,7 @@ func sendAsNorns() (err error) {
 	ws.WriteJSON(models.Message{
 		Name:  "infinitedigits2", // the norns goes by its name in its group
 		Group: "infinitedigits2", // a norns designates a group by its name
-		Room:  "AA",              // tells it which audio group it wants to be in
+		Room:  "AAA",             // tells it which audio group it wants to be in
 	})
 
 	// go func() {
@@ -61,7 +61,7 @@ func sendAsNorns() (err error) {
 	for {
 		for i := 0; i < 60; i++ {
 			var b []byte
-			b, err = ioutil.ReadFile(fmt.Sprintf("philip.ogg.%d.ogg"))
+			b, err = ioutil.ReadFile(fmt.Sprintf("philip.ogg.%d.ogg", i))
 			if err != nil {
 				return
 			}

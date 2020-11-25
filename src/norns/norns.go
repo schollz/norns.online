@@ -121,7 +121,7 @@ chmod +x /home/we/dust/code/norns.online/jack_capture
 			startsh += `
 mkfifo /dev/shm/norns.online.mpv` + fmt.Sprint(i) + `
 sleep 1
-mpv --merge-files=yes --gapless-audio=yes --no-video --jack-port="system:playback_(1|2)" --input-file=/dev/shm/norns.online.mpv` + fmt.Sprint(i) + ` --idle &
+mpv --gapless-audio=yes --no-video --jack-port="system:playback_(1|2)" --input-file=/dev/shm/norns.online.mpv` + fmt.Sprint(i) + ` --idle &
 `
 		}
 
