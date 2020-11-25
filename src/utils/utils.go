@@ -5,14 +5,15 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"os/exec"
 )
 
 // ConvertAudio converts to something else and removes the original
 func ConvertAudio(fname string) (newfname string, err error) {
-	newfname = fname
-	return
-	// newfname = fname + ".ogg"
-	// cmd := exec.Command("ffmpeg", "-i", fname,"-codec:a","libvorbis","-qscale:a","7",newfname)
+	// newfname = fname
+	// return
+	newfname = fname + ".ogg"
+	cmd := exec.Command("ffmpeg", "-i", fname,"-codec:a","libvorbis","-qscale:a","7",newfname)
 	// newfname = fname + ".ogg"
 	// cmd := exec.Command("ffmpeg", "-i", fname,"-codec:a","libvorbis","-qscale:a","7",newfname)
 	//newfname = fname + ".mp3"
