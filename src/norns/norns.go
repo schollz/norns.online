@@ -48,12 +48,17 @@ type Norns struct {
 	ws             *websocket.Conn
 	incomingAudio  chan string
 
-	mpvs           map[string]string // map sender to filename
+	mpvs           map[string]Incoming // map sender to filename
 	timeSinceAudio time.Time
 
 	streamPosition int
 
 	sync.Mutex
+}
+
+type Incoming struct {
+	Filename string
+	LastSeen time.Time
 }
 
 // New returns a new instance
@@ -79,7 +84,7 @@ rm -- "$0"
 	`), 0777)
 
 	n = new(Norns)
-	n.mpvs = make(map[string]string)
+	n.mpvs = make(map[string]Incoming)
 	n.timeSinceAudio = time.Now()
 	n.configFile = configFile
 	n.AllowEncs = true
@@ -480,12 +485,28 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 	if _, ok := n.mpvs[sender]; !ok {
 		if len(n.mpvs) == n.RoomSize {
 			err = fmt.Errorf("can't support any more in room")
+			// try to delete some and then return and wait for more
+			todelete := []string{}
+			for k := range n.mpvs {
+				if time.Since(n.mpvs[k].LastSeen).Seconds() > float64(n.PacketSize*2) {
+					todelete = append(todelete, k)
+				}
+			}
+			for _, k := range todelete {
+				delete(n.mpvs, k)
+			}
 			return
 		}
-		n.mpvs[sender] = fmt.Sprintf("/dev/shm/norns.online.mpv%d", len(n.mpvs))
+		n.mpvs[sender] = Incoming{
+			Filename: fmt.Sprintf("/dev/shm/norns.online.mpv%d", len(n.mpvs)),
+			LastSeen: time.Now(),
+		}
 	}
-
-	n.incomingAudio <- "loadfile " + filename + " append-play|" + n.mpvs[sender]
+	n.mpvs[sender] = Incoming{
+		Filename: n.mpvs[sender].Filename,
+		LastSeen: time.Now(),
+	}
+	n.incomingAudio <- "loadfile " + filename + " append-play|" + n.mpvs[sender].Filename
 	logger.Debug("audio processed!")
 
 	return
