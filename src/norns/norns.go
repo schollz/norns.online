@@ -22,7 +22,6 @@ import (
 	"github.com/schollz/norns.online/src/utils"
 )
 
-const MAX_NORNS_INPUTS = 2
 
 type Norns struct {
 	Name        string `json:"name"`
@@ -35,6 +34,9 @@ type Norns struct {
 	SendAudio   bool   `json:"sendaudio"`
 	KeepAwake   bool   `json:"keepawake"`
 	FrameRate   int    `json:"framerate"`
+	PacketSize int `json:"packetsize"`
+	BufferTime int `json:"buffertime"`
+	RoomSize int `json:"roomsize`
 
 	srcbkg         image.Image
 	configFile     string
@@ -92,6 +94,15 @@ rm -- "$0"
 		logger.Error(err)
 		return
 	}
+	if n.PacketSize < 1 {
+		n.PacketSize = 1
+	}
+	if n.BufferTime < 1 {
+		n.BufferTime = 1000
+	}
+	if n.RoomSize < 1 {
+		n.RoomSize = 1
+	}
 
 	startsh := `#!/bin/bash
 cd /dev/shm
@@ -101,13 +112,13 @@ rm -rf /dev/shm/norns.online*.ogg
 rm -rf /dev/shm/jack_capture*.ogg
 rm -rf /dev/sh/norns.online.mpv*
 chmod +x /home/we/dust/code/norns.online/jack_capture
-/home/we/dust/code/norns.online/jack_capture -f flac --port crone:output_1 --port crone:output_2 --recording-time 36000 -Rf ` + fmt.Sprint(models.AUDIO_PACKET_SECONDS*48000) + ` -z 4 &
+/home/we/dust/code/norns.online/jack_capture -f flac --port crone:output_1 --port crone:output_2 --recording-time 36000 -Rf ` + fmt.Sprint(n.PacketSize*48000) + ` -z 4 &
 `
 	if n.Room != "" && n.AllowRoom {
 		startsh += `	
 # launch playback server
 `
-		for i := 0; i < MAX_NORNS_INPUTS; i++ {
+		for i := 0; i < n.RoomSize; i++ {
 			startsh += `
 mkfifo /dev/shm/norns.online.mpv` + fmt.Sprint(i) + `
 sleep 1
@@ -419,16 +430,16 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 
 	// figure out which mpv to use
 	if _, ok := n.mpvs[sender]; !ok {
-		if len(n.mpvs) == MAX_NORNS_INPUTS {
+		if len(n.mpvs) == n.RoomSize {
 			err = fmt.Errorf("can't support any more in room")
 			return
 		}
 		n.mpvs[sender] = fmt.Sprintf("/dev/shm/norns.online.mpv%d", len(n.mpvs))
 	}
 
-	if time.Since(n.timeSinceAudio).Seconds() > models.AUDIO_PACKET_SECONDS {
+	if time.Since(n.timeSinceAudio).Seconds() > float64(n.PacketSize) {
 		// buffer for packet size
-		time.Sleep(time.Duration(1000*models.AUDIO_PACKET_SECONDS/2) * time.Millisecond)
+		time.Sleep(time.Duration(n.BufferTime) * time.Millisecond)
 	}
 	n.timeSinceAudio = time.Now()
 

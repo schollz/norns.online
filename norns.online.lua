@@ -36,6 +36,8 @@ settings={
   sendaudio=true,
   keepawake=false,
   framerate=5,
+  buffertime=1000,
+  packetsize=1,
 }
 uimessage=""
 ui=1
@@ -84,6 +86,16 @@ function init()
     write_settings()
     redraw()
   end)
+
+  params:add_control("packetsize","packet size",controlspec.new(1,30,'lin',1,1,'s'))
+  params:set_action("packetsize",function(v)
+    if not startup then os.execute(KILL_FILE) end
+    settings.packetsize=v
+    write_settings()
+    redraw()
+  end)
+  
+  params:add_separator("norns<->norns")
   params:add_option("allowroom","allow rooms",{"disabled","enabled"},1)
   params:set_action("allowroom",function(v)
     if not startup then os.execute(KILL_FILE) end
@@ -91,10 +103,27 @@ function init()
     write_settings()
     redraw()
   end)
-  params:add_text("roomname","room","")
+
+  params:add_text("roomname","room name","")
   params:set_action("roomname",function(v)
     if not startup then os.execute(KILL_FILE) end
     settings.room=v
+    write_settings()
+    redraw()
+  end)
+
+  params:add_control("roomsize","room size",controlspec.new(1,3,'lin',1,1,'other'))
+  params:set_action("roomsize",function(v)
+    if not startup then os.execute(KILL_FILE) end
+    settings.roomsize=v
+    write_settings()
+    redraw()
+  end)
+
+  params:add_control("buffertime","room buffer time",controlspec.new(100,3000,'lin',100,1000,'ms'))
+  params:set_action("buffertime",function(v)
+    if not startup then os.execute(KILL_FILE) end
+    settings.buffertime=v
     write_settings()
     redraw()
   end)
@@ -254,6 +283,9 @@ function load_settings()
   end
   params:set("roomname",settings.room)
   params:set("framerate",settings.framerate)
+  params:set("buffertime",settings.buffertime)
+  params:set("packetsize",settings.packetsize)
+  params:set("roomsize",settings.roomsize)
 end
 
 function toggle()
@@ -349,7 +381,7 @@ function update()
   os.execute("cd "..CODE_DIR.." && git pull")
   uimessage="building"
   redraw()
-  os.execute("cd "..CODE_DIR.."; /usr/local/go/bin/go version")
+  os.execute("cd "..CODE_DIR.."; /usr/local/go/bin/go build")
   uimessage=""
   redraw()
   if not util.file_exists(SERVER_FILE) then
