@@ -102,7 +102,7 @@ function init()
   params:add_taper("roomvolume","room volume",0,100,1,0,"")
   params:set_action("roomvolume",function(x)
     if settings.allowroom and settings.room ~= "" then 
-      for i=1,4 do
+      for i=0,4 do
         if util.file_exists("/dev/shm/norns.online.mpv"..i) then
           file = io.open("/dev/shm/setvol", "w")
           file:write("#!/bin/bash", "\n")
