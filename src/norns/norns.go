@@ -411,7 +411,7 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 	if err != nil {
 		return
 	}
-	audioFile, err := ioutil.TempFile("/dev/shm", "norns.online.incoming.*.ogg")
+	audioFile, err := ioutil.TempFile("/dev/shm", "norns.online.incoming.*.flac")
 	if err != nil {
 		return
 	}
@@ -499,19 +499,19 @@ func (n *Norns) Stream() (filename string, err error) {
 			if len(files) > 1 {
 				currentFile <- files[0]
 			}
-			time.Sleep(1 * time.Second)
+			time.Sleep(500 * time.Millisecond)
 		}
 	}()
 
 	for {
-		fname := <-currentFile
-		// convert audio from flac to lossly (ogg)
-		fname, err = utils.ConvertAudio(fname)
-		if err != nil {
-			logger.Error(err)
-			os.Remove(fname)
-			continue
-		}
+		fname := <-currentFile // current file is a flac file
+		// // convert audio from flac
+		// fname, err = utils.ConvertAudio(fname)
+		// if err != nil {
+		// 	logger.Error(err)
+		// 	os.Remove(fname)
+		// 	continue
+		// }
 		logger.Debugf("processing %s", fname)
 		b, errb := ioutil.ReadFile(fname)
 		if errb != nil {
