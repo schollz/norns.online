@@ -52,7 +52,7 @@ func sendAsNorns() (err error) {
 	ws.WriteJSON(models.Message{
 		Name:  "infinitedigits2", // the norns goes by its name in its group
 		Group: "infinitedigits2", // a norns designates a group by its name
-		Room:  "AAA",             // tells it which audio group it wants to be in
+		Room:  "llllllll",        // tells it which audio group it wants to be in
 	})
 
 	// go func() {

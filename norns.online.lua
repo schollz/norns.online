@@ -27,7 +27,7 @@ LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v0.2.0
 -- default settings
 settings={
   name="",
-  room="",
+  room="llllllll",
   allowroom=false,
   allowmenu=true,
   allowencs=true,
@@ -37,6 +37,7 @@ settings={
   keepawake=false,
   framerate=5,
   buffertime=1000,
+  roomsize=1,
   packetsize=2,
 }
 uimessage=""
@@ -104,7 +105,7 @@ function init()
     redraw()
   end)
 
-  params:add_text("roomname","room name","")
+  params:add_text("roomname","room name","llllllll")
   params:set_action("roomname",function(v)
     if not startup then os.execute(KILL_FILE) end
     settings.room=v
@@ -282,10 +283,10 @@ function load_settings()
     params:set("allowroom",1)
   end
   params:set("roomname",settings.room)
+  params:set("roomsize",settings.roomsize)
   params:set("framerate",settings.framerate)
   params:set("buffertime",settings.buffertime)
   params:set("packetsize",settings.packetsize)
-  params:set("roomsize",settings.roomsize)
 end
 
 function toggle()
