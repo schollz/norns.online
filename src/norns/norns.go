@@ -270,7 +270,7 @@ func (n *Norns) Run() (err error) {
 				continue
 			}
 
-			if time.Since(n.timeSinceAudio).Seconds() > float64(n.PacketSize*1.5) {
+			if time.Since(n.timeSinceAudio).Seconds() > float64(n.PacketSize)*1.5 {
 				// buffer for packet size
 				logger.Debugf("buffering for %d ms", n.BufferTime)
 				time.Sleep(time.Duration(n.BufferTime) * time.Millisecond)
