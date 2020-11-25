@@ -63,6 +63,7 @@ func sendAsNorns() (err error) {
 	// }()
 	for {
 		for i := 0; i < 60; i++ {
+			tt := time.Now()
 			var b []byte
 			b, err = ioutil.ReadFile(fmt.Sprintf("pp/philip.ogg.%d.flac", i))
 			if err != nil {
@@ -76,7 +77,9 @@ func sendAsNorns() (err error) {
 			if err != nil {
 				return
 			}
-			time.Sleep(2000 * time.Millisecond) // length of this sample
+			t2 := int(2000 - time.Since(tt).Seconds()*1000)
+			fmt.Println(t2)
+			time.Sleep(time.Duration(t2) * time.Millisecond) // length of this sample
 		}
 
 	}

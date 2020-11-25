@@ -269,6 +269,7 @@ func (n *Norns) Run() (err error) {
 			if len(cmds) != 2 {
 				continue
 			}
+			logger.Debugf("timeSince: %d ms", int(time.Since(n.timeSinceAudio).Seconds()*1000))
 
 			if time.Since(n.timeSinceAudio).Seconds() > float64(n.PacketSize)*1.5 {
 				// buffer for packet size
