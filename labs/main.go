@@ -15,14 +15,14 @@ import (
 
 func main() {
 	var err error
-	err = splitAudio("philip.ogg", 60, 2)
-	if err != nil {
-		panic(err)
-	}
-	// err = sendAsNorns()
+	// err = splitAudio("philip.ogg", 60, 2)
 	// if err != nil {
 	// 	panic(err)
 	// }
+	err = sendAsNorns()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func splitAudio(fname string, splits int, seconds int) (err error) {
@@ -64,7 +64,7 @@ func sendAsNorns() (err error) {
 	for {
 		for i := 0; i < 60; i++ {
 			var b []byte
-			b, err = ioutil.ReadFile(fmt.Sprintf("pp/philip.ogg.%d.flac", i))
+			b, err = ioutil.ReadFile(fmt.Sprintf("pp/philip.ogg.%d.opus", i))
 			if err != nil {
 				return
 			}
