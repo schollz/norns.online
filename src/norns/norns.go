@@ -22,7 +22,6 @@ import (
 	"github.com/schollz/norns.online/src/utils"
 )
 
-
 type Norns struct {
 	Name        string `json:"name"`
 	Room        string `json:"room"` // designates where it wants to receive audio\
@@ -34,9 +33,9 @@ type Norns struct {
 	SendAudio   bool   `json:"sendaudio"`
 	KeepAwake   bool   `json:"keepawake"`
 	FrameRate   int    `json:"framerate"`
-	PacketSize int `json:"packetsize"`
-	BufferTime int `json:"buffertime"`
-	RoomSize int `json:"roomsize`
+	PacketSize  int    `json:"packetsize"`
+	BufferTime  int    `json:"buffertime"`
+	RoomSize    int    `json:"roomsize`
 
 	srcbkg         image.Image
 	configFile     string
@@ -122,7 +121,7 @@ chmod +x /home/we/dust/code/norns.online/jack_capture
 			startsh += `
 mkfifo /dev/shm/norns.online.mpv` + fmt.Sprint(i) + `
 sleep 1
-mpv --cache 4096 --audio-buffer 4 --no-video --jack-port="system:playback_(1|2)" --input-file=/dev/shm/norns.online.mpv` + fmt.Sprint(i) + ` --idle &
+mpv --merge-files=yes --gapless-audio=yes --no-video --jack-port="system:playback_(1|2)" --input-file=/dev/shm/norns.online.mpv` + fmt.Sprint(i) + ` --idle &
 `
 		}
 
