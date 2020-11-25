@@ -98,6 +98,22 @@ function init()
     write_settings()
     redraw()
   end)
+
+  params:add_taper("roomvolume","room volume",0,100,1,0,"")
+  params:set_action("roomvolume",function(x)
+    if settings.allowroom and settings.room ~= "" then 
+      for i=1,4 do
+        if util.file_exists("/dev/shm/norns.online.mpv"..i)
+        file = io.open("/dev/shm", "w")
+        file:write("#!/bin/bash", "\n")
+        file:write("echo 'set_property volume "..x.."'  > /dev/shm/norns.online.mpv"..i, "\n")
+        file:close()
+        os.execute("chmod +x /dev/shm/setvol")
+        os.execute("/dev/shm/setvol")
+        os.execute("rm /dev/shm/setvol")
+      end
+    end
+  end)
   
   settings.name=randomString(5)
   load_settings()
