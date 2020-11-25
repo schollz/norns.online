@@ -15,18 +15,21 @@ import (
 
 func main() {
 	var err error
-	// err = splitAudio("philip.ogg", 60, 1)
-	err = sendAsNorns()
+	err = splitAudio("philip.ogg", 60, 1)
 	if err != nil {
 		panic(err)
 	}
+	// err = sendAsNorns()
+	// if err != nil {
+	// 	panic(err)
+	// }
 }
 
 func splitAudio(fname string, splits int, seconds int) (err error) {
-	curSeconds := 0
+	curSeconds := 8
 	for i := 0; i < splits; i++ {
-		fmt.Println("ffmpeg", "-i", fname, "-ss", fmt.Sprint(curSeconds), "-t", fmt.Sprint(seconds), fmt.Sprintf("%s.%d.ogg", fname, i))
-		cmd := exec.Command("ffmpeg", "-y", "-i", fname, "-ss", fmt.Sprint(curSeconds), "-t", fmt.Sprint(seconds), fmt.Sprintf("%s.%d.ogg", fname, i))
+		fmt.Println("ffmpeg", "-i", fname, "-ss", fmt.Sprint(curSeconds), "-t", fmt.Sprint(seconds), fmt.Sprintf("pp/%s.%d.flac", fname, i))
+		cmd := exec.Command("ffmpeg", "-y", "-i", fname, "-ss", fmt.Sprint(curSeconds), "-t", fmt.Sprint(seconds), fmt.Sprintf("pp/%s.%d.flac", fname, i))
 		err = cmd.Run()
 		if err != nil {
 			return
@@ -61,7 +64,7 @@ func sendAsNorns() (err error) {
 	for {
 		for i := 0; i < 60; i++ {
 			var b []byte
-			b, err = ioutil.ReadFile(fmt.Sprintf("philip.ogg.%d.ogg", i))
+			b, err = ioutil.ReadFile(fmt.Sprintf("pp/philip.ogg.%d.wav", i))
 			if err != nil {
 				return
 			}
