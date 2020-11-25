@@ -15,7 +15,7 @@ import (
 
 func main() {
 	var err error
-	// err = splitAudio("philip.ogg", 60, 1)
+	// err = splitAudio("philip.ogg", 60, 2)
 	// if err != nil {
 	// 	panic(err)
 	// }
@@ -76,7 +76,7 @@ func sendAsNorns() (err error) {
 			if err != nil {
 				return
 			}
-			time.Sleep(900 * time.Millisecond) // length of this sample
+			time.Sleep(2000 * time.Millisecond) // length of this sample
 		}
 
 	}
