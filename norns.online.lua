@@ -110,7 +110,7 @@ function init()
           file:close()
           os.execute("chmod +x /dev/shm/setvol")
           os.execute("/dev/shm/setvol")
-          os.execute("rm /dev/shm/setvol")
+          -- os.execute("rm /dev/shm/setvol")
         end
       end
     end
