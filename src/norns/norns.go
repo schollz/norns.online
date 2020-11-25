@@ -296,6 +296,7 @@ func (n *Norns) Run() (err error) {
 			updated, _ := n.Load()
 			if updated {
 				ticker.Stop()
+				ticker = nil
 				if n.FrameRate == 1 {
 					ticker = time.NewTicker(1 * time.Second)
 				} else if n.FrameRate == 0 {
