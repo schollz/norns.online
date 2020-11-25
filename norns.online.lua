@@ -343,12 +343,13 @@ function install_prereqs()
 end
 
 function update()
+  os.execute("rm -f "..SERVER_FILE)
   uimessage="updating"
   redraw()
   os.execute("cd "..CODE_DIR.." && git pull")
   uimessage="building"
   redraw()
-  os.execute("cd "..CODE_DIR.."; /usr/local/go/bin/go build")
+  os.execute("cd "..CODE_DIR.."; /usr/local/go/bin/go version")
   uimessage=""
   redraw()
   if not util.file_exists(SERVER_FILE) then
