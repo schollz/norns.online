@@ -15,21 +15,21 @@ import (
 
 func main() {
 	var err error
-	// err = splitAudio("philip.ogg", 60, 2)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	err = sendAsNorns()
+	err = splitAudio("philip.ogg", 60, 2)
 	if err != nil {
 		panic(err)
 	}
+	// err = sendAsNorns()
+	// if err != nil {
+	// 	panic(err)
+	// }
 }
 
 func splitAudio(fname string, splits int, seconds int) (err error) {
 	curSeconds := 8
 	for i := 0; i < splits; i++ {
-		fmt.Println("ffmpeg", "-i", fname, "-ss", fmt.Sprint(curSeconds), "-t", fmt.Sprint(seconds), fmt.Sprintf("pp/%s.%d.flac", fname, i))
-		cmd := exec.Command("ffmpeg", "-y", "-i", fname, "-ss", fmt.Sprint(curSeconds), "-t", fmt.Sprint(seconds), fmt.Sprintf("pp/%s.%d.flac", fname, i))
+		fmt.Println("ffmpeg", "-i", fname, "-ss", fmt.Sprint(curSeconds), "-t", fmt.Sprint(seconds), fmt.Sprintf("pp/%s.%d.opus", fname, i))
+		cmd := exec.Command("ffmpeg", "-y", "-i", fname, "-ss", fmt.Sprint(curSeconds), "-t", fmt.Sprint(seconds), fmt.Sprintf("pp/%s.%d.opus", fname, i))
 		err = cmd.Run()
 		if err != nil {
 			return
