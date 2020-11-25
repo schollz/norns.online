@@ -26,6 +26,8 @@ future directions:
 - K1+K2 updates
 - more params in global menu
 
+_note:_ this app requires `ffmpeg` and `mpv`, which are automatically installed if you use this program.
+
 ### quick start
 
 ![parameters for online](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/online.png)
@@ -74,6 +76,13 @@ not too much. the norns sends out screenshots (~1.2 kB each) and - if audio is e
 
 <details><summary><strong>ogg vs mp3 vs flac?</strong></summary>
 audio sharing uses ogg. through flac is lossless (and therefore the best theoretical quality), ogg sounds really good (to me) for 10x less bandwidth. i tried mp3, but for some reason the mp3s will consistenly cause popping when the buffer switches over to the next packet, even at 320 kbps - this did not occur for ogg.
+</details>
+
+<details><summary><strong>how do i prevent audible pops?</strong></summary>
+the audible pops in playback on the browser or norns are from badly switched buffers. i've found that upgrading the norns greatly helps to reduce this:<pre>
+> ssh we@norns.local
+> sudo apt upgrade
+</pre>
 </details>
 
 

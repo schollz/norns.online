@@ -308,7 +308,7 @@ function install_prereqs()
     uimessage="installing ffmpeg and mpv..."
     redraw()
     os.execute("sudo apt update")
-    uimessage="please wait while installs..."
+    uimessage="please wait about 2min..."
     redraw()
     os.execute("sudo apt install -y mpv ffmpeg")
     uimessage=""
