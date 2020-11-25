@@ -298,6 +298,8 @@ func (n *Norns) Run() (err error) {
 				ticker.Stop()
 				if n.FrameRate == 1 {
 					ticker = time.NewTicker(1 * time.Second)
+				} else if n.FrameRate == 0 {
+					ticker = time.NewTicker(3 * time.Minute)
 				} else {
 					ticker = time.NewTicker(time.Duration(1000/n.FrameRate) * time.Millisecond)
 				}

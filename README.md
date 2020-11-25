@@ -75,6 +75,10 @@ if you are online, you have <a href="https://en.wikipedia.org/wiki/Security_thro
 if audio is enabled, a fair amount. the norns sends out screenshots periodically, but at the highest fps this is only ~18 kB/s.  however, if audio is enabled - the norns sends flac packets periodically (~170 kB/s = ~616 MB/hr). if you are audio-sharing a room you will be receiving about that much for each norns in the room. i tried reducing bandwidth by using lossy audio (ogg) however the gapless audio playback only worked without pops when using flac or wav.
 </details>
 
+<details><summary><strong>how much cpu does this use?</strong></summary>
+this uses about ~4% of the CPU for capturing and sending audio data. the main usage comes from screenshots, which cost about 2-3% cpu every fps. that means if you run at max of 12 fps you will be using at least %30-40 of cpu.
+</details>
+
 
 ## my other norns scripts
 
