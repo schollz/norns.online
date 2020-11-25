@@ -103,14 +103,15 @@ function init()
   params:set_action("roomvolume",function(x)
     if settings.allowroom and settings.room ~= "" then 
       for i=1,4 do
-        if util.file_exists("/dev/shm/norns.online.mpv"..i)
-        file = io.open("/dev/shm", "w")
-        file:write("#!/bin/bash", "\n")
-        file:write("echo 'set_property volume "..x.."'  > /dev/shm/norns.online.mpv"..i, "\n")
-        file:close()
-        os.execute("chmod +x /dev/shm/setvol")
-        os.execute("/dev/shm/setvol")
-        os.execute("rm /dev/shm/setvol")
+        if util.file_exists("/dev/shm/norns.online.mpv"..i) then
+          file = io.open("/dev/shm", "w")
+          file:write("#!/bin/bash", "\n")
+          file:write("echo 'set_property volume "..x.."'  > /dev/shm/norns.online.mpv"..i, "\n")
+          file:close()
+          os.execute("chmod +x /dev/shm/setvol")
+          os.execute("/dev/shm/setvol")
+          os.execute("rm /dev/shm/setvol")
+        end
       end
     end
   end)
