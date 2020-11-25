@@ -71,12 +71,9 @@ if you are online, you have <a href="https://en.wikipedia.org/wiki/Security_thro
 
 
 <details><summary><strong>how much bandwidth does this use?</strong></summary>
-not too much. the norns sends out screenshots (~1.2 kB each) and - if audio is enabled - the norns sends ogg packets (~17.5 kB / second) periodically. if you use a fps of 4 + audio enabled, then you are sending out ~22.3 kB / second, which is ~80 MB/hour. if you are audio-sharing a room you will be receiving about that much for each norns in the room.
+not too much. the norns sends out screenshots (~1.2 kB each) and - if audio is enabled - the norns sends flac packets (~170 kB / second) periodically. if you use a fps of 4 + audio enabled, then you are sending out ~171 kB / second, which is ~616 MB/hour. if you are audio-sharing a room you will be receiving about that much for each norns in the room.
 </details>
 
-<details><summary><strong>ogg vs mp3 vs flac?</strong></summary>
-audio sharing uses ogg. through flac is lossless (and therefore the best theoretical quality), ogg sounds really good (to me) for 10x less bandwidth. i tried mp3, but for some reason the mp3s will consistenly cause popping when the buffer switches over to the next packet, even at 320 kbps - this did not occur for ogg.
-</details>
 
 <details><summary><strong>how do i prevent audible pops?</strong></summary>
 the audible pops in playback on the browser or norns are from badly switched buffers. i've found that upgrading the norns greatly helps to reduce this:<pre>

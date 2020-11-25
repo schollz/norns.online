@@ -37,7 +37,7 @@ settings={
   keepawake=false,
   framerate=5,
   buffertime=1000,
-  packetsize=1,
+  packetsize=2,
 }
 uimessage=""
 ui=1
@@ -87,7 +87,7 @@ function init()
     redraw()
   end)
 
-  params:add_control("packetsize","packet size",controlspec.new(1,30,'lin',1,1,'s'))
+  params:add_control("packetsize","packet size",controlspec.new(1,30,'lin',1,2,'s'))
   params:set_action("packetsize",function(v)
     if not startup then os.execute(KILL_FILE) end
     settings.packetsize=v
