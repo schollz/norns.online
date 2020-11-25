@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -45,6 +46,7 @@ type Norns struct {
 	inMenu         bool
 	norns          *websocket.Conn
 	ws             *websocket.Conn
+	incomingAudio  chan string
 
 	mpvs           map[string]string // map sender to filename
 	timeSinceAudio time.Time
@@ -85,6 +87,7 @@ rm -- "$0"
 	n.KeepAwake = false
 	n.FrameRate = 4
 	n.srcbkg, err = imaging.Open("/home/we/dust/code/norns.online/static/img/background.png")
+	n.incomingAudio = make(chan string, 300)
 	if err != nil {
 		logger.Error(err)
 		return
@@ -258,6 +261,29 @@ func (n *Norns) Run() (err error) {
 			logger.Info("killed")
 		}()
 	}
+
+	go func() {
+		for {
+			// process incoming audio
+			cmds := strings.Split(<-n.incomingAudio, "|")
+			if len(cmds) != 2 {
+				continue
+			}
+
+			if time.Since(n.timeSinceAudio).Seconds()*1000 > float64(n.BufferTime+n.PacketSize*1000) {
+				// buffer for packet size
+				logger.Debugf("buffering for %d ms", n.BufferTime)
+				time.Sleep(time.Duration(n.BufferTime) * time.Millisecond)
+			}
+			n.timeSinceAudio = time.Now()
+
+			errCmd := sendCommandToMPV(cmds[0], cmds[1])
+			if errCmd != nil {
+				logger.Error(errCmd)
+			}
+		}
+
+	}()
 
 	// bind to internal address
 	u := url.URL{Scheme: "ws", Host: "localhost:5555", Path: "/"}
@@ -456,14 +482,7 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 		n.mpvs[sender] = fmt.Sprintf("/dev/shm/norns.online.mpv%d", len(n.mpvs))
 	}
 
-	if time.Since(n.timeSinceAudio).Seconds() > float64(n.PacketSize) {
-		// buffer for packet size
-		logger.Debugf("buffering for %d ms", n.BufferTime)
-		time.Sleep(time.Duration(n.BufferTime) * time.Millisecond)
-	}
-	n.timeSinceAudio = time.Now()
-
-	err = sendCommandToMPV("loadfile "+filename+" append-play", n.mpvs[sender])
+	n.incomingAudio <- "loadfile " + filename + " append-play|" + n.mpvs[sender]
 	logger.Debug("audio processed!")
 
 	return
