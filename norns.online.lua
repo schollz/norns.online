@@ -132,7 +132,7 @@ function init()
 
   params:add_control("roomvolume","room vol",controlspec.new(0,100,'lin',10,80,''))
   params:set_action("roomvolume",function(x)
-    settings.roomvolume=v
+    settings.roomvolume=x
     write_settings()
     redraw()
     -- if settings.allowroom and settings.room ~= "" then 
