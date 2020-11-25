@@ -99,7 +99,7 @@ function init()
     redraw()
   end)
 
-  params:add_control("roomvolume","room vol",controlspec.new(0,100,'lin',10,100,''))
+  params:add_control("roomvolume","room vol",controlspec.new(0,100,'lin',10,80,''))
   params:set_action("roomvolume",function(x)
     if settings.allowroom and settings.room ~= "" then 
       for i=0,4 do
