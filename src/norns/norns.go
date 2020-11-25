@@ -271,6 +271,7 @@ func (n *Norns) Run() (err error) {
 			}
 			logger.Debugf("timeSince: %d ms", int(time.Since(n.timeSinceAudio).Seconds()*1000))
 
+			// TODO make this deviation user adjustable instead of just 1.5
 			if time.Since(n.timeSinceAudio).Seconds() > float64(n.PacketSize)*1.5 {
 				// buffer for packet size
 				logger.Debugf("buffering for %d ms", n.BufferTime)
