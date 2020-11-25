@@ -283,8 +283,8 @@ function load_settings()
   end
   params:set("roomname",settings.room)
   params:set("framerate",settings.framerate)
-  params:set("buffertime",settings.buffertime)
-  params:set("packetsize",settings.packetsize)
+  -- params:set("buffertime",settings.buffertime)
+  -- params:set("packetsize",settings.packetsize)
   params:set("roomsize",settings.roomsize)
 end
 
