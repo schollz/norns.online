@@ -99,7 +99,7 @@ function init()
     redraw()
   end)
 
-  params:add_taper("roomvolume","room volume",0,100,100,10,"")
+  params:add_control("roomvolume","room vol",controlspec.new(0,100,'lin',10,100,''))
   params:set_action("roomvolume",function(x)
     if settings.allowroom and settings.room ~= "" then 
       for i=0,4 do
