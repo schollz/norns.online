@@ -428,7 +428,7 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 
 	if time.Since(n.timeSinceAudio).Seconds() > models.AUDIO_PACKET_SECONDS {
 		// buffer for packet size
-		time.Sleep(models.AUDIO_PACKET_SECONDS * time.Second)
+		time.Sleep(time.Duration(1000*models.AUDIO_PACKET_SECONDS/2) * time.Millisecond)
 	}
 	n.timeSinceAudio = time.Now()
 

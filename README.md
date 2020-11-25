@@ -4,9 +4,9 @@
 
 online [norns](https://monome.org/docs/norns/) on [norns.online](https://norns.online).
 
-**control your norns** and listen to it from the internet. 
+**control your norns** and listen to it from the internet. just open a browser to `norns.online/<yourname>` and you'll see your norns!
 
-**share audio** with other norns around the world.
+**share audio** with other norns around the world. play with other people as if you are 1/4 mile apart (where sound takes ~4 seconds to reach the other person).
 
 what was <a href="https://llllllll.co/t/norns-online-crowdsource-your-norns/38492">just an idea</a> is now a reality
 

@@ -2,9 +2,9 @@
 -- online norns on norns.online
 --
 -- llllllll.co/t/norns-online
--- note!!! this script opens your
--- norns to to the net
--- - (ab)use with caution.
+-- note: this script opens your
+-- norns to to the net.
+-- (ab)use with caution.
 --    ▼ instructions below ▼
 -- K3 toggles internet
 -- K2 changes name
