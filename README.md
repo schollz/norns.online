@@ -37,11 +37,12 @@ _note:_ this app requires `ffmpeg` and `mpv`, which are automatically installed 
 
 ### norns↔norns audio sharing
 
-![parameters for sharing](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/audio_sharing.png)
+![parameters for sharing](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/room_sharing.png)
 
 - go to gloal parameters and make sure both "`send audio`" and "`allow rooms`" are set to "`enabled`".
 - change the "`room`" to the room you want to share audio. make sure your norns partner uses the same room.
-- go to main screen and press K3 to go online. you should now be sharing audio with any other norns in that room (max 3 per room).
+- go to main screen and press K3 to go online. you should now be sharing audio with any other norns in that room.
+- adjust "`room vol`" to change the level of incoming audio.
 
 ### other uses 
 
