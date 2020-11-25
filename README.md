@@ -4,11 +4,11 @@
 
 online [norns](https://monome.org/docs/norns/) on [norns.online](https://norns.online).
 
-**control your norns** and listen to it from the internet. just open a browser to `norns.online/<yourname>` and you'll see your norns!
+**control your norns** and listen to it from the internet. just open a browser to `norns.online/<yourname>` and you'll see and hear your norns!
 
-**share audio** with other norns around the world. currently the time-lag between browsers/norns is ~4 seconds (so its asif you are playing 1/4 mile apart).
+**share audio** with other norns around the world. currently default the time-lag between browsers/norns is ~4 seconds (so its as if you are socially distanced by 1/4 mile).
 
-what was <a href="https://llllllll.co/t/norns-online-crowdsource-your-norns/38492">just an idea</a> is now a reality
+what was <a href="https://llllllll.co/t/norns-online-crowdsource-your-norns/38492">just an idea</a> is now a reality.
 
 future directions:
 
@@ -67,7 +67,7 @@ a pre-compiled <a href="https://github.com/kmatheussen/jack_capture"><code>jack_
 </details>
 
 <details><summary><strong>is this secure?</strong></summary>
-if you are online, you have <a href="https://en.wikipedia.org/wiki/Security_through_obscurity">security through obscurity</a>. that means that <em>anyone</em> with the url <code>norns.online/&lt;yourname&gt;</code> can access your norns so you can make <code>&lt;yourname&gt;</code> complicated to be more secure. code injection is not possible, as i took precations to make sure the inputs are sanitized on the norns so that only <code>enc()</code> and <code>key()</code> and <code>_menu.setmode()</code> functions are available. but, even with these functions someone could reset your norns / make some havoc. if this concerns you, don&#39;t share <code>&lt;yourname&gt;</code> with anyone or avoid using this script entirely.
+if you are online, you have <a href="https://en.wikipedia.org/wiki/Security_through_obscurity">security through obscurity</a>. that means that <em>anyone</em> with the url <code>norns.online/&lt;yourname&gt;</code> can access your norns so you can make <code>&lt;yourname&gt;</code> complicated to be more secure. code injection is not possible, as i took precautions to make sure the inputs are sanitized on the norns so that only <code>enc()</code> and <code>key()</code> and <code>_menu.setmode()</code> functions are available. but, even with these functions someone could reset your norns / make some havoc. if this concerns you, don&#39;t share <code>&lt;yourname&gt;</code> with anyone or avoid using this script entirely.
 </details>
 
 
