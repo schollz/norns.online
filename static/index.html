@@ -8,9 +8,9 @@
             width: 830px;
             height: 540px;
             border-radius: 10px;
- -webkit-box-shadow: #999 5px 7px 2px 5px;
- -moz-box-shadow: #999 5px 7px 2px 5px;
- box-shadow: #999 5px 7px 2px 5px;
+             -webkit-box-shadow: #999 5px 7px 2px 5px;
+             -moz-box-shadow: #999 5px 7px 2px 5px;
+             box-shadow: #999 5px 7px 2px 5px;
         }
 
         .hints,
@@ -124,23 +124,19 @@
     <div class="center">
         <div class="norns">
             <div class="nornsimage">
-                <a href="/" target="_blank" class="twitch"><img id="img" src="/static/img/audio_sharing.png"
-                        style="filter: brightness(1);" width=365></a>
+                <a href="/" target="_blank" class="twitch"><img id="img" src="/static/img/audio_sharing.png" style="filter: brightness(1);" width=365></a>
             </div>
             <button class="button k0" id="k0"></button>
             <button class="button k1" id="k1"></button>
             <button class="button k2" id="k2"></button>
             <div class="enc1knob knobshadow">
-                <input type="text" value="75" class="enc0" data-width="100" data-displayInput=false data-cursor=true
-                    data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
+                <input type="text" value="75" class="enc0" data-width="100" data-displayInput=false data-cursor=true data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
             </div>
             <div class="enc2knob knobshadow">
-                <input type="text" value="75" class="enc1" data-width="100" data-displayInput=false data-cursor=true
-                    data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
+                <input type="text" value="75" class="enc1" data-width="100" data-displayInput=false data-cursor=true data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
             </div>
             <div class="enc3knob knobshadow">
-                <input type="text" value="75" class="enc2" data-width="100" data-displayInput=false data-cursor=true
-                    data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
+                <input type="text" value="75" class="enc2" data-width="100" data-displayInput=false data-cursor=true data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
             </div>
         </div>
         <div id="livestream" class="hidden">
@@ -161,109 +157,139 @@
     <script src="/static/js/jquery.knob.min.js"></script>
     <script src="https://player.twitch.tv/js/embed/v1.js"></script>
     <script>
-        var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
-        var currentPlayingFinished = 0;
-        var socket;
-        var norns_id = window.location.pathname.substr(1);
-        if (norns_id.length < 1) {
-            norns_id = window.location.hash.substr(1);
+    var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+    var currentPlayingFinished = 0;
+    var socket;
+    var norns_id = window.location.pathname.substr(1);
+    if (norns_id.length < 1) {
+        norns_id = window.location.hash.substr(1);
+    }
+    console.log(norns_id);
+
+    function randomString(length) {
+        var result = '';
+        var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var charactersLength = characters.length;
+        for (var i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
         }
-        console.log(norns_id);
-
-        function randomString(length) {
-            var result = '';
-            var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            var charactersLength = characters.length;
-            for (var i = 0; i < length; i++) {
-                result += characters.charAt(Math.floor(Math.random() * charactersLength));
-            }
-            return result;
-        }
+        return result;
+    }
 
 
-        function debounce(func, wait, immediate) {
-            var timeout;
-            return function () {
-                var context = this,
-                    args = arguments;
-                var later = function () {
-                    timeout = null;
-                    if (!immediate) func.apply(context, args);
-                };
-                var callNow = immediate && !timeout;
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-                if (callNow) func.apply(context, args);
+    function debounce(func, wait, immediate) {
+        var timeout;
+        return function() {
+            var context = this,
+                args = arguments;
+            var later = function() {
+                timeout = null;
+                if (!immediate) func.apply(context, args);
             };
+            var callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow) func.apply(context, args);
         };
+    };
 
-        var twitchActivated = false;
-        var keys = [];
-        var encs = [];
+    var twitchActivated = false;
+    var keys = [];
+    var encs = [];
 
-        function currentTime() {
-            return (new Date()).getTime();
-        }
+    function currentTime() {
+        return (new Date()).getTime();
+    }
 
-        encs = [0, 1, 2].map(function (i) {
-            let last_time = currentTime();
-            let value = 0;
-            let z = 0;
-            let consecutive_turns = 0;
-            return {
-                change: function (v) {
-                    increased = v > value
-                    dif = 0;
-                    if (Math.abs(value - v) > 50) {
-                        increased = !increased;
-                    } else {
-                        dif = (v - value);
-                    }
-                    value = v;
-                    if (currentTime() - last_time < 350) {
-                        consecutive_turns = consecutive_turns + dif;
-                        return
-                    }
-                    var multiplier = 1;
-                    if (Math.abs(consecutive_turns) > 40) {
-                        multiplier = 3;
-                    } else if (Math.abs(consecutive_turns) > 20) {
-                        multiplier = 2;
-                    }
-                    consecutive_turns = 0;
-
-                    last_time = currentTime()
-                    if (increased) {
-                        z = 1 * multiplier;
-                        console.log(i + " increased " + z)
-                    } else {
-                        z = -1 * multiplier;
-                        console.log(i + " decreased " + z)
-                    }
-                    if (norns_id.length > 0 && socket != null) {
-                        socket.send(JSON.stringify({
-                            "recipient": norns_id,
-                            kind: "enc",
-                            n: i + 1,
-                            z: z,
-                        }))
-                    }
-                },
-                val: function () {
-                    return z;
+    encs = [0, 1, 2].map(function(i) {
+        let last_time = currentTime();
+        let value = 0;
+        let z = 0;
+        let consecutive_turns = 0;
+        return {
+            change: function(v) {
+                increased = v > value
+                dif = 0;
+                if (Math.abs(value - v) > 50) {
+                    increased = !increased;
+                } else {
+                    dif = (v - value);
                 }
-            }
-        });
+                value = v;
+                if (currentTime() - last_time < 350) {
+                    consecutive_turns = consecutive_turns + dif;
+                    return
+                }
+                var multiplier = 1;
+                if (Math.abs(consecutive_turns) > 40) {
+                    multiplier = 3;
+                } else if (Math.abs(consecutive_turns) > 20) {
+                    multiplier = 2;
+                }
+                consecutive_turns = 0;
 
-        keys = [0, 1, 2].map(function (i) {
-            let last_time = currentTime();
-            let value = 0;
-            let fast_clicked = false;
-            return {
-                reset: function () {
-                    value = 0;
-                    $("#k" + i).removeClass("latched")
-                    if (socket != null) {
+                last_time = currentTime()
+                if (increased) {
+                    z = 1 * multiplier;
+                    console.log(i + " increased " + z)
+                } else {
+                    z = -1 * multiplier;
+                    console.log(i + " decreased " + z)
+                }
+                if (norns_id.length > 0 && socket != null) {
+                    socket.send(JSON.stringify({
+                        "recipient": norns_id,
+                        kind: "enc",
+                        n: i + 1,
+                        z: z,
+                    }))
+                }
+            },
+            val: function() {
+                return z;
+            }
+        }
+    });
+
+    keys = [0, 1, 2].map(function(i) {
+        let last_time = currentTime();
+        let value = 0;
+        let fast_clicked = false;
+        return {
+            reset: function() {
+                value = 0;
+                $("#k" + i).removeClass("latched")
+                if (socket != null) {
+                    socket.send(JSON.stringify({
+                        kind: "key",
+                        n: i + 1,
+                        z: value,
+                        "recipient": norns_id,
+                    }))
+                }
+            },
+            change: function() {
+                console.log(i + " clicked")
+                value = 1 - value;
+                $("#k" + i).toggleClass("latched")
+                if (currentTime() - last_time < 500 && value == 0) {
+                    console.log("fast click!")
+                    fast_clicked = true
+                } else {
+                    console.log("slow click")
+                    fast_clicked = false
+                }
+                last_time = currentTime();
+                if (norns_id.length > 0) {
+                    if (i == 0 && socket != null) {
+                        socket.send(JSON.stringify({
+                            kind: "key",
+                            n: i + 1,
+                            z: value,
+                            fast: fast_clicked,
+                            "recipient": norns_id,
+                        }))
+                    } else if (socket != null) {
                         socket.send(JSON.stringify({
                             kind: "key",
                             n: i + 1,
@@ -271,154 +297,126 @@
                             "recipient": norns_id,
                         }))
                     }
-                },
-                change: function () {
-                    console.log(i + " clicked")
-                    value = 1 - value;
-                    $("#k" + i).toggleClass("latched")
-                    if (currentTime() - last_time < 500 && value == 0) {
-                        console.log("fast click!")
-                        fast_clicked = true
-                    } else {
-                        console.log("slow click")
-                        fast_clicked = false
-                    }
-                    last_time = currentTime();
-                    if (norns_id.length > 0) {
-                        if (i == 0 && socket != null) {
-                            socket.send(JSON.stringify({
-                                kind: "key",
-                                n: i + 1,
-                                z: value,
-                                fast: fast_clicked,
-                                "recipient": norns_id,
-                            }))
-                        } else if (socket != null) {
-                            socket.send(JSON.stringify({
-                                kind: "key",
-                                n: i + 1,
-                                z: value,
-                                "recipient": norns_id,
-                            }))
-                        }
-                    }
-                },
-                val: function () {
-                    return value;
-                },
-                get_fast_clicked: function () {
-                    return fast_clicked;
                 }
+            },
+            val: function() {
+                return value;
+            },
+            get_fast_clicked: function() {
+                return fast_clicked;
             }
+        }
+    });
+
+    for (var i = 0; i < 3; i++) {
+        $(`.enc${i}`).knob({
+            'change': encs[i].change,
+            'width': 80,
+            'height': 80,
         });
+        if (i == 0) {
+            document.getElementById("k" + i).addEventListener("click", keys[i].change);
+            //     document.getElementById("k" + i).addEventListener("mouseleave", keys[i].reset);
+        } else {
+            document.getElementById("k" + i).addEventListener("mousedown", keys[i].change);
+            document.getElementById("k" + i).addEventListener("mouseup", keys[i].change);
+        }
+    }
 
-        for (var i = 0; i < 3; i++) {
-            $(`.enc${i}`).knob({
-                'change': encs[i].change,
-            });
-            if (i == 0) {
-                document.getElementById("k" + i).addEventListener("click", keys[i].change);
-                //     document.getElementById("k" + i).addEventListener("mouseleave", keys[i].reset);
-            } else {
-                document.getElementById("k" + i).addEventListener("mousedown", keys[i].change);
-                document.getElementById("k" + i).addEventListener("mouseup", keys[i].change);
+
+    function base64ToArrayBuffer(base64) {
+        var binary_string = window.atob(base64);
+        var len = binary_string.length;
+        var bytes = new Uint8Array(len);
+        for (var i = 0; i < len; i++) {
+            bytes[i] = binary_string.charCodeAt(i);
+        }
+        return bytes.buffer;
+    }
+
+
+    function playMP3(mp3data) {
+        audioCtx.decodeAudioData(base64ToArrayBuffer(mp3data), function(buffer) {
+            console.log(buffer);
+            // Get an AudioBufferSourceNode.
+            // This is the AudioNode to use when we want to play an AudioBuffer
+            var source = audioCtx.createBufferSource();
+
+            // set the buffer in the AudioBufferSourceNode
+            source.buffer = buffer;
+
+            // connect the AudioBufferSourceNode to the
+            // destination so we can hear the sound
+            source.connect(audioCtx.destination);
+
+            // start the source playing
+            console.log(currentPlayingFinished);
+            if (currentPlayingFinished <= audioCtx.currentTime) {
+                currentPlayingFinished = audioCtx.currentTime + 1
             }
-        }
+            source.start(currentPlayingFinished);
+            currentPlayingFinished = currentPlayingFinished + buffer.duration;
+        })
+    }
 
 
-        function base64ToArrayBuffer(base64) {
-            var binary_string = window.atob(base64);
-            var len = binary_string.length;
-            var bytes = new Uint8Array(len);
-            for (var i = 0; i < len; i++) {
-                bytes[i] = binary_string.charCodeAt(i);
+    if (norns_id.length > 0) {
+        const socketMessageListener = (e) => {
+            data = JSON.parse(e.data);
+            if ('img' in data) {
+                document.getElementById('img').setAttribute(
+                    'src',
+                    'data:image/png;base64,' + data['img']
+                )
             }
-            return bytes.buffer;
-        }
-
-
-        function playMP3(mp3data) {
-            audioCtx.decodeAudioData(base64ToArrayBuffer(mp3data), function (buffer) {
-                console.log(buffer);
-                // Get an AudioBufferSourceNode.
-                // This is the AudioNode to use when we want to play an AudioBuffer
-                var source = audioCtx.createBufferSource();
-
-                // set the buffer in the AudioBufferSourceNode
-                source.buffer = buffer;
-
-                // connect the AudioBufferSourceNode to the
-                // destination so we can hear the sound
-                source.connect(audioCtx.destination);
-
-                // start the source playing
-                console.log(currentPlayingFinished);
-                if (currentPlayingFinished <= audioCtx.currentTime) {
-                    currentPlayingFinished = audioCtx.currentTime + 1
-                }
-                source.start(currentPlayingFinished);
-                currentPlayingFinished = currentPlayingFinished + buffer.duration;
-            })
-        }
-
-
-        if (norns_id.length > 0) {
-            const socketMessageListener = (e) => {
-                data = JSON.parse(e.data);
-                if ('img' in data) {
-                    document.getElementById('img').setAttribute(
-                        'src',
-                        'data:image/png;base64,' + data['img']
-                    )
-                }
-                if ('audio' in data) {
-                    playMP3(data['audio'])
-                }
-                if ('twitch' in data) {
-                    if (data['twitch']) {
-                        $("#livestream").removeClass("hidden");
-                        if (!twitchActivated) {
-                            twitchActivated = true;
-                            $(".twitch").attr("href", "https://www.twitch.tv/" + norns_id)
-                            var options = {
-                                width: 1050,
-                                height: 200,
-                                channel: norns_id,
-                                parent: ["norns.online"]
-                            };
-                            var player = new Twitch.Player("playerdiv", options);
-                            player.setVolume(0.5);
-                        }
-                    } else {
-                        $("#livestream").addClass("hidden");
+            if ('audio' in data) {
+                playMP3(data['audio'])
+            }
+            if ('twitch' in data) {
+                if (data['twitch']) {
+                    $("#livestream").removeClass("hidden");
+                    if (!twitchActivated) {
+                        twitchActivated = true;
+                        $(".twitch").attr("href", "https://www.twitch.tv/" + norns_id)
+                        var options = {
+                            width: 1050,
+                            height: 200,
+                            channel: norns_id,
+                            parent: ["norns.online"]
+                        };
+                        var player = new Twitch.Player("playerdiv", options);
+                        player.setVolume(0.5);
                     }
+                } else {
+                    $("#livestream").addClass("hidden");
                 }
-            };
-            const socketOpenListener = (e) => {
-                console.log('Connected');
-                socket.send(JSON.stringify({
-                    "name": "browser" + randomString(5),
-                    "group": norns_id,
-                }))
-            };
-            const socketErrorListener = (e) => {
-                console.error(e);
             }
-            const socketCloseListener = (e) => {
-                if (socket) {
-                    console.log('Disconnected.');
-                }
-                var url = window.origin.replace("http", "ws") + '/ws';
-                socket = new WebSocket(url);
-                socket.onopen = socketOpenListener;
-                socket.onmessage = socketMessageListener;
-                socket.onclose = socketCloseListener;
-                socket.onerror = socketErrorListener;
-            };
-            window.addEventListener('load', (event) => {
-                socketCloseListener();
-            });
+        };
+        const socketOpenListener = (e) => {
+            console.log('Connected');
+            socket.send(JSON.stringify({
+                "name": "browser" + randomString(5),
+                "group": norns_id,
+            }))
+        };
+        const socketErrorListener = (e) => {
+            console.error(e);
         }
+        const socketCloseListener = (e) => {
+            if (socket) {
+                console.log('Disconnected.');
+            }
+            var url = window.origin.replace("http", "ws") + '/ws';
+            socket = new WebSocket(url);
+            socket.onopen = socketOpenListener;
+            socket.onmessage = socketMessageListener;
+            socket.onclose = socketCloseListener;
+            socket.onerror = socketErrorListener;
+        };
+        window.addEventListener('load', (event) => {
+            socketCloseListener();
+        });
+    }
     </script>
 </body>
 
