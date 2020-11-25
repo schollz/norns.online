@@ -23,6 +23,7 @@ import (
 	"github.com/schollz/norns.online/src/utils"
 )
 
+const IMAGE_FINAL_WIDTH = 365
 type Norns struct {
 	Name        string `json:"name"`
 	Room        string `json:"room"` // designates where it wants to receive audio\
@@ -92,6 +93,8 @@ rm -- "$0"
 	n.KeepAwake = false
 	n.FrameRate = 4
 	n.srcbkg, err = imaging.Open("/home/we/dust/code/norns.online/static/img/background.png")
+		n.srcbkg = imaging.Resize(n.srcbkg, IMAGE_FINAL_WIDTH, 0, imaging.NearestNeighbor) 
+
 	n.incomingAudio = make(chan string, 300)
 	if err != nil {
 		logger.Error(err)
@@ -394,7 +397,7 @@ func (n *Norns) updateClient() (err error) {
 		return
 	}
 
-	src = imaging.Resize(src, 510, 0, imaging.NearestNeighbor) // full width is 550, padding is added
+	src = imaging.Resize(src, IMAGE_FINAL_WIDTH, 0, imaging.NearestNeighbor) // full width is 550, padding is added
 	src = imaging.AdjustGamma(src, 1.25)
 	src = imaging.OverlayCenter(n.srcbkg, src, 1)
 	err = imaging.Save(src, "/dev/shm/norns.online.screenshot2.png")

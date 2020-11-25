@@ -8,7 +8,9 @@
             width: 830px;
             height: 540px;
             border-radius: 10px;
-            box-shadow: 10px 10px #999;
+ -webkit-box-shadow: #999 5px 7px 2px 5px;
+ -moz-box-shadow: #999 5px 7px 2px 5px;
+ box-shadow: #999 5px 7px 2px 5px;
         }
 
         .hints,
@@ -43,6 +45,7 @@
             position: absolute;
             left: 64px;
             top:  200px;
+
         }
 
         .k1 {
@@ -68,24 +71,32 @@
             background-color: #222222;
             border: none;
             border-radius: 50%;
-            box-shadow: 2px 12px #999;
+            box-shadow: 4px 4px 1px 2px #999;
         }
 
         .button:active {
-            box-shadow: 0 5px #666;
-            transform: translateY(4px);
+            box-shadow: 0 2px #666;
+            transform: translateY(4px) translateX(4px);
         }
 
         .latched {
             background-color: rgb(123, 12, 123);
-            box-shadow: 0 5px #666;
-            transform: translateY(4px);
+            box-shadow: 0 2px #666;
+            transform: translateY(4px) translateX(4px);
+        }
+
+        .knobshadow {
+                        width: 85px;
+            height: 87px;
+            background-color: #999;
+            border: none;
+            border-radius: 50%;
         }
 
         .enc1knob {
             position: absolute;
             left: 164px;
-            top: 170px;
+            top: 180px;
         }
 
         .enc2knob {
@@ -113,21 +124,21 @@
     <div class="center">
         <div class="norns">
             <div class="nornsimage">
-                <a href="/" target="_blank" class="twitch"><img id="img" src="/static/img/sleep.png"
-                        style="filter: brightness(1);"></a>
+                <a href="/" target="_blank" class="twitch"><img id="img" src="/static/img/audio_sharing.png"
+                        style="filter: brightness(1);" width=365></a>
             </div>
             <button class="button k0" id="k0"></button>
             <button class="button k1" id="k1"></button>
             <button class="button k2" id="k2"></button>
-            <div class="enc1knob">
+            <div class="enc1knob knobshadow">
                 <input type="text" value="75" class="enc0" data-width="100" data-displayInput=false data-cursor=true
                     data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
             </div>
-            <div class="enc2knob">
+            <div class="enc2knob knobshadow">
                 <input type="text" value="75" class="enc1" data-width="100" data-displayInput=false data-cursor=true
                     data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
             </div>
-            <div class="enc3knob">
+            <div class="enc3knob knobshadow">
                 <input type="text" value="75" class="enc2" data-width="100" data-displayInput=false data-cursor=true
                     data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
             </div>
