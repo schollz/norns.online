@@ -1,6 +1,6 @@
 # norns.online
 
-![111](https://user-images.githubusercontent.com/6550035/99736745-c470c180-2a7b-11eb-80d4-e9b2a02167cf.png)
+![111](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/online2.PNG)
 
 online [norns](https://monome.org/docs/norns/) on [norns.online](https://norns.online).
 
