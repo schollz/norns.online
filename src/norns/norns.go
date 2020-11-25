@@ -438,6 +438,7 @@ func (n *Norns) processAudio(sender, audioData string) (err error) {
 
 	if time.Since(n.timeSinceAudio).Seconds() > float64(n.PacketSize) {
 		// buffer for packet size
+		logger.Debugf("buffering for %d ms", n.BufferTime)
 		time.Sleep(time.Duration(n.BufferTime) * time.Millisecond)
 	}
 	n.timeSinceAudio = time.Now()
