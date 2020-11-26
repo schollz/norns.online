@@ -1,11 +1,10 @@
 <html>
 
 <head>
+    <meta charset="UTF-8">
     <title>ᑎOᖇᑎᔕ ||| OᑎᒪIᑎE</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-    @font-face {
+        @font-face {
     font-family: 'uni 05_53';
     font-style: normal;
     font-weight: 400;
@@ -38,6 +37,9 @@ body {
 color: #fff  ;
         }
 
+li {
+    font-size: 0.8em;
+}
         #playerdiv {
             padding-top: 10px
         }
@@ -190,14 +192,22 @@ color: #fff  ;
             <div id="playerdiv"></div>
         </div>
         <div class="hints" style="padding-top: 2em;">
-            <p>norns.online: share your <a href="https://monome.org/">norns</a> screen and audio.</p>
-            <details style="padding-top: 0.5em;"><summary>hints</summary>
-            <ul>
-                <li>- k1 latches (when purple) so you can use it as a shift.</li>
-                <li>- double click k1 to get into/out-of menu (if menu enabled).</li>
-                <li>- double click k1 if inputs aren't working.</li>
-                <li>- don't hear audio? click one of the buttons above (if audio enabled).</li>
-            </ul>
+            <p>norns.online: share your <a href="https://monome.org/" target="_blank">norns</a> screen and audio.</p>
+            <div id="gettingstarted" class="hidden" style="font-size:1.0em;">to get started:
+                <ul>
+                    <li>- <a href="https://monome.org/docs/norns/maiden/" target="_blank">download norns.online</a> from maiden.</li>
+                    <li>- open the script and press K3 to go online.</li>
+                    <li>- open this webpage to norns.online/&lt;yourname&gt;.</li>
+                </ul>
+            </div>
+            <details style="padding-top: 0.5em;" class="hidden" id="hints">
+                <summary><span style="position:relative;bottom:3px; left:-2px">hints</span></summary>
+                <ul style="font-size:1em;">
+                    <li>- k1 latches (when purple) so you can use it as a shift.</li>
+                    <li>- double click k1 to get into/out-of menu (if menu enabled).</li>
+                    <li>- double click k1 if inputs aren't working.</li>
+                    <li id="audioenabled" class="hidden">- don't hear audio? click one of the buttons above (if audio enabled).</li>
+                </ul>
             </details>
         </div>
     </div>
@@ -209,10 +219,16 @@ color: #fff  ;
     var currentPlayingFinished = 0;
     var socket;
     var norns_id = window.location.pathname.substr(1);
+    norns_id = norns_id.replace('static/', '')
     if (norns_id.length < 1) {
         norns_id = window.location.hash.substr(1);
     }
-    console.log(norns_id);
+    console.log(`norns_id: "${norns_id}"`);
+    if (norns_id == "") {
+        $("#gettingstarted").removeClass("hidden");
+    } else {
+        $("#hints").removeClass("hidden");
+    }
 
     function randomString(length) {
         var result = '';
@@ -418,6 +434,7 @@ color: #fff  ;
                 )
             }
             if ('audio' in data) {
+                $("#audioenabled").removeClass("hidden");
                 playMP3(data['audio'])
             }
             if ('twitch' in data) {
