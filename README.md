@@ -2,7 +2,7 @@
 
 ![111](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/online2.PNG)
 
-https://vimeo.com/484174036
+https://vimeo.com/484176216
 
 **connect.** *norns.online* a both a script and a website and they are connected..
 
