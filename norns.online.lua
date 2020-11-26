@@ -20,7 +20,7 @@ CONFIG_FILE=CODE_DIR.."config.json"
 KILL_FILE="/dev/shm/norns.online.kill.sh"
 START_FILE=CODE_DIR.."start.sh"
 SERVER_FILE=CODE_DIR.."norns.online"
-LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v0.2.0/norns.online"
+LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v1.0.0/norns.online"
 
 -- default settings
 settings={
