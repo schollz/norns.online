@@ -282,7 +282,7 @@ li {
                     consecutive_turns = consecutive_turns + dif;
                     return
                 }
-		console.log(consecutive_turns);
+		//console.log(consecutive_turns);
                 var multiplier = 1;
                 if (Math.abs(consecutive_turns) > 25) {
                     multiplier = 3;
@@ -296,7 +296,7 @@ li {
 
                 last_time = currentTime()
                     z = 1 * multiplier;
-                    console.log(i + " decreased " + z)
+                    //console.log(i + " decreased " + z)
                 if (norns_id.length > 0 && socket != null) {
                     socket.send(JSON.stringify({
                         "recipient": norns_id,
@@ -330,14 +330,14 @@ li {
                 }
             },
             change: function() {
-                console.log(i + " clicked")
+                //console.log(i + " clicked")
                 value = 1 - value;
                 $("#k" + i).toggleClass("latched")
                 if (currentTime() - last_time < 500 && value == 0) {
-                    console.log("fast click!")
+                    //console.log("fast click!")
                     fast_clicked = true
                 } else {
-                    console.log("slow click")
+                    //console.log("slow click")
                     fast_clicked = false
                 }
                 last_time = currentTime();
@@ -411,7 +411,7 @@ li {
             source.connect(audioCtx.destination);
 
             // start the source playing
-            console.log(currentPlayingFinished);
+            //console.log(currentPlayingFinished);
             if (currentPlayingFinished <= audioCtx.currentTime) {
                 currentPlayingFinished = audioCtx.currentTime + 1
             }
