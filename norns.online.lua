@@ -1,17 +1,15 @@
--- norns.online v0.2.0
+-- norns.online v1.0.0
 -- online norns on norns.online
 --
 -- llllllll.co/t/norns-online
--- note: this script opens your
--- norns to to the net.
--- (ab)use with caution.
+-- caution: this script opens
+-- your norns to to the net.
+--
 --    ▼ instructions below ▼
 -- K3 toggles internet
 -- K2 changes name
 -- K1+K2 updates
 -- more params in global menu
--- if you enable audio, make sure
--- to restart norns.online
 
 local json=include("lib/json")
 local textentry=require 'textentry'
@@ -46,7 +44,7 @@ ui=1
 uishift=false
 params:add_separator("norns.online")
 function init()
-  startup = true
+  startup=true
   params:add_option("allowmenu","menu",{"disabled","enabled"},2)
   params:set_action("allowmenu",function(v)
     settings.allowmenu=v==2
@@ -88,7 +86,7 @@ function init()
     write_settings()
     redraw()
   end)
-
+  
   params:add_control("packetsize","packet size",controlspec.new(1,30,'lin',1,2,'s'))
   params:set_action("packetsize",function(v)
     if not startup then os.execute(KILL_FILE) end
@@ -105,7 +103,7 @@ function init()
     write_settings()
     redraw()
   end)
-
+  
   params:add_text("roomname","room name","llllllll")
   params:set_action("roomname",function(v)
     if not startup then os.execute(KILL_FILE) end
@@ -113,7 +111,7 @@ function init()
     write_settings()
     redraw()
   end)
-
+  
   params:add_control("roomsize","room size",controlspec.new(1,3,'lin',1,1,'other'))
   params:set_action("roomsize",function(v)
     if not startup then os.execute(KILL_FILE) end
@@ -121,7 +119,7 @@ function init()
     write_settings()
     redraw()
   end)
-
+  
   params:add_control("buffertime","room buffer time",controlspec.new(100,3000,'lin',100,2000,'ms'))
   params:set_action("buffertime",function(v)
     if not startup then os.execute(KILL_FILE) end
@@ -129,7 +127,7 @@ function init()
     write_settings()
     redraw()
   end)
-
+  
   params:add_control("roomvolume","room vol",controlspec.new(0,100,'lin',5,80,''))
   params:set_action("roomvolume",function(x)
     settings.roomvolume=x
@@ -141,7 +139,7 @@ function init()
   load_settings()
   write_settings()
   redraw()
-  startup = false
+  startup=false
 end
 
 function key(n,z)
@@ -358,9 +356,9 @@ function install_prereqs()
   end
   missingffmpeg=string.match(os.capture("ffmpeg --help 2>&1"),"not found")
   missingmpv=string.match(os.capture("mpv --version 2>&1"),"not found")
-  if missingffmpeg and missingmpv then 
+  if missingffmpeg and missingmpv then
     show_message("still missing mpv and ffmpeg")
-  elseif missingmpv then 
+  elseif missingmpv then
     show_message("still missing mpv")
   elseif missingffmpeg then
     show_message("still missing ffmpeg")
