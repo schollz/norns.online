@@ -4,7 +4,7 @@
 
 https://vimeo.com/484176216
 
-**connect.** *norns.online* a both a script and a website and they are connected..
+**connect.** *norns.online* a both a script and a website.
 
 **listen and visualize.** after running, *norns.online* will run in the background. then the audio+visuals of any script will then be beamed to `norns.online/<yourname>`.
 
