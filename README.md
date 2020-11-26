@@ -2,17 +2,23 @@
 
 ![111](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/online2.PNG)
 
-online [norns](https://monome.org/docs/norns/) on [norns.online](https://norns.online).
+https://vimeo.com/484174036
 
-**control your norns** and listen to it from the internet. just open a browser to `norns.online/<yourname>` and you'll see and hear your norns!
+**connect.** *norns.online* a both a script and a website and they are connected..
 
-**share audio** with other norns around the world. currently default the time-lag between browsers/norns is ~4 seconds (so its as if you are socially distanced by 1/4 mile).
+**listen and visualize.** after running, *norns.online* will run in the background. then the audio+visuals of any script will then be beamed to `norns.online/<yourname>`.
 
-what was <a href="https://llllllll.co/t/norns-online-crowdsource-your-norns/38492">just an idea</a> is now a reality.
+**guide.** at the website you have the same inputs as your norns to provide guidance and access, remotely.
 
-future directions:
+**collaborate.** when online, you can connect to other norns via "rooms." anyone in a "room" shares live audio. the latency is ~4 seconds, so you can imagine that you all are playing together while being socially distanced by a distance of a quarter-mile.
+
+_note:_ the script requires `ffmpeg` and `mpv`, which are automatically installed if you use this program (~300 MB).
+
+**future directions:**
 
 - fix all the 🐛🐛🐛
+- audio sharing sync (very hard)
+- audio sharing as input to softcut/engine
 
 ### Requirements
 
@@ -26,13 +32,13 @@ future directions:
 - K1+K2 updates
 - more params in global menu
 
-_note:_ this app requires `ffmpeg` and `mpv`, which are automatically installed if you use this program.
+
 
 ### quick start
 
 ![parameters for online](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/online.png)
 
-- press K3. open browser to `norns.online/<yourname>`. if this is the first time running, wait for the `mpv` and `ffmpeg` programs to be installed.
+- press K3. open browser to `norns.online/<yourname>`. if this is the first time running, wait for the `mpv` and `ffmpeg` programs to be installed (~300 MB).
 - use norns normally, your norns will stay online in the background.
 
 ### norns↔norns audio sharing
@@ -44,10 +50,10 @@ _note:_ this app requires `ffmpeg` and `mpv`, which are automatically installed 
 - go to main screen and press K3 to go online. you should now be sharing audio with any other norns in that room.
 - adjust "`room vol`" to change the level of incoming audio.
 
-### other uses 
+### uses
 
 - play with other norns 
-- norns as an internet radio
+- stream an internet radio from norns
 - twitch plays norns (params -> twitch to enable livestream)
 - control multiple norns simultaneously
 - make demos
@@ -67,7 +73,7 @@ a pre-compiled <a href="https://github.com/kmatheussen/jack_capture"><code>jack_
 </details>
 
 <details><summary><strong>is this secure?</strong></summary>
-if you are online, you have <a href="https://en.wikipedia.org/wiki/Security_through_obscurity">security through obscurity</a>. that means that <em>anyone</em> with the url <code>norns.online/&lt;yourname&gt;</code> can access your norns so you can make <code>&lt;yourname&gt;</code> complicated to be more secure. code injection is not possible, as i took precautions to make sure the inputs are sanitized on the norns so that only <code>enc()</code> and <code>key()</code> and <code>_menu.setmode()</code> functions are available. but, even with these functions someone could reset your norns / make some havoc. if this concerns you, don&#39;t share <code>&lt;yourname&gt;</code> with anyone or avoid using this script entirely.
+if you are online, you have <a href="https://en.wikipedia.org/wiki/Security_through_obscurity">security through obscurity</a> (weak security). that means that <em>anyone</em> with the url <code>norns.online/&lt;yourname&gt;</code> can access your norns so you can make <code>&lt;yourname&gt;</code> complicated to be more secure. code injection is not possible, as i took precautions to make sure the inputs are sanitized on the norns so that only <code>enc()</code> and <code>key()</code> and <code>_menu.setmode()</code> functions are available. but, even with these functions someone could reset your norns / make some havoc. if this concerns you, don&#39;t share <code>&lt;yourname&gt;</code> with anyone or avoid using this script entirely.
 </details>
 
 
@@ -76,7 +82,7 @@ if audio is enabled, a fair amount. the norns sends out screenshots periodically
 </details>
 
 <details><summary><strong>how much cpu does this use?</strong></summary>
-this uses about ~4% of the CPU for capturing and sending audio data. the main usage comes from screenshots, which cost about 2-3% cpu every fps. that means if you run at max of 12 fps you will be using at least %30-40 of cpu.
+on a raspberry pi 3b+ this uses about ~4% total CPU for capturing and sending audio data. a lot of usage will come from screenshots, which will use about 2-3% cpu every fps. that means if you run at max of 12 fps you will be using at least 30-40% of cpu for sending screenshots.
 </details>
 
 
