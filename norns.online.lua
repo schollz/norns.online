@@ -74,7 +74,7 @@ function init()
     write_settings()
   end)
   
-  params:add_control("framerate","frame rate",controlspec.new(0,15,'lin',1,4,'fps'))
+  params:add_control("framerate","max frame rate",controlspec.new(0,15,'lin',1,4,'fps'))
   params:set_action("framerate",function(v)
     settings.framerate=v
     write_settings()

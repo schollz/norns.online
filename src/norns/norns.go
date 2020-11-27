@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"image"
-	"image/color"
-	"image/png"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -43,15 +41,15 @@ type Norns struct {
 	RoomSize    int    `json:"roomsize"`
 	RoomVolume  int    `json:"roomvolume"`
 
-	srcbkg         image.Image
-	configFile     string
-	configFileHash []byte
-	currentScreen  []byte
-	active         bool
-	inMenu         bool
-	norns          *websocket.Conn
-	ws             *websocket.Conn
-	incomingAudio  chan string
+	srcbkg            image.Image
+	configFile        string
+	configFileHash    []byte
+	currentScreenHash []byte
+	active            bool
+	inMenu            bool
+	norns             *websocket.Conn
+	ws                *websocket.Conn
+	incomingAudio     chan string
 
 	mpvs           map[string]Incoming // map sender to filename
 	timeSinceAudio time.Time
@@ -227,6 +225,15 @@ func (n *Norns) connectToWebsockets() (err error) {
 			n.Lock()
 			err = n.norns.WriteMessage(websocket.TextMessage, []byte(cmd+"\n"))
 			n.Unlock()
+			if m.Kind == "key" {
+				go func() {
+					// double check menu mode
+					time.Sleep(100 * time.Millisecond)
+					n.Lock()
+					n.norns.WriteMessage(websocket.TextMessage, []byte(`"isMenu:"..tostring(_menu.mode)`+"\n"))
+					n.Unlock()
+				}()
+			}
 			if err != nil {
 				logger.Error(err)
 				continue
@@ -317,6 +324,28 @@ func (n *Norns) Run() (err error) {
 	}
 	defer n.norns.Close()
 
+	go func() {
+		for {
+			_, p, errm := n.norns.ReadMessage()
+			if errm != nil {
+				break
+			}
+			msg := strings.TrimSpace(string(p))
+			if msg == "<ok>" || msg == "" {
+				continue
+			}
+			logger.Debugf("msg: '%s'", msg)
+			if strings.HasPrefix(msg, "isMenu") {
+				n.inMenu = msg == "isMenu:true"
+			}
+		}
+	}()
+
+	time.Sleep(50 * time.Millisecond)
+	n.Lock()
+	n.norns.WriteMessage(websocket.TextMessage, []byte(`"isMenu:"..tostring(_menu.mode)`+"\n"))
+	n.Unlock()
+
 	done := make(chan struct{})
 
 	logger.Info("connected")
@@ -363,7 +392,9 @@ func (n *Norns) Run() (err error) {
 			}
 		case _ = <-ticker.C:
 			n.Lock()
-			err = n.norns.WriteMessage(websocket.TextMessage, []byte(`_norns.screen_export_png("/dev/shm/norns.online.screenshot.png")`+"\n"))
+			cmd := `_norns.screen_export_png("/dev/shm/norns.online.screenshot.png")`
+			// cmd = `ff=io.open("/dev/shm/norns.online.screenshot","w"); ff:write(screen.peek(0,0,128,64)); ff:close()`
+			err = n.norns.WriteMessage(websocket.TextMessage, []byte(cmd+"\n"))
 			n.Unlock()
 			if err != nil {
 				logger.Debugf("write: %w", err)
@@ -395,6 +426,12 @@ func (n *Norns) Run() (err error) {
 }
 
 func (n *Norns) updateClient() (err error) {
+	filehash, err := utils.MD5HashFile("/dev/shm/norns.online.screenshot.png")
+	if err != nil || bytes.Equal(filehash, n.currentScreenHash) {
+		return
+	}
+	n.currentScreenHash = filehash
+
 	// open dumped image
 	src, err := imaging.Open("/dev/shm/norns.online.screenshot.png")
 	if err != nil {
@@ -414,51 +451,6 @@ func (n *Norns) updateClient() (err error) {
 		return
 	}
 	base64data := base64.StdEncoding.EncodeToString(b)
-
-	tsent := time.Now()
-	if n.ws != nil {
-		n.Lock()
-		n.ws.WriteJSON(models.Message{
-			Img:    base64data,
-			Twitch: n.AllowTwitch,
-		})
-		n.Unlock()
-	}
-	logger.Tracef("sent data in %s", time.Since(tsent))
-	return
-}
-
-func (n *Norns) updateClient2() (err error) {
-	// open dumped image
-	b, err := ioutil.ReadFile("/dev/shm/norns.online.screenshot")
-	if err != nil {
-		return
-	}
-	if bytes.Equal(b, n.currentScreen) {
-		return
-	}
-	logger.Debug("got new screenshot!")
-	n.currentScreen = b
-
-	i := 0
-	src := image.NewNRGBA(image.Rectangle{image.Point{0, 0}, image.Point{128, 64}})
-	for y := src.Bounds().Min.Y; y < src.Bounds().Max.Y; y++ {
-		for x := src.Bounds().Min.X; x < src.Bounds().Max.X; x++ {
-			src.Set(x, y, color.RGBA{uint8(b[i]) * 17, uint8(b[i]) * 17, uint8(b[i]) * 17, 255})
-			i++
-		}
-	}
-
-	src = imaging.Resize(src, IMAGE_FINAL_WIDTH, 0, imaging.NearestNeighbor) // full width is 550, padding is added
-	src = imaging.AdjustGamma(src, 1.25)
-	src = imaging.OverlayCenter(n.srcbkg, src, 1)
-	buf := new(bytes.Buffer)
-	err = png.Encode(buf, src)
-	if err != nil {
-		return
-	}
-
-	base64data := base64.StdEncoding.EncodeToString(buf.Bytes())
 
 	tsent := time.Now()
 	if n.ws != nil {
