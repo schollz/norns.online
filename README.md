@@ -6,11 +6,11 @@ https://vimeo.com/484176216
 
 **connect.** *norns.online* a both a script and a website.
 
-**listen and visualize.** after running, *norns.online* will run in the background. then the audio+visuals of any script will then be beamed to `norns.online/<yourname>`.
+**listen and visualize.** after starting, *norns.online* will run in the background letting you run any other script. all norns audio+visuals will then be beamed to `norns.online/<yourname>`.
 
-**guide.** at the website you have the same inputs as your norns to provide guidance and access, remotely.
+**guide.** the website has the same inputs as your norns to provide remote guidance and access.
 
-**collaborate.** when online, you can connect to other norns via "rooms." anyone in a "room" shares live audio. the latency is ~4 seconds, so you can imagine that you all are playing together while being socially distanced by a distance of a quarter-mile.
+**collaborate.** connect to other norns via "*rooms*." anyone in a "room" shares live audio. the latency is ~4 seconds, so you can imagine that you all are playing together while being socially distanced by a distance of a quarter-mile.
 
 _note:_ the script requires `ffmpeg` and `mpv`, which are automatically installed if you use this program (~300 MB).
 
@@ -33,7 +33,6 @@ _note:_ the script requires `ffmpeg` and `mpv`, which are automatically installe
 - more params in global menu
 
 
-
 ### quick start
 
 ![parameters for online](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/online.png)
@@ -52,19 +51,18 @@ _note:_ the script requires `ffmpeg` and `mpv`, which are automatically installe
 
 ### uses
 
-- play with other norns 
-- stream an internet radio from norns
-- twitch plays norns (params -> twitch to enable livestream)
-- control multiple norns simultaneously
-- make demos
-- download screenshots
+- make an internet radio from your norns
+- collaborate between two norns
+- twitch plays norns
+- make demos (screen capture `norns.online`)
+- download screenshots (right-click image at `norns.online` to download)
 - tech support other people's norns
 - !?!?!?
 
 ### faq
 
 <details><summary><strong>how does the norns.online webpage work?</strong></summary>
-norns runs a service that sends screenshots to <code>norns.online/&lt;yourname&gt;</code>. the website at <code>norns.online/&lt;yourname&gt;</code> sends inputs back to norns. norns listens to to inputs and runs the acceptable ones (adjustable with parameters). if enabled, norns will also stream packets of audio and send those to the website. the website will buffer them and play them so anyone with your address can hear your norns.
+norns runs a service that sends screenshot updates to <code>norns.online/&lt;yourname&gt;</code>. the website at <code>norns.online/&lt;yourname&gt;</code> sends inputs back to norns. norns listens to to inputs and runs the acceptable ones (adjustable with parameters). if enabled, norns will also stream packets of audio and send those to the website. the website will buffer them and play them so anyone with your address can hear your norns.
 </details>
 
 
