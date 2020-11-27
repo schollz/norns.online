@@ -457,6 +457,10 @@ ul {
                 "name": "browser" + randomString(5),
                 "group": norns_id,
             }))
+            socket.send(JSON.stringify({
+                "kind": "hello",
+                "recipient": norns_id,
+            }))
         };
         const socketErrorListener = (e) => {
             console.error(e);
