@@ -82,7 +82,7 @@ if audio is enabled, a fair amount. the norns sends out screenshots periodically
 </details>
 
 <details><summary><strong>how much cpu does this use?</strong></summary>
-on a raspberry pi 3b+ this uses about ~4% total CPU for capturing and sending audio data. a lot of usage will come from screenshots, which will use about 2-3% cpu every fps. that means if you run at max of 12 fps you will be using at least 30-40% of cpu for sending screenshots.
+not too much. on a raspberry pi 3b+ this uses about ~4% total CPU for capturing and sending audio data. screenshots also take cpu and higher fps takes more. the exact fps depends on the max fps (set in params) and how fast the screen changes (only updated screens are sent). at max it might take up to 30% of the cpu (15 fps!), but usually its 1-15%.
 </details>
 
 

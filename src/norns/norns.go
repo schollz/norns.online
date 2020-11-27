@@ -95,7 +95,7 @@ rm -- "$0"
 	n.KeepAwake = false
 	n.FrameRate = 4
 	n.srcbkg, err = imaging.Open("/home/we/dust/code/norns.online/static/img/background.png")
-	n.srcbkg = imaging.Resize(n.srcbkg, IMAGE_FINAL_WIDTH, 0, imaging.NearestNeighbor)
+	n.srcbkg = imaging.Resize(n.srcbkg, IMAGE_FINAL_WIDTH+30, 0, imaging.NearestNeighbor)
 
 	n.incomingAudio = make(chan string, 300)
 	if err != nil {
