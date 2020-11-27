@@ -186,18 +186,18 @@ function redraw()
     screen.move(64,36)
     screen.font_face(3)
     screen.font_size(12)
-    screen.text_center("norns.online/")
+    screen.text_center("at norns.online/")
     
     screen.level(15)
     screen.move(64,58)
     screen.font_face(7)
     screen.font_size(24)
-    if string.len(settings.name)>20 then
+    if string.len(settings.name)>16 then
       screen.move(64,53)
       screen.font_size(12)
     elseif string.len(settings.name)>10 then
-      screen.move(64,53)
-      screen.font_size(14)
+      screen.move(64,58)
+      screen.font_size(18)
     end
     screen.text_center(settings.name)
   else

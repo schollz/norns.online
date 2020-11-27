@@ -402,7 +402,7 @@ func (n *Norns) Run() (err error) {
 			}
 			time.Sleep(10 * time.Millisecond)
 
-			go n.updateClient()
+			go n.updateClient(false)
 		case <-interrupt:
 			logger.Info("interrupt - quitting gracefully")
 
@@ -425,9 +425,9 @@ func (n *Norns) Run() (err error) {
 	return
 }
 
-func (n *Norns) updateClient() (err error) {
+func (n *Norns) updateClient(force bool) (err error) {
 	filehash, err := utils.MD5HashFile("/dev/shm/norns.online.screenshot.png")
-	if err != nil || bytes.Equal(filehash, n.currentScreenHash) {
+	if err != nil || (bytes.Equal(filehash, n.currentScreenHash) && force == false) {
 		return
 	}
 	n.currentScreenHash = filehash
@@ -495,9 +495,16 @@ func (n *Norns) processMessage(m models.Message) (cmd string, err error) {
 				logger.Error(errF)
 			}
 		}(m.Sender, m.Audio)
-	}
+	} 
 	if n.inMenu {
 		cmd = "_menu." + cmd
+	}
+	if m.Kind == "hello" {
+		cmd = `_norns.screen_export_png("/dev/shm/norns.online.screenshot.png")`
+		go func() {
+			time.Sleep(100*time.Millisecond)
+			n.updateClient(true)
+		}()
 	}
 
 	return
