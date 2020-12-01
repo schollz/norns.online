@@ -5,3 +5,10 @@ Caddyfile
 start.sh
 screenshot.png 
 screenshot2.png
+*.ogg
+*.wav
+*.mp3
+*.flac
+*.mkv
+.vscode/
+*.exe

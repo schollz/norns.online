@@ -2,18 +2,53 @@ package utils
 
 import (
 	"crypto/md5"
+	"crypto/sha256"
+	"fmt"
 	"io"
 	"math/rand"
 	"os"
 	"os/exec"
 )
 
+// CopyMax copies only the maxBytes and then returns an error if it
+// copies equal to or greater than maxBytes (meaning that it did not
+// complete the copy).
+func CopyMax(dst io.Writer, src io.Reader, maxBytes int64) (n int64, err error) {
+	n, err = io.CopyN(dst, src, maxBytes)
+	if err != nil && err != io.EOF {
+		return
+	}
+
+	if n >= maxBytes {
+		err = fmt.Errorf("upload exceeds maximum size")
+	} else {
+		err = nil
+	}
+	return
+}
+
+func SHA256(fname string) (hash string, err error) {
+	f, err := os.Open(fname)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err = io.Copy(h, f); err != nil {
+		return
+	}
+
+	hash = fmt.Sprintf("%x", h.Sum(nil))
+	return
+}
+
 // ConvertAudio converts to something else and removes the original
 func ConvertAudio(fname string) (newfname string, err error) {
 	// newfname = fname
 	// return
 	newfname = fname + ".ogg"
-	cmd := exec.Command("ffmpeg", "-i", fname,"-codec:a","libvorbis","-qscale:a","7",newfname)
+	cmd := exec.Command("ffmpeg", "-i", fname, "-codec:a", "libvorbis", "-qscale:a", "7", newfname)
 	// newfname = fname + ".ogg"
 	// cmd := exec.Command("ffmpeg", "-i", fname,"-codec:a","libvorbis","-qscale:a","7",newfname)
 	//newfname = fname + ".mp3"
