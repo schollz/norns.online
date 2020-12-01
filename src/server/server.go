@@ -53,8 +53,7 @@ type Client struct {
 
 func Run() (err error) {
 	sockets = make(map[string]Client)
-	os.MkdirAll("public/keys", os.ModePerm)
-	os.MkdirAll("public/uploads", os.ModePerm)
+	os.MkdirAll("share/keys", os.ModePerm)
 	port := 8098
 	log.Infof("listening on :%d", port)
 	http.HandleFunc("/", handler)
@@ -89,11 +88,11 @@ func handle(w http.ResponseWriter, r *http.Request) (err error) {
 	} else if strings.HasPrefix(r.URL.Path, "/directory.json") {
 		// this is called from curl/wget upload
 		return handleDirectory(w, r)
-	} else if strings.HasPrefix(r.URL.Path, "/public") {
+	} else if strings.HasPrefix(r.URL.Path, "/share") {
 		if strings.HasSuffix(r.URL.Path, "/") {
-			s := strings.TrimPrefix(r.URL.Path, "/public/")
+			s := strings.TrimPrefix(r.URL.Path, "/share/")
 			if s == "" {
-				s = "norns.online/public"
+				s = "norns.online/share"
 			}
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			io.WriteString(w, `<style>
@@ -109,18 +108,21 @@ a {
 a:hover {
     color: 9a9f9b;
 }
-body{padding:1em;margin:auto;max-width:800px;color:#fff; font-family: 'uni 05_53', arial; background-color: #222222;font-size:3em;font-weight:bold;</style><pre style="margin-bottom:-1em;">
+pre {
+font-family: 'uni 05_53', arial;
+}
+body{padding:1em;margin:auto;max-width:800px;color:#fff; font-family: 'uni 05_53', arial; background-color: #222222;font-size:2em;font-weight:bold;</style><pre style="margin-bottom:-1em;">
 `+s+`
 `)
-			if !strings.HasSuffix(r.URL.Path, "/public/") {
+			if !strings.HasSuffix(r.URL.Path, "/share/") {
 				io.WriteString(w, `<a href="../">..</a>
 `)
 			}
 			io.WriteString(w, `</pre>`)
 		}
 		http.FileServer(http.Dir(".")).ServeHTTP(w, r)
-	} else if strings.HasPrefix(r.URL.Path, "/public") {
-		http.Redirect(w, r, "/public/", 302)
+	} else if strings.HasPrefix(r.URL.Path, "/share") {
+		http.Redirect(w, r, "/share/", 302)
 	} else if r.URL.Path == "/ws" {
 		err = handleWebsocket(w, r)
 		log.Infof("ws: %w", err)
@@ -185,7 +187,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request) (err error) {
 	}
 
 	// make sure username is not taken
-	if _, err = os.Stat("public/keys/" + username); !os.IsNotExist(err) {
+	if _, err = os.Stat("share/keys/" + username); !os.IsNotExist(err) {
 		err = fmt.Errorf("username taken")
 		return
 	}
@@ -217,7 +219,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request) (err error) {
 	}
 
 	// add to the database
-	err = os.Rename(fname, "public/keys/"+username)
+	err = os.Rename(fname, "share/keys/"+username)
 	if err == nil {
 		w.Write([]byte("registration OK"))
 	}
@@ -241,7 +243,7 @@ func handleUnregister(w http.ResponseWriter, r *http.Request) (err error) {
 	}
 
 	// make sure username exists
-	if _, err = os.Stat("public/keys/" + username); os.IsNotExist(err) {
+	if _, err = os.Stat("share/keys/" + username); os.IsNotExist(err) {
 		err = nil
 		return
 	}
@@ -256,7 +258,7 @@ func handleUnregister(w http.ResponseWriter, r *http.Request) (err error) {
 	log.Debugf("signature: %+v", signature)
 
 	// read in the public key
-	pubkey, err := ioutil.ReadFile("public/keys/" + username)
+	pubkey, err := ioutil.ReadFile("share/keys/" + username)
 	if err != nil {
 		return
 	}
@@ -270,7 +272,7 @@ func handleUnregister(w http.ResponseWriter, r *http.Request) (err error) {
 	}
 
 	// remove to the database
-	err = os.Remove("public/keys/" + username)
+	err = os.Remove("share/keys/" + username)
 	if err == nil {
 		w.Write([]byte("...unregistration OK"))
 	}
@@ -289,7 +291,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) (err error) {
 	}
 
 	// make sure username exists
-	if _, err = os.Stat("public/keys/" + m.Username); os.IsNotExist(err) {
+	if _, err = os.Stat("share/keys/" + m.Username); os.IsNotExist(err) {
 		err = fmt.Errorf("need to register first")
 		return
 	}
@@ -370,7 +372,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) (err error) {
 	}
 
 	// verify the signature of the hash of data
-	keyb, err := ioutil.ReadFile("public/keys/" + m.Username)
+	keyb, err := ioutil.ReadFile("share/keys/" + m.Username)
 	if err != nil {
 		log.Error(err)
 		return
@@ -383,14 +385,14 @@ func handleUpload(w http.ResponseWriter, r *http.Request) (err error) {
 	}
 
 	// everything is good write it out
-	os.MkdirAll(path.Join("public", "uploads", m.Type, m.Username, m.DataName), os.ModePerm)
-	err = os.Rename(fname, path.Join("public", "uploads", m.Type, m.Username, m.DataName, m.Files[0].Name))
+	os.MkdirAll(path.Join("share", m.Type, m.Username, m.DataName), os.ModePerm)
+	err = os.Rename(fname, path.Join("share", m.Type, m.Username, m.DataName, m.Files[0].Name))
 	if err != nil {
 		log.Error(err)
 		return
 	}
 	// check if metadata exists, and if it does combine meta datas
-	metadatajson := path.Join("public", "uploads", m.Type, m.Username, m.DataName, "metadata.json")
+	metadatajson := path.Join("share", m.Type, m.Username, m.DataName, "metadata.json")
 	bcurrent, err := ioutil.ReadFile(metadatajson)
 	if err == nil {
 		var mcurrent Metadata
