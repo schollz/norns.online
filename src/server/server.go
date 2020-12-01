@@ -378,7 +378,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) (err error) {
 		log.Error(err)
 		return
 	}
-	err = auth.VerifyString(string(keyb), m.Files[0].Hash, m.Files[0].Signature)
+	err = auth.VerifyString(string(keyb), m.DataName+m.Files[0].Name+m.Files[0].TargetDir+m.Files[0].Hash, m.Files[0].Signature)
 	if err != nil {
 		log.Error(err)
 		err = fmt.Errorf("could not verify signature")
