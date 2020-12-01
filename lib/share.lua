@@ -238,4 +238,4 @@ function file_exists(fname)
 end
 
 
-return shar
+return share
