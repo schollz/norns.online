@@ -34,11 +34,18 @@ _note:_ the script requires `ffmpeg` and `mpv`, which are automatically installe
 - K1+K2 updates
 - more params in global menu
 
+### share tapes and download script saves
 
-### quick start
+- open the *norns.online/share* script
+- register if you haven't already.
+- download or upload tapes, and download script saves
+- _note:_ uploading script saves must be done from a script's `SHARE` parameter
+
+### beam your norns
 
 ![parameters for online](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/online.png)
 
+- open the *norns.online* script
 - press K3. open browser to `norns.online/<yourname>`. if this is the first time running, wait for the `mpv` and `ffmpeg` programs to be installed (~300 MB).
 - use norns normally, your norns will stay online in the background.
 
@@ -46,6 +53,7 @@ _note:_ the script requires `ffmpeg` and `mpv`, which are automatically installe
 
 ![parameters for sharing](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/room_sharing.png)
 
+- open the *norns.online* script
 - go to gloal parameters and make sure both "`send audio`" and "`allow rooms`" are set to "`enabled`".
 - change the "`room`" to the room you want to share audio. make sure your norns partner uses the same room.
 - go to main screen and press K3 to go online. you should now be sharing audio with any other norns in that room.
@@ -63,7 +71,7 @@ _note:_ the script requires `ffmpeg` and `mpv`, which are automatically installe
 
 ### faq
 
-<details><summary><strong>how does the norns.online webpage work?</strong></summary>
+<details><summary><strong>how does the norns.online streaming work?</strong></summary>
 norns runs a service that sends screenshot updates to <code>norns.online/&lt;yourname&gt;</code>. the website at <code>norns.online/&lt;yourname&gt;</code> sends inputs back to norns. norns listens to to inputs and runs the acceptable ones (adjustable with parameters). if enabled, norns will also stream packets of audio and send those to the website. the website will buffer them and play them so anyone with your address can hear your norns.
 </details>
 
@@ -72,8 +80,12 @@ norns runs a service that sends screenshot updates to <code>norns.online/&lt;you
 a pre-compiled <a href="https://github.com/kmatheussen/jack_capture"><code>jack_capture</code></a> periodically captures the norns output into 2-second flac files into a <code>/dev/shm</code> temp directory. each new flac packet is immediately sent out via websockets and then deleted. because of buffering, expect a lag of at least 4 seconds. when in a room, audio from other norns is piped into your norns via <code>mpv</code>. the incoming audio from other norns is added at the very end of the signal chain so (currently) it cannot be used as input to norns engines.
 </details>
 
-<details><summary><strong>is this secure?</strong></summary>
+<details><summary><strong>is norns.online secure?</strong></summary>
+<p>
 if you are online, you have <a href="https://en.wikipedia.org/wiki/Security_through_obscurity">security through obscurity</a> (weak security). that means that <em>anyone</em> with the url <code>norns.online/&lt;yourname&gt;</code> can access your norns so you can make <code>&lt;yourname&gt;</code> complicated to be more secure. code injection is not possible, as i took precautions to make sure the inputs are sanitized on the norns so that only <code>enc()</code> and <code>key()</code> and <code>_menu.setmode()</code> functions are available. but, even with these functions someone could reset your norns / make some havoc. if this concerns you, don&#39;t share <code>&lt;yourname&gt;</code> with anyone or avoid using this script entirely.
+</p>
+<p>
+</p>
 </details>
 
 
