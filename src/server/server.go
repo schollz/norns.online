@@ -497,6 +497,15 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 		if err != nil {
 			break
 		}
+		if m.TimeSend {
+			// send back time
+			m.TimeServer = utils.UTCTime()
+			err = c.WriteJSON(m)
+			if err != nil {
+				break
+			}
+			continue
+		}
 		m.Sender = name // update the sender information
 		if m.Audio != "" {
 			log.Debugf("got audio from %s in group %s and room %s", name, group, room)

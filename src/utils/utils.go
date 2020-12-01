@@ -8,7 +8,13 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"time"
 )
+
+func UTCTime() int64 {
+	// javascript: (new Date()).getTime()
+	return time.Now().UTC().UnixNano() / int64(time.Millisecond)
+}
 
 // CopyMax copies only the maxBytes and then returns an error if it
 // copies equal to or greater than maxBytes (meaning that it did not

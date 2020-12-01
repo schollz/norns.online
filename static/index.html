@@ -465,6 +465,11 @@ ul {
                     $("#livestream").addClass("hidden");
                 }
             }
+            if ('timesend' in data) {
+                rtt = (new Date()).getTime() - data['timeclient'];
+                bf = data['timeserver']-data['timeclient'];
+                console.log(`rtt: ${rtt}, bf: ${bf}`);
+            }
         };
         const socketOpenListener = (e) => {
             console.log('Connected');
@@ -476,6 +481,18 @@ ul {
                 "kind": "hello",
                 "recipient": norns_id,
             }))
+            var callCount = 1;
+            var repeater = setInterval(function () {
+              if (callCount < 50) {
+                socket.send(JSON.stringify({
+                    "timesend":true,
+                    "timeclient":(new Date()).getTime(),
+                }))
+                callCount += 1;
+              } else {
+                clearInterval(repeater);
+              }
+            }, 100);
         };
         const socketErrorListener = (e) => {
             console.error(e);

@@ -16,4 +16,8 @@ type Message struct {
 	Twitch    bool   `json:"twitch"`
 	Img       string `json:"img,omitempty"`
 	Audio     string `json:"audio,omitempty"`
+	// timing messages
+	TimeSend   bool  `json:"timesend,omitempty"`
+	TimeClient int64 `json:"timeclient,omitempty"`
+	TimeServer int64 `json:"timeserver,omitempty"`
 }
