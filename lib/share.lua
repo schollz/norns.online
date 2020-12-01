@@ -23,6 +23,10 @@ share.key_established=function()
   return false
 end
 
+share.clean=function()
+  os.remove(datadir.."username")
+end
+
 share.generate_keypair=function(username)
   os.execute("mkdir -p "..datadir)
   os.execute("openssl genrsa -out "..datadir.."key.private 2048")
@@ -55,7 +59,7 @@ share.download=function(datatype,username,dataname)
     os.execute("mkdir -p "..file.targetdir)
     os.execute("mv /dev/shm/"..filename.." "..file.targetdir.."/"..filename)
   end
-  return "..downloaded"
+  return "...downloaded"
 end
 
 share.is_registered=function()

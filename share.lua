@@ -1,12 +1,14 @@
--- norns.online/share v0.0.0
+-- norns.online/share v0.0.1
 --
+-- llllllll.co/t/norns-online
 --
---
---
---
+-- download / upload tapes &
+-- download script dumps
 --
 --    ▼ instructions below ▼
 --
+-- any encode switches
+-- press K3 to activate
 
 local json=include("lib/json")
 local textentry=require 'textentry'
@@ -14,12 +16,20 @@ local fileselect=require 'fileselect'
 local share=include("norns.online/lib/share")
 local textentry=require 'textentry'
 
+virtualdir="/dev/shm/dir.norns.online/"
+datadir="/home/we/dust/data/norns.online/"
 username=""
 uimessage=""
+is_registered=false
 dir={}
 mode=1
-function init()
 
+
+function init()
+  username=share.key_established()
+  if not username then
+    mode=0
+  end
 end
 
 
@@ -27,13 +37,17 @@ function download_callback(path)
   if path=="cancel" then
     do return end
   end
-  p="/dev/shm/share.norns.online/"
-  local path=(path:sub(0,#p)==p) and path:sub(#p+1) or path
+  local path=(path:sub(0,#virtualdir)==virtualdir) and path:sub(#virtualdir+1) or path
   print(path)
   foo=splitstr(path,"/")
   datatype=foo[1]
   username=foo[2]
   dataname=foo[3]
+  if mode==2 then
+    datatype="tape"
+    username=foo[1]
+    dataname=foo[2]
+  end
   uimessage="downloading "..dataname.."..."
   redraw()
   msg=share.download(datatype,username,dataname)
@@ -52,6 +66,20 @@ function upload_callback(path)
   show_message(share.upload("tape",dataname,path,targetdir))
 end
 
+function server_register()
+  if not share.is_registered() then
+    uimessage="registering..."
+    redraw()
+    msg=share.register(x)
+    show_message(msg)
+    if not string.match(msg,"OK") then
+      share.clean()
+    else
+      username=share.key_established()
+    end
+  end
+end
+
 function server_generate_key()
   textentry.enter(function(x)
     if x~=nil then
@@ -61,6 +89,7 @@ function server_generate_key()
       share.generate_keypair(x)
       uimessage=""
       redraw()
+      server_register()
     end
   end,"","enter public name:")
 end
@@ -69,8 +98,17 @@ end
 function key(k,z)
   if z==0 then
     do return end
-  end
-  if k==3 then
+  elseif k==3 and not username then
+    server_generate_key()
+    redraw()
+  elseif k==3 then
+    if not is_registered then
+      is_registered=share.is_registered()
+      if not is_registered then
+        server_register()
+        do return end
+      end
+    end
     print(os.capture("ffmpeg --help 2>&1"))
     missingffmpeg=string.match(os.capture("ffmpeg --help 2>&1"),"not found")
     if missingffmpeg then
@@ -85,22 +123,8 @@ function key(k,z)
       redraw()
     end
     if mode==1 then
-      username=share.key_established()
-      if not username then
-        server_generate_key()
-      else
-        -- upload
-        if not share.is_registered() then
-          uimessage="registering..."
-          redraw()
-          msg=share.register(x)
-          uimessage=""
-          if not string.match(msg,"OK") then
-            do return end
-          end
-        end
-        fileselect.enter("/home/we/dust/audio",upload_callback)
-      end
+      -- upload
+      fileselect.enter("/home/we/dust/audio",upload_callback)
     else
       -- download
       -- make fake folder structure in /dev/shm
@@ -109,19 +133,23 @@ function key(k,z)
       dir=share.directory()
       uimessage=""
       redraw()
-      os.execute("rm -rf /dev/shm/share.norns.online")
+      os.execute("rm -rf "..virtualdir)
       for _,s in ipairs(dir) do
-        tab.print(s)
-        os.execute("mkdir -p /dev/shm/share.norns.online/"..s.type.."/"..s.username)
-        os.execute("touch /dev/shm/share.norns.online/"..s.type.."/"..s.username.."/"..s.dataname)
+        if mode==2 and s.type=="tape" then
+          os.execute("mkdir -p "..virtualdir..s.username)
+          os.execute("touch "..virtualdir..s.username.."/"..s.dataname)
+        elseif mode==3 and s.type~="tape" then
+          os.execute("mkdir -p "..virtualdir..s.type.."/"..s.username)
+          os.execute("touch "..virtualdir..s.type.."/"..s.username.."/"..s.dataname)
+        end
       end
-      fileselect.enter("/dev/shm/share.norns.online/",download_callback)
+      fileselect.enter(virtualdir,download_callback)
     end
   end
 end
 
 function enc(k,z)
-  mode=util.clamp(mode+z,1,2)
+  mode=util.clamp(mode+sign(z),1,3)
   redraw()
 end
 
@@ -129,20 +157,45 @@ end
 function redraw()
   screen.clear()
 
-  screen.move(20,20)
-  if mode==1 then
-    screen.level(15)
+
+  screen.level(4)
+  screen.font_face(3)
+  screen.font_size(12)
+  screen.move(64,10)
+  screen.text_center("norns.online/share")
+  screen.move(64,22)
+  screen.font_size(10)
+  if username then
+    screen.text_center("registered as "..username)
   else
-    screen.level(4)
+    screen.text_center("unregistered")
   end
-  screen.text("upload")
-  if mode==2 then
+
+  -- screen.level(15)
+  -- screen.move(64,50)
+  -- screen.font_face(7)
+  -- screen.font_size(24)
+  -- screen.text_center("register")
+  if not username then
     screen.level(15)
+    screen.move(64,50)
+    screen.font_face(7)
+    screen.font_size(24)
+    screen.text_center("register")
   else
-    screen.level(4)
+    screen.level(15)
+    screen.font_face(7)
+    screen.font_size(16)
+    screen.move(64,50)
+    if mode==1 then
+      screen.text_center("share tape")
+    elseif mode==2 then
+      screen.text_center("download tape")
+    elseif mode==3 then
+      screen.text_center("download script")
+    end
   end
-  screen.move(20,40)
-  screen.text("download")
+
 
   screen.font_face(1)
   screen.font_size(8)
