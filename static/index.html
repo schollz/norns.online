@@ -506,7 +506,7 @@ ul {
             }))
             var callCount = 1;
             var repeater = setInterval(function () {
-              if (callCount < 100) {
+              if (callCount < 10) {
                 socket.send(JSON.stringify({
                     "timesend":true,
                     "timeclient":(new Date()).getTime()+getAvg(timeAdjusts),
@@ -515,7 +515,7 @@ ul {
               } else {
                 clearInterval(repeater);
               }
-            }, 100);
+            }, 1000);
         };
         const socketErrorListener = (e) => {
             console.error(e);
