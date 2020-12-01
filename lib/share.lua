@@ -1,9 +1,9 @@
 -- share.lua
 local share={debug=true}
-local json=include("share.norns.online/lib/json")
+local json=include("norns.online/lib/json")
 
-datadir = "/home/we/dust/data/share.norns.online/"
-server_name = "142.93.177.120:8333"
+datadir = "/home/we/dust/data/norns.online/"
+server_name = "https://norns.online"
 
 share.log=function(...)
   local arg={...}
@@ -24,7 +24,7 @@ share.key_established = function()
 end
 
 share.generate_keypair = function(username)
-	os.execute("mkdir -p /home/we/dust/data/share.norns.online")
+	os.execute("mkdir -p "..datadir)
 	os.execute("openssl genrsa -out "..datadir.."key.private 2048")
 	os.execute("openssl rsa -in "..datadir.."key.private -pubout -out "..datadir.."key.public")
 	f = io.open(datadir.."username","w")
@@ -34,7 +34,7 @@ end
 
 share.download = function(datatype,username,dataname)
 	-- check signature
-	result = os.capture("curl -s "..server_name.."/public/uploads/"..datatype.."/"..username.."/"..dataname.."/metadata.json")
+	result = os.capture("curl -s "..server_name.."/share/"..datatype.."/"..username.."/"..dataname.."/metadata.json")
 	print(result)
 	metadata = json.decode(result)
 	if metadata == nil then 
@@ -42,7 +42,7 @@ share.download = function(datatype,username,dataname)
 	end
 	for _, file in ipairs(metadata.files) do
 		filename = file.name
-		result = os.capture("curl -s -o /dev/shm/"..filename.." "..server_name.."/public/uploads/"..datatype.."/"..username.."/"..dataname.."/"..file.name)
+		result = os.capture("curl -s -o /dev/shm/"..filename.." "..server_name.."/share/"..datatype.."/"..username.."/"..dataname.."/"..file.name)
 		if ends_with(filename,".wav.flac") then 
 			-- convert back to wav
 			new_filename = filename:gsub(".flac".."$", "")
@@ -67,7 +67,7 @@ share.is_registered = function()
 	if publickey == nil then
 		return
 	end
-	curl_url = server_name.."/public/keys/"..username
+	curl_url = server_name.."/share/keys/"..username
 	curl_cmd = "curl -s "..curl_url
 	result = os.capture(curl_cmd)
 	return result==publickey

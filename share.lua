@@ -1,4 +1,4 @@
--- share.norns.online v0.0.0
+-- norns.online/share v0.0.0
 -- 
 --
 -- 
@@ -11,7 +11,7 @@
 local json=include("lib/json")
 local textentry=require 'textentry'
 local fileselect = require 'fileselect'
-local share = include("share.norns.online/lib/share")
+local share = include("norns.online/lib/share")
 local textentry=require 'textentry'
 
 username=""
@@ -93,8 +93,8 @@ function key(k,z)
 				if not share.is_registered() then
 			      	uimessage="registering..."
 			      	redraw()
-					msg = share.register(x)
-					show_message(msg)
+							msg = share.register(x)
+							uimessage=""
 					if not string.match(msg,"OK") then 
 						do return end
 					end
