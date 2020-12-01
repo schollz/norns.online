@@ -159,40 +159,45 @@ function redraw()
 
 
   screen.level(4)
-  screen.font_face(3)
-  screen.font_size(12)
-  screen.move(64,10)
-  screen.text_center("norns.online/share")
-  screen.move(64,22)
-  screen.font_size(10)
+  screen.font_face(1)
+  screen.font_size(8)
+  screen.move(5,10)
+  screen.text("norns.online/share")
+  screen.move(5,19)
+  screen.font_size(8)
   if username then
-    screen.text_center("registered as "..username)
+    screen.text("registered as "..username)
   else
-    screen.text_center("unregistered")
+    screen.text("unregistered")
   end
 
-  -- screen.level(15)
-  -- screen.move(64,50)
-  -- screen.font_face(7)
-  -- screen.font_size(24)
-  -- screen.text_center("register")
   if not username then
     screen.level(15)
-    screen.move(64,50)
-    screen.font_face(7)
-    screen.font_size(24)
-    screen.text_center("register")
+    screen.font_face(1)
+    screen.font_size(8)
+    screen.move(0,24+11)
+    screen.text(">")
+    screen.move(5,24+1*11)
+    screen.text("register")
   else
-    screen.level(15)
-    screen.font_face(7)
-    screen.font_size(16)
-    screen.move(64,50)
-    if mode==1 then
-      screen.text_center("share tape")
-    elseif mode==2 then
-      screen.text_center("download tape")
-    elseif mode==3 then
-      screen.text_center("download script")
+    screen.font_face(1)
+    screen.font_size(8)
+    for i=1,3 do 
+      if mode==i then 
+        screen.level(15)
+        screen.move(0,24+i*11)
+        screen.text(">")
+      else
+        screen.level(4)
+      end
+      screen.move(5,24+i*11)
+      if i==1 then
+        screen.text("upload tape")
+      elseif i==2 then
+        screen.text("download tape")
+      elseif i==3 then
+        screen.text("download script")
+      end
     end
   end
 
