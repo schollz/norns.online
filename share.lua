@@ -17,18 +17,18 @@ local share=include("norns.online/lib/share")
 local textentry=require 'textentry'
 
 virtualdir="/dev/shm/dir.norns.online/"
-datadir = "/home/we/dust/data/norns.online/"
+datadir="/home/we/dust/data/norns.online/"
 username=""
 uimessage=""
-is_registered = false
+is_registered=false
 dir={}
 mode=1
 
 
 function init()
-  username = share.key_established()
-  if not username then 
-    mode = 0
+  username=share.key_established()
+  if not username then
+    mode=0
   end
 end
 
@@ -43,7 +43,7 @@ function download_callback(path)
   datatype=foo[1]
   username=foo[2]
   dataname=foo[3]
-  if mode==2 then 
+  if mode==2 then
     datatype="tape"
     username=foo[1]
     dataname=foo[2]
@@ -75,7 +75,7 @@ function server_register()
     if not string.match(msg,"OK") then
       share.clean()
     else
-      username = share.key_established()
+      username=share.key_established()
     end
   end
 end
@@ -98,15 +98,15 @@ end
 function key(k,z)
   if z==0 then
     do return end
-  elseif k==3 and not username then 
+  elseif k==3 and not username then
     server_generate_key()
-    redraw()    
+    redraw()
   elseif k==3 then
-    if not is_registered then 
+    if not is_registered then
       is_registered=share.is_registered()
-      if not is_registered then 
+      if not is_registered then
         server_register()
-        do return end 
+        do return end
       end
     end
     print(os.capture("ffmpeg --help 2>&1"))
@@ -135,10 +135,10 @@ function key(k,z)
       redraw()
       os.execute("rm -rf "..virtualdir)
       for _,s in ipairs(dir) do
-        if mode==2 and s.type == "tape" then 
+        if mode==2 and s.type=="tape" then
           os.execute("mkdir -p "..virtualdir..s.username)
           os.execute("touch "..virtualdir..s.username.."/"..s.dataname)
-        elseif mode==3 and s.type ~= "tape" then
+        elseif mode==3 and s.type~="tape" then
           os.execute("mkdir -p "..virtualdir..s.type.."/"..s.username)
           os.execute("touch "..virtualdir..s.type.."/"..s.username.."/"..s.dataname)
         end
@@ -165,18 +165,18 @@ function redraw()
   screen.text_center("norns.online/share")
   screen.move(64,22)
   screen.font_size(10)
-  if username then 
+  if username then
     screen.text_center("registered as "..username)
   else
     screen.text_center("unregistered")
   end
 
-    -- screen.level(15)
-    -- screen.move(64,50)
-    -- screen.font_face(7)
-    -- screen.font_size(24)
-    -- screen.text_center("register")
-  if not username then 
+  -- screen.level(15)
+  -- screen.move(64,50)
+  -- screen.font_face(7)
+  -- screen.font_size(24)
+  -- screen.text_center("register")
+  if not username then
     screen.level(15)
     screen.move(64,50)
     screen.font_face(7)
@@ -187,11 +187,11 @@ function redraw()
     screen.font_face(7)
     screen.font_size(16)
     screen.move(64,50)
-    if mode==1 then 
+    if mode==1 then
       screen.text_center("share tape")
-    elseif mode == 2 then 
+    elseif mode==2 then
       screen.text_center("download tape")
-    elseif mode == 3 then 
+    elseif mode==3 then
       screen.text_center("download script")
     end
   end
