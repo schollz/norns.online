@@ -65,6 +65,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	err := handle(w, r)
 	if err != nil {
 		log.Error(err)
+		w.Write([]byte(err.Error()))
 	}
 	log.Infof("%v %v %v %s\n", r.RemoteAddr, r.Method, r.URL.Path, time.Since(t))
 }
