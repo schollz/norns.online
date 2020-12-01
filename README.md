@@ -29,17 +29,15 @@ _note:_ the script requires `ffmpeg` and `mpv`, which are automatically installe
 
 ### Documentation 
 
-- K3 toggles internet
-- K2 changes name
-- K1+K2 updates
-- more params in global menu
 
 ### share tapes and download script saves
+
+![parameters for online](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/upload.png)
 
 - open the *norns.online/share* script
 - register if you haven't already.
 - download or upload tapes, and download script saves
-- _note:_ uploading script saves must be done from a script's `SHARE` parameter
+- _note:_ *uploading* a script save must be done from a script's `SHARE` parameter
 
 ### beam your norns
 
@@ -48,6 +46,7 @@ _note:_ the script requires `ffmpeg` and `mpv`, which are automatically installe
 - open the *norns.online* script
 - press K3. open browser to `norns.online/<yourname>`. if this is the first time running, wait for the `mpv` and `ffmpeg` programs to be installed (~300 MB).
 - use norns normally, your norns will stay online in the background.
+- press K2 to change name, or K1+K2 to update
 
 ### norns↔norns audio sharing
 
