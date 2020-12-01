@@ -97,6 +97,10 @@ if audio is enabled, a fair amount. the norns sends out screenshots periodically
 not too much. on a raspberry pi 3b+ this uses about ~4% total CPU for capturing and sending audio data. screenshots also take cpu and higher fps takes more. the exact fps depends on the max fps (set in params) and how fast the screen changes (only updated screens are sent). at max it might take up to 30% of the cpu (15 fps!), but usually its 1-15%.
 </details>
 
+<details><summary><strong>how much disk space does this use?</strong></summary>
+installation requires `ffmpeg` and `mpv` which take up about 300MB. other than that, it only takes up space when you download shared script saves and tapes.
+</details>
+
 
 ## my other norns scripts
 
