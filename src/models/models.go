@@ -17,7 +17,7 @@ type Message struct {
 	Img       string `json:"img,omitempty"`
 	Audio     string `json:"audio,omitempty"`
 	// timing messages
-	TimeSend   bool  `json:"timesend,omitempty"`
-	TimeClient int64 `json:"timeclient,omitempty"`
-	TimeServer int64 `json:"timeserver,omitempty"`
+	TimeSend   bool    `json:"timesend,omitempty"`
+	TimeClient float64 `json:"timeclient,omitempty"`
+	TimeServer float64 `json:"timeserver,omitempty"`
 }

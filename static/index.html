@@ -226,6 +226,7 @@ ul {
     <script src="/static/js/jquery.knob.min.js"></script>
     <script src="https://player.twitch.tv/js/embed/v1.js"></script>
     <script>
+    var timeAdjusts = [];
     var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
     var currentPlayingFinished = 0;
     var socket;
@@ -239,6 +240,14 @@ ul {
         $(".gettingstarted").removeClass("hidden");
     } else {
         $("#hints").removeClass("hidden");
+    }
+
+    function getAvg(grades) {
+        if (grades.length==0) {
+            return 0;
+        }
+      const total = grades.reduce((acc, c) => acc + c, 0);
+      return total / grades.length;
     }
 
     function randomString(length) {
@@ -469,6 +478,7 @@ ul {
                 rtt = (new Date()).getTime() - data['timeclient'];
                 bf = data['timeserver']-data['timeclient'];
                 console.log(`rtt: ${rtt}, bf: ${bf}`);
+                timeAdjusts.push(bf-rtt/2);
             }
         };
         const socketOpenListener = (e) => {
@@ -486,7 +496,7 @@ ul {
               if (callCount < 50) {
                 socket.send(JSON.stringify({
                     "timesend":true,
-                    "timeclient":(new Date()).getTime(),
+                    "timeclient":(new Date()).getTime()+getAvg(timeAdjusts),
                 }))
                 callCount += 1;
               } else {

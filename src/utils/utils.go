@@ -11,9 +11,9 @@ import (
 	"time"
 )
 
-func UTCTime() int64 {
+func UTCTime() float64 {
 	// javascript: (new Date()).getTime()
-	return time.Now().UTC().UnixNano() / int64(time.Millisecond)
+	return float64(time.Now().UTC().UnixNano() / int64(time.Millisecond))
 }
 
 // CopyMax copies only the maxBytes and then returns an error if it
