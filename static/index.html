@@ -242,12 +242,25 @@ ul {
         $("#hints").removeClass("hidden");
     }
 
-    function getAvg(grades) {
-        if (grades.length==0) {
-            return 0;
-        }
-      const total = grades.reduce((acc, c) => acc + c, 0);
-      return total / grades.length;
+    function getAvg(values) {
+  if(values.length ===0) return 0;
+
+  values.sort(function(a,b){
+    return a-b;
+  });
+
+  var half = Math.floor(values.length / 2);
+
+  if (values.length % 2)
+    return values[half];
+
+  return (values[half - 1] + values[half]) / 2.0;
+
+      //   if (grades.length==0) {
+      //       return 0;
+      //   }
+      // const total = grades.reduce((acc, c) => acc + c, 0);
+      // return total / grades.length;
     }
 
     function randomString(length) {
