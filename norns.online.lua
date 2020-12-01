@@ -47,7 +47,7 @@ ui=1
 uishift=false
 params:add_separator("norns.online")
 function init()
-  startup = true
+  startup=true
   params:add_option("allowmenu","menu",{"disabled","enabled"},2)
   params:set_action("allowmenu",function(v)
     settings.allowmenu=v==2
@@ -68,19 +68,19 @@ function init()
     settings.allowtwitch=v==2
     write_settings()
   end)
-  
+
   params:add_option("keepawake","keep awake",{"disabled","enabled"},1)
   params:set_action("keepawake",function(v)
     settings.keepawake=v==2
     write_settings()
   end)
-  
+
   params:add_control("framerate","max frame rate",controlspec.new(0,15,'lin',1,4,'fps'))
   params:set_action("framerate",function(v)
     settings.framerate=v
     write_settings()
   end)
-  
+
   params:add_separator("audio sharing")
   params:add_option("sendaudio","send audio",{"disabled","enabled"},2)
   params:set_action("sendaudio",function(v)
@@ -97,7 +97,7 @@ function init()
     write_settings()
     redraw()
   end)
-  
+
   params:add_separator("norns<->norns")
   params:add_option("allowroom","allow rooms",{"disabled","enabled"},1)
   params:set_action("allowroom",function(v)
@@ -137,15 +137,15 @@ function init()
     write_settings()
     redraw()
   end)
-  
+
   settings.name=share.key_established()
-  if not settings.name then 
+  if not settings.name then
     settings.name=randomString(5)
   end
   load_settings()
   write_settings()
   redraw()
-  startup = false
+  startup=false
 end
 
 function key(n,z)
@@ -185,13 +185,13 @@ function redraw()
   print(util.file_exists(KILL_FILE))
   if util.file_exists(KILL_FILE) then
     screen.text_center("online")
-    
+
     screen.level(4)
     screen.move(64,36)
     screen.font_face(3)
     screen.font_size(12)
     screen.text_center("at norns.online/")
-    
+
     screen.level(15)
     screen.move(64,58)
     screen.font_face(7)
@@ -208,7 +208,7 @@ function redraw()
     screen.level(15)
     screen.text_center("offline")
   end
-  
+
   screen.font_face(1)
   screen.font_size(8)
   if uimessage~="" then
@@ -225,7 +225,7 @@ function redraw()
     screen.level(0)
     screen.text_center(uimessage)
   end
-  
+
   screen.update()
 end
 
@@ -246,8 +246,8 @@ function load_settings()
   end
   data=readAll(CONFIG_FILE)
   settings=json.decode(data)
-  username = share.key_established()
-  if username then 
+  username=share.key_established()
+  if username then
     settings.name=username
   end
   tab.print(settings)
@@ -366,9 +366,9 @@ function install_prereqs()
   end
   missingffmpeg=string.match(os.capture("ffmpeg --help 2>&1"),"not found")
   missingmpv=string.match(os.capture("mpv --version 2>&1"),"not found")
-  if missingffmpeg and missingmpv then 
+  if missingffmpeg and missingmpv then
     show_message("still missing mpv and ffmpeg")
-  elseif missingmpv then 
+  elseif missingmpv then
     show_message("still missing mpv")
   elseif missingffmpeg then
     show_message("still missing ffmpeg")
