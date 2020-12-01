@@ -188,15 +188,28 @@ ul {
             <div id="playerdiv"></div>
         </div>
         <div class="hints" style="padding-top: 2em;">
-            <p>norns.online: share your <a href="https://monome.org/" target="_blank">norns</a> screen and audio.</p>
-            <p>made <a href="https://github.com/schollz/norns.online" target="_blank">open-source</a> by infinite digits.</p>
-            <div id="gettingstarted" class="hidden" style="font-size:1.0em;">to get started:
+            <p><a href="/">norns.online</a>: share your <a href="https://monome.org/" target="_blank">norns</a> screen + audio,</p>
+            <p><a href="/share">norns.online/share</a>: share tapes + script saves.</p>
+            
+             <div class="gettingstarted" class="hidden" style="font-size:1.0em;padding-top: 1em;">first, get norns.online from <a href="https://monome.org/docs/norns/maiden/" target="_blank">maiden</a>.
+            </div>
+
+            <div class="gettingstarted" class="hidden" style="font-size:1.0em;padding-top: 1em;">to share screen + audio:
                 <ul>
-                    <li>- <a href="https://monome.org/docs/norns/maiden/" target="_blank">download norns.online</a> from maiden.</li>
-                    <li>- open the script and press K3 to go online.</li>
+                    <li>- open 'norns.online' script</li>
+                    <li>- press K3 to go online.</li>
                     <li>- open webpage norns.online/&lt;yourname&gt;.</li>
                 </ul>
             </div>
+
+            <div class="gettingstarted" class="hidden" style="font-size:1.0em;padding-top: 1em;">to share tapes + script saves:
+                <ul>
+                    <li>- open 'norns.online/share' script</li>
+                    <li>- press K3 to register.</li>
+                </ul>
+            </div> 
+
+
             <details style="padding-top: 0.5em;" class="hidden" id="hints">
                 <summary><span style="position:relative;bottom:3px; left:-2px">hints</span></summary>
                 <ul>
@@ -205,6 +218,8 @@ ul {
                     <li id="audioenabled" class="hidden">- on mobile, press any button to enable audio.</li>
                 </ul>
             </details>
+
+            <p style="padding-top:1em;">made <a href="https://github.com/schollz/norns.online" target="_blank">open-source</a> by infinite digits.</p>
         </div>
     </div>
     <script src="/static/js/jquery-3.5.1.min.js"></script>
@@ -221,7 +236,7 @@ ul {
     }
     console.log(`norns_id: "${norns_id}"`);
     if (norns_id == "") {
-        $("#gettingstarted").removeClass("hidden");
+        $(".gettingstarted").removeClass("hidden");
     } else {
         $("#hints").removeClass("hidden");
     }
