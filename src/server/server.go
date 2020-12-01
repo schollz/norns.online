@@ -108,7 +108,10 @@ a {
 a:hover {
     color: 9a9f9b;
 }
-body{padding:1em;margin:auto;max-width:800px;color:#fff; font-family: 'uni 05_53', arial; background-color: #222222;font-size:3em;font-weight:bold;</style><pre style="margin-bottom:-1em;">
+pre {
+font-family: 'uni 05_53', arial;
+}
+body{padding:1em;margin:auto;max-width:800px;color:#fff; font-family: 'uni 05_53', arial; background-color: #222222;font-size:2em;font-weight:bold;</style><pre style="margin-bottom:-1em;">
 `+s+`
 `)
 			if !strings.HasSuffix(r.URL.Path, "/share/") {
