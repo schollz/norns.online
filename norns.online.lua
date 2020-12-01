@@ -15,6 +15,7 @@
 
 local json=include("lib/json")
 local textentry=require 'textentry'
+local share=include("norns.online/lib/share")
 
 -- default files / directories
 CODE_DIR="/home/we/dust/code/norns.online/"
@@ -137,7 +138,10 @@ function init()
     redraw()
   end)
   
-  settings.name=randomString(5)
+  settings.name=share.key_established()
+  if not settings.name then 
+    settings.name=randomString(5)
+  end
   load_settings()
   write_settings()
   redraw()
@@ -242,6 +246,10 @@ function load_settings()
   end
   data=readAll(CONFIG_FILE)
   settings=json.decode(data)
+  username = share.key_established()
+  if username then 
+    settings.name=username
+  end
   tab.print(settings)
   if settings.sendaudio then
     params:set("sendaudio",2)
