@@ -495,14 +495,14 @@ func (n *Norns) processMessage(m models.Message) (cmd string, err error) {
 				logger.Error(errF)
 			}
 		}(m.Sender, m.Audio)
-	} 
+	}
 	if n.inMenu {
 		cmd = "_menu." + cmd
 	}
 	if m.Kind == "hello" {
 		cmd = `_norns.screen_export_png("/dev/shm/norns.online.screenshot.png")`
 		go func() {
-			time.Sleep(100*time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 			n.updateClient(true)
 		}()
 	}
