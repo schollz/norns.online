@@ -40,7 +40,7 @@ type Metadata struct {
 
 type File struct {
 	Name      string `json:"name"`
-	TargetDir string `json:"targetdir"`
+	Target    string `json:"target"`
 	Hash      string `json:"hash"`      // hash of the data
 	Signature string `json:"signature"` // signature of the hash
 }
@@ -336,10 +336,10 @@ func handleUpload(w http.ResponseWriter, r *http.Request) (err error) {
 		return
 	}
 
-	if _, ok := r.URL.Query()["targetdir"]; ok {
-		m.Files[0].TargetDir = r.URL.Query()["targetdir"][0]
+	if _, ok := r.URL.Query()["target"]; ok {
+		m.Files[0].Target = r.URL.Query()["target"][0]
 	} else {
-		err = fmt.Errorf("no targetdir")
+		err = fmt.Errorf("no target")
 		return
 	}
 
@@ -378,7 +378,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) (err error) {
 		log.Error(err)
 		return
 	}
-	err = auth.VerifyString(string(keyb), m.Files[0].TargetDir+m.Files[0].Hash, m.Files[0].Signature)
+	err = auth.VerifyString(string(keyb), m.Files[0].Target+m.Files[0].Hash, m.Files[0].Signature)
 	if err != nil {
 		log.Error(err)
 		err = fmt.Errorf("could not verify signature")
