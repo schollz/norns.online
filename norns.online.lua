@@ -153,15 +153,15 @@ function init()
 end
 
 function key(k,z)
-  if z == 0 then 
-    do return end 
+  if z==0 then
+    do return end
   end
-  if not settings.is_installed then 
+  if not settings.is_installed then
     show_message("checking installation...")
-    install_prereqs() 
+    install_prereqs()
   end
   print(settings.name)
-  if k==3 and settings.name == "" then
+  if k==3 and settings.name=="" then
     print("register mode")
     server_generate_key()
     redraw()
@@ -179,7 +179,7 @@ function key(k,z)
     if mode==1 then
       -- upload
       fileselect.enter("/home/we/dust/audio",upload_callback)
-    elseif mode ==2 or mode==3 then
+    elseif mode==2 or mode==3 then
       -- download
       -- make fake folder structure in /dev/shm
       uimessage="getting directory..."
@@ -198,9 +198,9 @@ function key(k,z)
         end
       end
       fileselect.enter(VIRTUAL_DIR,download_callback)
-    elseif mode ==4 then 
-      if util.file_exists(KILL_FILE) then 
-        -- kill 
+    elseif mode==4 then
+      if util.file_exists(KILL_FILE) then
+        -- kill
         stop()
         redraw()
       else
@@ -216,7 +216,7 @@ function enc(n,z)
 end
 
 function redraw()
- screen.clear()
+  screen.clear()
 
   screen.level(4)
   screen.font_face(1)
@@ -228,7 +228,7 @@ function redraw()
     screen.text("norns.online")
   end
 
-  start_point = 12
+  start_point=12
   if not settings.name then
     screen.level(15)
     screen.font_face(1)
@@ -240,8 +240,8 @@ function redraw()
   else
     screen.font_face(1)
     screen.font_size(8)
-    for i=1,4 do 
-      if mode==i then 
+    for i=1,4 do
+      if mode==i then
         screen.level(15)
         screen.move(0,start_point+i*11)
         screen.text(">")
@@ -255,8 +255,8 @@ function redraw()
         screen.text("download tape")
       elseif i==3 then
         screen.text("download script save")
-      elseif i==4 then 
-        if util.file_exists(KILL_FILE) then 
+      elseif i==4 then
+        if util.file_exists(KILL_FILE) then
           screen.text("go offline")
           x=110
           y=start_point+i*11-5
@@ -393,7 +393,7 @@ function start()
   make_start_sh()
   os.execute(START_FILE)
   clock.run(function()
-      for i=1,10 do
+    for i=1,10 do
       clock.sleep(0.1)
       redraw()
     end
@@ -403,7 +403,7 @@ end
 function stop()
   os.execute(KILL_FILE)
   clock.run(function()
-      for i=1,10 do
+    for i=1,10 do
       clock.sleep(0.1)
       redraw()
     end
@@ -448,7 +448,7 @@ function install_prereqs()
   elseif missingffmpeg then
     show_message("still missing ffmpeg")
   else
-    settings.is_installed = true
+    settings.is_installed=true
     write_settings()
   end
 end
@@ -478,7 +478,7 @@ end
 
 --
 -- sharing server stuff
--- 
+--
 
 
 
@@ -535,7 +535,7 @@ function server_generate_key()
     if x~=nil then
       uimessage="generating keypair..."
       redraw()
-      settings.name = x 
+      settings.name=x
       share.generate_keypair(settings.name)
       uimessage=""
       redraw()
@@ -604,3 +604,5 @@ function splitstr(inputstr,sep)
   end
   return t
 end
+
+ 
