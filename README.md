@@ -4,7 +4,7 @@
 
 https://vimeo.com/484176216
 
-**connect.** *norns.online* is two scripts and a website.
+**connect.** *norns.online* is a script, a script library, and a website.
 
 **listen and visualize.** run the *norns.online* script to beam your audio+visual data to `norns.online/<yourname>`.
 
@@ -12,7 +12,7 @@ https://vimeo.com/484176216
 
 **collaborate.** use the *norns.online* script to connect to other norns via "*rooms*." anyone in a "room" shares live audio. the latency is ~4 seconds, so you can imagine that you all are playing together while being socially distanced by a distance of a quarter-mile.
 
-**share.** use the *norns.online/share* script to upload or download tapes and also download script dumps. scripts that support will have `SHARE` available to load script tapes. 
+**share.** use the *norns.online* script to upload or download tapes. individual scripts also can upload/download script saves by going to the `SHARE` parameter (in global parameters).
 
 _note:_ the script requires `ffmpeg` and `mpv`, which are automatically installed if you use this program (~300 MB).
 
