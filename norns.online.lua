@@ -16,14 +16,18 @@
 local json=include("lib/json")
 local textentry=require 'textentry'
 local share=include("norns.online/lib/share")
+local fileselect=require 'fileselect'
+
 
 -- default files / directories
 CODE_DIR="/home/we/dust/code/norns.online/"
-CONFIG_FILE=CODE_DIR.."config.json"
+DATA_DIR="/home/we/dust/data/norns.online/"
+CONFIG_FILE=DATA_DIR.."config.json"
 KILL_FILE="/dev/shm/norns.online.kill.sh"
 START_FILE=CODE_DIR.."start.sh"
 SERVER_FILE=CODE_DIR.."norns.online"
 LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v1.0.0/norns.online"
+VIRTUAL_DIR="/dev/shm/dir.norns.online/"
 
 -- default settings
 settings={
@@ -41,7 +45,11 @@ settings={
   roomsize=1,
   packetsize=2,
   roomvolume=80,
+  is_registered=false,
+  is_installed=false,
 }
+dir={}
+mode=1
 uimessage=""
 ui=1
 uishift=false
@@ -138,76 +146,140 @@ function init()
     redraw()
   end)
 
-  settings.name=share.key_established()
-  if not settings.name then
-    settings.name=randomString(5)
-  end
   load_settings()
   write_settings()
   redraw()
   startup=false
 end
 
-function key(n,z)
-  if n==1 then
-    uishift=z
-  elseif uishift==1 and n==2 then
-    update()
-  elseif n==2 and z==0 then
-    textentry.enter(function(x)
-      if x~=nil then
-        settings.name=x
-        os.execute(KILL_FILE)
-        redraw()
-      end
-    end,settings.name,"norns.online/")
-  elseif n==3 and z==1 then
-    toggle()
+function key(k,z)
+  if z==0 then
+    do return end
   end
-  redraw()
+  if not settings.is_installed then
+    show_message("checking installation...")
+    install_prereqs()
+  end
+  if k==3 and mode==4 and util.file_exists(KILL_FILE) then
+    print("killing server")
+      -- kill
+      stop()
+      redraw()
+  elseif k==3 and settings.name=="" then
+    print(settings.name)
+    print("register mode")
+    server_generate_key()
+    redraw()
+  elseif k==3 and mode==4 then
+    start()
+  elseif k==3 then
+    print("go mode")
+    print(settings.is_registered)
+    if not settings.is_registered then
+      settings.is_registered=share.is_registered(settings.name)
+      if not settings.is_registered then
+        server_register(settings.name)
+      else
+        write_settings()
+      end
+    end
+    if mode==1 then
+      -- upload
+      fileselect.enter("/home/we/dust/audio",upload_callback)
+    elseif mode==2 or mode==3 then
+      -- download
+      -- make fake folder structure in /dev/shm
+      uimessage="getting directory..."
+      redraw()
+      dir=share.directory()
+      uimessage=""
+      redraw()
+      if dir == nil then 
+        show_message("server down :(")
+        do return end
+      end
+      os.execute("rm -rf "..VIRTUAL_DIR)
+      for _,s in ipairs(dir) do
+        if mode==2 and s.type=="tape" then
+          os.execute("mkdir -p "..VIRTUAL_DIR..s.username)
+          os.execute("touch "..VIRTUAL_DIR..s.username.."/"..s.dataname)
+        elseif mode==3 and s.type~="tape" then
+          os.execute("mkdir -p "..VIRTUAL_DIR..s.type.."/"..s.username)
+          os.execute("touch "..VIRTUAL_DIR..s.type.."/"..s.username.."/"..s.dataname)
+        end
+      end
+      fileselect.enter(VIRTUAL_DIR,download_callback)
+    end
+  end
 end
 
 function enc(n,z)
+  mode=util.clamp(mode+sign(z),1,4)
   redraw()
 end
 
 function redraw()
   screen.clear()
+
   screen.level(4)
-  screen.font_face(3)
-  screen.font_size(12)
-  screen.move(64,8)
-  screen.text_center("you are now")
-  screen.move(64,22)
-  screen.font_face(3)
-  screen.font_size(12)
-  screen.level(15)
-  print(util.file_exists(KILL_FILE))
-  if util.file_exists(KILL_FILE) then
-    screen.text_center("online")
-
-    screen.level(4)
-    screen.move(64,36)
-    screen.font_face(3)
-    screen.font_size(12)
-    screen.text_center("at norns.online/")
-
-    screen.level(15)
-    screen.move(64,58)
-    screen.font_face(7)
-    screen.font_size(24)
-    if string.len(settings.name)>16 then
-      screen.move(64,53)
-      screen.font_size(12)
-    elseif string.len(settings.name)>10 then
-      screen.move(64,58)
-      screen.font_size(18)
-    end
-    screen.text_center(settings.name)
+  screen.font_face(1)
+  screen.font_size(8)
+  screen.move(1,8)
+  if settings.name then
+    screen.text("norns.online/"..settings.name)
   else
-    screen.level(15)
-    screen.text_center("offline")
+    screen.text("norns.online")
   end
+
+  start_point=12
+  if not settings.name then
+    screen.level(15)
+    screen.font_face(1)
+    screen.font_size(8)
+    screen.move(0,start_point+11)
+    screen.text(">")
+    screen.move(7,start_point+1*11)
+    screen.text("register")
+  else
+    screen.font_face(1)
+    screen.font_size(8)
+    for i=1,4 do
+      if mode==i then
+        screen.level(15)
+        screen.move(0,start_point+i*11)
+        screen.text(">")
+      else
+        screen.level(4)
+      end
+      screen.move(7,start_point+i*11)
+      if i==1 then
+        screen.text("upload tape")
+      elseif i==2 then
+        screen.text("download tape")
+      elseif i==3 then
+        screen.text("download script save")
+      elseif i==4 then
+        if util.file_exists(KILL_FILE) then
+          screen.text("go offline")
+          x=110
+          y=start_point+i*11-5
+          w=30
+          screen.level(15)
+          screen.rect(x-w/2,y,w,10)
+          screen.fill()
+          screen.level(15)
+          screen.rect(x-w/2,y,w,10)
+          screen.stroke()
+          screen.move(x,y+7)
+          screen.level(0)
+          screen.text_center("LIVE")
+        else
+          screen.text("go online")
+        end
+      end
+    end
+  end
+
 
   screen.font_face(1)
   screen.font_size(8)
@@ -246,10 +318,6 @@ function load_settings()
   end
   data=readAll(CONFIG_FILE)
   settings=json.decode(data)
-  username=share.key_established()
-  if username then
-    settings.name=username
-  end
   tab.print(settings)
   if settings.sendaudio then
     params:set("sendaudio",2)
@@ -323,21 +391,33 @@ function toggle()
 end
 
 function start()
+  print("starting")
   write_settings()
-  install_prereqs()
   make_start_sh()
   os.execute(START_FILE)
-  redraw()
+  clock.run(function()
+    for i=1,10 do
+      clock.sleep(0.1)
+      redraw()
+    end
+  end)
 end
 
 function stop()
+  print("stopping server...")
   os.execute(KILL_FILE)
-  redraw()
+  clock.run(function()
+    for i=1,10 do
+      clock.sleep(0.1)
+      redraw()
+    end
+    os.remove(KILL_FILE)
+  end)
 end
 
 function make_start_sh()
   startsh="#!/bin/bash\n"
-  startsh=startsh..CODE_DIR.."norns.online --config "..CODE_DIR.."config.json > /dev/null &\n"
+  startsh=startsh..CODE_DIR.."norns.online --config "..CONFIG_FILE.." > /dev/null &\n"
   f=io.open(START_FILE,"w")
   f:write(startsh)
   f:close(f)
@@ -372,6 +452,9 @@ function install_prereqs()
     show_message("still missing mpv")
   elseif missingffmpeg then
     show_message("still missing ffmpeg")
+  else
+    settings.is_installed=true
+    write_settings()
   end
 end
 
@@ -397,6 +480,79 @@ function update()
     show_message("updated.")
   end
 end
+
+--
+-- sharing server stuff
+--
+
+
+
+function download_callback(path)
+  if path=="cancel" then
+    do return end
+  end
+  local path=(path:sub(0,#VIRTUAL_DIR)==VIRTUAL_DIR) and path:sub(#VIRTUAL_DIR+1) or path
+  print(path)
+  foo=splitstr(path,"/")
+  datatype=foo[1]
+  username=foo[2]
+  dataname=foo[3]
+  if mode==2 then
+    datatype="tape"
+    username=foo[1]
+    dataname=foo[2]
+  end
+  uimessage="downloading "..dataname.."..."
+  redraw()
+  msg=share.download(datatype,username,dataname)
+  show_message(msg)
+end
+
+function upload_callback(pathtofile)
+  if pathtofile=="cancel" then
+    do return end
+  end
+  _,filename,_=share.split_path(pathtofile)
+  uimessage="uploading "..filename.."..."
+  target="/home/we/dust/audio/share/"..settings.name.."/"..filename
+  redraw()
+  msg = share.upload(settings.name,"tape",filename,pathtofile,target)
+  if string.match(msg,"need to register") then
+    settings.is_registered=false
+    write_settings()
+  end
+  show_message(msg)
+end
+
+function server_register()
+  if not share.is_registered(settings.name) then
+    uimessage="registering "..settings.name.."..."
+    redraw()
+    msg=share.register(settings.name)
+    show_message(msg)
+    if string.match(msg,"OK") then
+      settings.is_registered=true
+    else
+      settings.is_registered=false
+    end
+      write_settings()
+  end
+end
+
+function server_generate_key()
+  textentry.enter(function(x)
+    if x~=nil then
+      uimessage="generating keypair..."
+      redraw()
+      settings.name=x
+      share.generate_keypair(settings.name)
+      uimessage=""
+      redraw()
+      server_register()
+    end
+  end,"","enter public name:")
+end
+
 
 --
 -- utils
@@ -445,3 +601,17 @@ function os.capture(cmd)
   f:close()
   return s
 end
+
+
+function splitstr(inputstr,sep)
+  if sep==nil then
+    sep="%s"
+  end
+  local t={}
+  for str in string.gmatch(inputstr,"([^"..sep.."]+)") do
+    table.insert(t,str)
+  end
+  return t
+end
+
+
