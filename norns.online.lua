@@ -160,11 +160,17 @@ function key(k,z)
     show_message("checking installation...")
     install_prereqs()
   end
-  print(settings.name)
-  if k==3 and settings.name=="" then
+  if k==3 and mode==4 and util.file_exists(KILL_FILE) then
+    print("killing server")
+      -- kill
+      stop()
+      redraw()
+  elseif k==3 and settings.name=="" then
     print("register mode")
     server_generate_key()
     redraw()
+  elseif k==3 and mode==4 then
+    start()
   elseif k==3 then
     print("go mode")
     print(settings.is_registered)
@@ -187,6 +193,10 @@ function key(k,z)
       dir=share.directory()
       uimessage=""
       redraw()
+      if dir == nil then 
+        show_message("server down :(")
+        do return end
+      end
       os.execute("rm -rf "..VIRTUAL_DIR)
       for _,s in ipairs(dir) do
         if mode==2 and s.type=="tape" then
@@ -198,14 +208,6 @@ function key(k,z)
         end
       end
       fileselect.enter(VIRTUAL_DIR,download_callback)
-    elseif mode==4 then
-      if util.file_exists(KILL_FILE) then
-        -- kill
-        stop()
-        redraw()
-      else
-        start()
-      end
     end
   end
 end
@@ -401,12 +403,14 @@ function start()
 end
 
 function stop()
+  print("stopping server...")
   os.execute(KILL_FILE)
   clock.run(function()
     for i=1,10 do
       clock.sleep(0.1)
       redraw()
     end
+    os.remove(KILL_FILE)
   end)
 end
 
@@ -605,4 +609,4 @@ function splitstr(inputstr,sep)
   return t
 end
 
- 
+
