@@ -2,7 +2,9 @@
 local share={debug=true}
 local json=include("norns.online/lib/json")
 
-datadir="/home/we/dust/data/norns.online/"
+DATA_DIR="/home/we/dust/data/norns.online/"
+CONFIG_FILE=DATA_DIR.."config.json"
+
 server_name="https://norns.online"
 server_name="192.168.0.3:8098"
 
@@ -17,14 +19,24 @@ share.log=function(...)
   end
 end
 
+share.username=function()
+  -- returns username
+  if not util.file_exists(CONFIG_FILE) then
+    do return nil end
+  end
+  data=readAll(CONFIG_FILE)
+  settings=json.decode(data)
+  return settings.name
+end
+
 share.generate_keypair=function(username)
-  os.execute("mkdir -p "..datadir)
-  os.execute("openssl genrsa -out "..datadir.."key.private 2048")
-  os.execute("openssl rsa -in "..datadir.."key.private -pubout -out "..datadir.."key.public")
+  os.execute("mkdir -p "..DATA_DIR)
+  os.execute("openssl genrsa -out "..DATA_DIR.."key.private 2048")
+  os.execute("openssl rsa -in "..DATA_DIR.."key.private -pubout -out "..DATA_DIR.."key.public")
 end
 
 share.is_registered=function(username)
-  local publickey=os.capture("cat "..datadir.."key.public")
+  local publickey=os.capture("cat "..DATA_DIR.."key.public")
   if publickey==nil then
     return
   end
@@ -50,12 +62,12 @@ share.register=function(username)
   local f=io.open(tmp_username,"w")
   f:write(username)
   f:close()
-  os.execute("openssl dgst -sign "..datadir.."key.private -out "..tmp_signature.." "..tmp_username)
+  os.execute("openssl dgst -sign "..DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_username)
   signature=os.capture("base64 -w 0 "..tmp_signature)
 
 
   curl_url=server_name.."/register?username="..username.."&signature="..signature
-  curl_cmd="curl -s -m 5 --upload-file "..datadir.."key.public "..'"'..curl_url..'"'
+  curl_cmd="curl -s -m 5 --upload-file "..DATA_DIR.."key.public "..'"'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
@@ -72,12 +84,12 @@ share.unregister=function(username)
   f=io.open(tmp_username,"w")
   f:write(username)
   f:close()
-  os.execute("openssl dgst -sign "..datadir.."key.private -out "..tmp_signature.." "..tmp_username)
+  os.execute("openssl dgst -sign "..DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_username)
   signature=os.capture("base64 -w 0 "..tmp_signature)
 
   -- send unregistration
   curl_url=server_name.."/unregister?username="..username.."&signature="..signature
-  curl_cmd="curl -s -m 5 --upload-file "..datadir.."key.public "..'"'..curl_url..'"'
+  curl_cmd="curl -s -m 5 --upload-file "..DATA_DIR.."key.public "..'"'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
@@ -87,7 +99,7 @@ share.unregister=function(username)
   return result
 end
 
-share.upload=function(username,type,dataname,pathtofile,target)
+share.upload=function(username, type,dataname,pathtofile,target)
   -- type is the type, e.g. tape / barcode (name of script) / etc.
   -- dataname is how the group of data can be represented
   -- pathtofile is the path to the file on this norns
@@ -95,7 +107,7 @@ share.upload=function(username,type,dataname,pathtofile,target)
   tmp_signature=temp_file_name()
   tmp_hash=temp_file_name()
 
-  _,filename,ext=share.split_path(pathtofile)
+  _,filename,ext = share.split_path(pathtofile)
   print("ext: "..ext)
 
   -- convert wav to flac, if it is a wav
@@ -104,28 +116,31 @@ share.upload=function(username,type,dataname,pathtofile,target)
     os.execute("ffmpeg -y -i "..pathtofile.." -ar 48000 /dev/shm/"..filename..".flac")
     -- update the pathname and filename (but not the target path)
     pathtofile="/dev/shm/"..filename..".flac"
-    _,filename,_=share.split_path(pathtofile)
+     _,filename,_ = share.split_path(pathtofile)
     flaced=true
+    ext = "wav.flac"
   end
 
   -- hash the data
   hash=os.capture("sha256sum "..pathtofile)
   hash=hash:firstword()
-  print("hash: "..hash)
+  hashed_filename = string.sub(hash,1,9).."."..ext
   f=io.open(tmp_hash,"w")
+  f:write(hashed_filename)
   f:write(target)
   f:write(hash)
   f:close()
+
 
   print(os.capture("cat "..tmp_hash))
   print("pathtofile: "..pathtofile)
 
   -- sign the hash
-  os.execute("openssl dgst -sign "..datadir.."key.private -out "..tmp_signature.." "..tmp_hash)
+  os.execute("openssl dgst -sign "..DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_hash)
   signature=os.capture("base64 -w 0 "..tmp_signature)
 
   -- upload the file and metadata
-  curl_url=server_name.."/upload?type="..type.."&username="..username.."&dataname="..dataname.."&filename="..filename.."&target="..target.."&hash="..hash.."&signature="..signature
+  curl_url=server_name.."/upload?type="..type.."&username="..username.."&dataname="..dataname.."&filename="..hashed_filename.."&target="..target.."&hash="..hash.."&signature="..signature
   curl_cmd="curl -s -m 5 --upload-file "..pathtofile..' "'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
@@ -155,14 +170,14 @@ share.download=function(type,username,dataname)
     os.execute("mkdir -p "..target_dir)
 
     -- download
-    result=""
+    result = ""
     if ends_with(file.name,".wav.flac") then
       -- download to temp and convert to wav
       result=os.capture("curl -s -m 5 -o /dev/shm/"..file.name.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
       os.execute("ffmpeg -y -i /dev/shm/"..file.name.." -ar 48000 -c:a pcm_s24le "..file.target)
       os.remove("/dev/shm/"..file.name)
     else
-      -- download directly to folder
+      -- download directly to folder 
       result=os.capture("curl -s -m 5 -o "..file.target.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
     end
     -- TODO: verify
@@ -186,12 +201,12 @@ share.read_file=function(fname)
   return content
 end
 
-share.split_path=function(path)
+share.split_path = function(path)
   -- https://stackoverflow.com/questions/5243179/what-is-the-neatest-way-to-split-out-a-path-name-into-its-components-in-lua
   -- /home/zns/1.txt returns
   -- /home/zns/   1.txt   txt
-  pathname,filename,ext=string.match(path,"(.-)([^\\/]-%.?([^%.\\/]*))$")
-  return pathname,filename,ext
+  pathname, filename,ext=string.match(path,"(.-)([^\\/]-%.?([^%.\\/]*))$")
+  return pathname, filename, ext
 end
 
 
@@ -238,5 +253,12 @@ function file_exists(fname)
   if f~=nil then io.close(f) return true else return false end
 end
 
+
+function readAll(file)
+  local f=assert(io.open(file,"rb"))
+  local content=f:read("*all")
+  f:close()
+  return content
+end
 
 return share
