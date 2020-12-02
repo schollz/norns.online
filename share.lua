@@ -54,16 +54,16 @@ function download_callback(path)
   show_message(msg)
 end
 
-function upload_callback(path)
+function upload_callback(pathtofile)
   if path=="cancel" then
     do return end
   end
   -- https://stackoverflow.com/questions/5243179/what-is-the-neatest-way-to-split-out-a-path-name-into-its-components-in-lua
-  _,dataname,_=string.match(path,"(.-)([^\\/]-%.?([^%.\\/]*))$")
-  uimessage="uploading "..dataname.."..."
-  targetdir="/home/we/dust/audio/share/"..username
+  _,filename,_=share.split_path(pathtofile)
+  uimessage="uploading "..filename.."..."
+  target="/home/we/dust/audio/share/"..username.."/"..filename
   redraw()
-  show_message(share.upload("tape",dataname,path,targetdir))
+  show_message(share.upload("tape",filename,pathtofile,target))
 end
 
 function server_register()

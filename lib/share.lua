@@ -37,32 +37,6 @@ share.generate_keypair=function(username)
   f:close()
 end
 
-share.download=function(datatype,username,dataname)
-  -- check signature
-  result=os.capture("curl -s "..server_name.."/share/"..datatype.."/"..username.."/"..dataname.."/metadata.json")
-  print(result)
-  metadata=json.decode(result)
-  if metadata==nil then
-    return "bad metadata"
-  end
-  for _,file in ipairs(metadata.files) do
-    filename=file.name
-    result=os.capture("curl -s -o /dev/shm/"..filename.." "..server_name.."/share/"..datatype.."/"..username.."/"..dataname.."/"..file.name)
-    if ends_with(filename,".wav.flac") then
-      -- convert back to wav
-      new_filename=filename:gsub(".flac".."$","")
-      os.execute("ffmpeg -y -i /dev/shm/"..filename.." -ar 48000 -c:a pcm_s24le /dev/shm/"..new_filename)
-      os.remove("/dev/shm/"..filename)
-      filename=new_filename
-    end
-    -- TODO: verify
-    -- make target directory
-    os.execute("mkdir -p "..file.targetdir)
-    os.execute("mv /dev/shm/"..filename.." "..file.targetdir.."/"..filename)
-  end
-  return "...downloaded"
-end
-
 share.is_registered=function()
   local username=os.capture("cat "..datadir.."username")
   if username==nil then
@@ -139,7 +113,11 @@ share.unregister=function()
   return result
 end
 
-share.upload=function(type,dataname,filename,targetdir)
+share.upload=function(type,dataname,pathtofile,target)
+  -- type is the type, e.g. tape / barcode (name of script) / etc.
+  -- dataname is how the group of data can be represented
+  -- pathtofile is the path to the file on this norns
+  -- target is the target path to file on any norns that downloads it
   tmp_signature=temp_file_name()
   tmp_hash=temp_file_name()
   local username=os.capture("cat "..datadir.."username")
@@ -147,32 +125,38 @@ share.upload=function(type,dataname,filename,targetdir)
     return
   end
 
+  _,filename,ext = share.split_path(pathtofile)
+  print("ext: "..ext)
+
   -- convert wav to flac, if it is a wav
   flaced=false
-  if ends_with(filename,".wav") then
-    os.execute("ffmpeg -y -i "..filename.." -ar 48000 "..filename..".flac")
-    filename=filename..".flac"
+  if ext=="wav" then
+    os.execute("ffmpeg -y -i "..pathtofile.." -ar 48000 /dev/shm/"..filename..".flac")
+    -- update the pathname and filename (but not the target path)
+    pathtofile="/dev/shm/"..filename..".flac"
+     _,filename,_ = share.split_path(pathtofile)
     flaced=true
   end
 
   -- hash the data
-  hash=os.capture("sha256sum "..filename)
+  hash=os.capture("sha256sum "..pathtofile)
   hash=hash:firstword()
   print("hash: "..hash)
   f=io.open(tmp_hash,"w")
-  f:write(targetdir)
+  f:write(target)
   f:write(hash)
   f:close()
 
   print(os.capture("cat "..tmp_hash))
+  print("pathtofile: "..pathtofile)
 
   -- sign the hash
   os.execute("openssl dgst -sign "..datadir.."key.private -out "..tmp_signature.." "..tmp_hash)
   signature=os.capture("base64 -w 0 "..tmp_signature)
 
   -- upload the file and metadata
-  curl_url=server_name.."/upload?type="..type.."&username="..username.."&dataname="..dataname.."&filename="..filename.."&targetdir="..targetdir.."&hash="..hash.."&signature="..signature
-  curl_cmd="curl -s --upload-file "..filename..' "'..curl_url..'"'
+  curl_url=server_name.."/upload?type="..type.."&username="..username.."&dataname="..dataname.."&filename="..filename.."&target="..target.."&hash="..hash.."&signature="..signature
+  curl_cmd="curl -s --upload-file "..pathtofile..' "'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
@@ -181,10 +165,41 @@ share.upload=function(type,dataname,filename,targetdir)
   os.remove(tmp_signature)
   os.remove(tmp_hash)
   if flaced then
-    os.remove(filename) -- remove if we converted
+    os.remove(pathtofile) -- remove if we converted
   end
   return result
 end
+
+
+share.download=function(type,username,dataname)
+  -- check signature
+  result=os.capture("curl -s "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/metadata.json")
+  print(result)
+  metadata=json.decode(result)
+  if metadata==nil then
+    return "bad metadata"
+  end
+  for _,file in ipairs(metadata.files) do
+    target_dir,target_filename,_=share.split_path(file.target)
+    -- make directory if it doesn't exist
+    os.execute("mkdir -p "..target_dir)
+
+    -- download
+    result = ""
+    if ends_with(file.name,".wav.flac") then
+      -- download to temp and convert to wav
+      result=os.capture("curl -s -o /dev/shm/"..file.name.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
+      os.execute("ffmpeg -y -i /dev/shm/"..file.name.." -ar 48000 -c:a pcm_s24le "..file.target)
+      os.remove("/dev/shm/"..file.name)
+    else
+      -- download directly to folder 
+      result=os.capture("curl -s -o "..file.target.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
+    end
+    -- TODO: verify
+  end
+  return "...downloaded"
+end
+
 
 share.write_file=function(fname,data)
   print("saving to "..fname)
@@ -199,6 +214,14 @@ share.read_file=function(fname)
   local content=f:read("*all")
   f:close()
   return content
+end
+
+share.split_path = function(path)
+  -- https://stackoverflow.com/questions/5243179/what-is-the-neatest-way-to-split-out-a-path-name-into-its-components-in-lua
+  -- /home/zns/1.txt returns
+  -- /home/zns/   1.txt   txt
+  pathname, filename,ext=string.match(path,"(.-)([^\\/]-%.?([^%.\\/]*))$")
+  return pathname, filename, ext
 end
 
 
