@@ -150,6 +150,7 @@ function init()
   write_settings()
   redraw()
   startup=false
+  share.create_virtual_directory()
 end
 
 function key(k,z)
@@ -188,27 +189,12 @@ function key(k,z)
       fileselect.enter("/home/we/dust/audio",upload_callback)
     elseif mode==2 or mode==3 then
       -- download
-      -- make fake folder structure in /dev/shm
-      uimessage="getting directory..."
-      redraw()
-      dir=share.directory()
-      uimessage=""
-      redraw()
-      if dir == nil then 
-        show_message("server down :(")
-        do return end
-      end
-      os.execute("rm -rf "..VIRTUAL_DIR)
-      for _,s in ipairs(dir) do
-        if mode==2 and s.type=="tape" then
-          os.execute("mkdir -p "..VIRTUAL_DIR..s.username)
-          os.execute("touch "..VIRTUAL_DIR..s.username.."/"..s.dataname)
-        elseif mode==3 and s.type~="tape" then
-          os.execute("mkdir -p "..VIRTUAL_DIR..s.type.."/"..s.username)
-          os.execute("touch "..VIRTUAL_DIR..s.type.."/"..s.username.."/"..s.dataname)
-        end
-      end
-      fileselect.enter(VIRTUAL_DIR,download_callback)
+      fileselect.enter(share.get_virtual_directory("tape"),function(x)
+        uimessage="downloading..."
+        redraw()
+        uimessage = share.download_from_virtual_directory(x)
+        redraw()
+      end)
     end
   end
 end
@@ -486,27 +472,6 @@ end
 --
 
 
-
-function download_callback(path)
-  if path=="cancel" then
-    do return end
-  end
-  local path=(path:sub(0,#VIRTUAL_DIR)==VIRTUAL_DIR) and path:sub(#VIRTUAL_DIR+1) or path
-  print(path)
-  foo=splitstr(path,"/")
-  datatype=foo[1]
-  username=foo[2]
-  dataname=foo[3]
-  if mode==2 then
-    datatype="tape"
-    username=foo[1]
-    dataname=foo[2]
-  end
-  uimessage="downloading "..dataname.."..."
-  redraw()
-  msg=share.download(datatype,username,dataname)
-  show_message(msg)
-end
 
 function upload_callback(pathtofile)
   if pathtofile=="cancel" then

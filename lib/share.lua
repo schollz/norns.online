@@ -4,6 +4,7 @@ local json=include("norns.online/lib/json")
 
 DATA_DIR="/home/we/dust/data/norns.online/"
 CONFIG_FILE=DATA_DIR.."config.json"
+VIRTUAL_DIR="/home/we/dust/data/norns.online/virtualdir/"
 
 server_name="https://norns.online"
 
@@ -18,7 +19,65 @@ share.log=function(...)
   end
 end
 
-share.username=function()
+--
+-- virtual directory 
+--
+
+share.directory=function()
+  curl_url=server_name.."/directory.json"
+  curl_cmd="curl -s -m 5 "..curl_url
+  result=os.capture(curl_cmd)
+  print(result)
+  if result =="" then 
+    do return nil end
+  end
+  return json.decode(result)
+end
+
+share.get_virtual_directory=function(datetype)
+  return VIRTUAL_DIR..datatype
+end
+
+share.make_virtual_directory=function()
+  dir=share.directory()
+  if dir == nil then 
+    do return nil end
+  end
+  -- -- erase previous virtual directory
+  -- os.execute("rm -rf "..VIRTUAL_DIR)
+  -- build virtual directory with empty files
+  for _,s in ipairs(dir) do
+    os.execute("mkdir -p "..VIRTUAL_DIR..s.type.."/"..s.username)
+    os.execute("touch "..VIRTUAL_DIR..s.type.."/"..s.username.."/"..s.dataname)
+  end
+  return VIRTUAL_DIR
+end
+
+share.trim_virtual_directory=function(path)
+  local path=(path:sub(0,#VIRTUAL_DIR)==VIRTUAL_DIR) and path:sub(#VIRTUAL_DIR+1) or path
+  return path 
+end
+
+share.download_from_virtual_directory=function(path)
+  if path=="cancel" then
+    do return end
+  end
+  path = share.trim_virtual_directory(path)
+  foo=splitstr(path,"/")
+  datatype=foo[1]
+  username=foo[2]
+  dataname=foo[3]
+  msg=share.download(datatype,username,dataname)
+  print(msg)
+  return msg
+end
+
+--
+-- registration
+--
+
+
+share.get_username=function()
   -- returns username
   if not util.file_exists(CONFIG_FILE) then
     do return nil end
@@ -45,16 +104,7 @@ share.is_registered=function(username)
   return result==publickey
 end
 
-share.directory=function()
-  curl_url=server_name.."/directory.json"
-  curl_cmd="curl -s -m 5 "..curl_url
-  result=os.capture(curl_cmd)
-  print(result)
-  if result =="" then 
-    do return nil end
-  end
-  return json.decode(result)
-end
+
 
 share.register=function(username)
   tmp_signature=share.temp_file_name()
@@ -103,7 +153,11 @@ share.unregister=function(username)
   return result
 end
 
-share.upload=function(username,type,dataname,pathtofile,target)
+--
+-- uploading/downloading
+--
+
+share._upload=function(username,type,dataname,pathtofile,target)
   -- type is the type, e.g. tape / barcode (name of script) / etc.
   -- dataname is how the group of data can be represented
   -- pathtofile is the path to the file on this norns
@@ -181,12 +235,74 @@ share.download=function(type,username,dataname)
       os.execute("ffmpeg -y -i /tmp/"..file.name.." -ar 48000 -c:a pcm_s24le "..file.target)
       os.remove("/tmp/"..file.name)
     else
-      -- download directly to folder
+      -- download directly to target
       result=os.capture("curl -s -m 5 -o "..file.target.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
     end
     -- TODO: verify
   end
   return "...downloaded"
+end
+
+
+
+--
+-- share uploader
+-- 
+
+share:new = function(o)
+  -- defined parameters
+  self.script_name = o.script_name
+  self.upload_function = o.upload_function
+  self.upload_username = share.get_username()
+
+  if self.upload_username == nil then
+    print("not registered")
+    do return end
+  end
+  if self.script_name == nil then 
+    print("no script_name defined")
+    do return end 
+  end
+  if self.upload_function == nil then 
+    print("no upload_function defined")
+    do return end 
+  end
+end
+
+
+share:upload = function(o)
+  if o.dataname == nil then 
+    print("need dataname")
+    do return end
+  end
+  if o.pathtofile == nil then 
+    print("need pathtofile")
+    do return end
+  end
+  if o.target == nil then 
+    print("need target")
+    do return end 
+  end
+  if self.upload_username == nil then
+    print("not registered")
+    do return end
+  end
+  if self.script_name == nil then 
+    print("no script_name defined")
+    do return end 
+  end
+  msg = share._upload(self.upload_username,self.script_name,o.dataname,o.pathtofile,o.target)
+  print(msg)
+  return msg
+end
+
+--
+-- public utilities
+--
+
+share.trim_prefix = function(s,p)
+  local t = (s:sub(0, #p) == p) and s:sub(#p+1) or s
+  return t
 end
 
 
@@ -231,78 +347,10 @@ share.temp_file_name = function()
   return "/dev/shm/tempfile"..randomString(5)
 end
 
-
-share:script_init = function(o)
-  -- defined parameters
-  self.script_name = o.script_name
-  self.upload_function = o.upload_function
-  self.upload_name = o.upload_name
-
-  self.upload_username = share.username()
-  if self.upload_username == nil then
-    print("not registered")
-    do return end
-  end
-  if self.script_name == nil then 
-    print("no script_name defined")
-    do return end 
-  end
-  if self.upload_function == nil then 
-    print("no upload_function defined")
-    do return end 
-  end
-  if self.upload_name == nil then 
-    params:add_text('share_upload_name',"upload name","")
-    params:add_action('share_upload_name',function(x)
-      self.upload_name=x
-    end)
-  end
-  params:add{type='binary',name="upload ready",id='share_upload_ready',behavior='toggle'}
-  params:add{type='binary',name="UPLOAD",id='share_upload',behavior='momentary',
-    action=function(x)
-      print('params:get("share_upload_ready"):'.. params:get("share_upload_ready"))
-      if params:get("share_upload_ready")==1 then 
-        params:set("share_upload_ready",0)
-        params:set("share_msg","uploading")
-        _menu.redraw()
-        self.upload_function()
-        params:set("share_msg","uploaded")
-      end
-    end
-  }
-  params:add_text('share_msg',"message","")
-end
-
-
-share:script_upload = function(o)
-  if o.dataname == nil then 
-    print("need dataname")
-    do return end
-  end
-  if o.pathtofile == nil then 
-    print("need pathtofile")
-    do return end
-  end
-  if o.target == nil then 
-    print("need target")
-    do return end 
-  end
-  if self.upload_username == nil then
-    print("not registered")
-    do return end
-  end
-  if self.script_name == nil then 
-    print("no script_name defined")
-    do return end 
-  end
-  msg = share.upload(self.upload_username,self.script_name,o.dataname,o.pathtofile,o.target)
-  print(msg)
-  return msg
-end
-
 --
--- utilities
+-- private utilities
 --
+
 function os.capture(cmd,raw)
   local f=assert(io.popen(cmd,'r'))
   local s=assert(f:read('*a'))
@@ -333,7 +381,6 @@ function randomString(length)
   math.randomseed(os.clock()^5)
   return randomString(length-1)..charset[math.random(1,#charset)]
 end
-
 
 
 function file_exists(fname)
