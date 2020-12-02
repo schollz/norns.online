@@ -23,7 +23,7 @@ end
 -- virtual directory 
 --
 
-share.directory=function()
+share.get_remote_directory=function()
   curl_url=server_name.."/directory.json"
   curl_cmd="curl -s -m 5 "..curl_url
   result=os.capture(curl_cmd)
@@ -39,7 +39,7 @@ share.get_virtual_directory=function(datetype)
 end
 
 share.make_virtual_directory=function()
-  dir=share.directory()
+  dir=share.get_remote_directory()
   if dir == nil then 
     do return nil end
   end
@@ -75,8 +75,6 @@ end
 --
 -- registration
 --
-
-
 share.get_username=function()
   -- returns username
   if not util.file_exists(CONFIG_FILE) then
@@ -103,8 +101,6 @@ share.is_registered=function(username)
   result=os.capture(curl_cmd)
   return result==publickey
 end
-
-
 
 share.register=function(username)
   tmp_signature=share.temp_file_name()
@@ -250,23 +246,23 @@ end
 -- 
 
 share:new = function(o)
+  -- uploader = share:new{script_name="oooooo"}
   -- defined parameters
+  o = o or {}
+  setmetatable(o, self)
+  self.__index = self
   self.script_name = o.script_name
-  self.upload_function = o.upload_function
   self.upload_username = share.get_username()
-
+  
   if self.upload_username == nil then
     print("not registered")
-    do return end
+    do return nil end
   end
   if self.script_name == nil then 
     print("no script_name defined")
-    do return end 
+    do return nil end 
   end
-  if self.upload_function == nil then 
-    print("no upload_function defined")
-    do return end 
-  end
+  return o
 end
 
 
