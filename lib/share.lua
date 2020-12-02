@@ -17,56 +17,34 @@ share.log=function(...)
   end
 end
 
-share.key_established=function()
-  if file_exists(datadir.."username") and file_exists(datadir.."key.public") then
-    return os.capture("cat "..datadir.."username")
-  end
-  return false
-end
-
-share.clean=function()
-  os.remove(datadir.."username")
-end
-
 share.generate_keypair=function(username)
   os.execute("mkdir -p "..datadir)
   os.execute("openssl genrsa -out "..datadir.."key.private 2048")
   os.execute("openssl rsa -in "..datadir.."key.private -pubout -out "..datadir.."key.public")
-  f=io.open(datadir.."username","w")
-  f:write(username)
-  f:close()
 end
 
-share.is_registered=function()
-  local username=os.capture("cat "..datadir.."username")
-  if username==nil then
-    return
-  end
+share.is_registered=function(username)
   local publickey=os.capture("cat "..datadir.."key.public")
   if publickey==nil then
     return
   end
   curl_url=server_name.."/share/keys/"..username
-  curl_cmd="curl -s "..curl_url
+  curl_cmd="curl -s -m 5 "..curl_url
   result=os.capture(curl_cmd)
   return result==publickey
 end
 
 share.directory=function()
   curl_url=server_name.."/directory.json"
-  curl_cmd="curl -s "..curl_url
+  curl_cmd="curl -s -m 5 "..curl_url
   result=os.capture(curl_cmd)
   print(result)
   return json.decode(result)
 end
 
-share.register=function()
+share.register=function(username)
   tmp_signature=temp_file_name()
   tmp_username=temp_file_name()
-  local username=os.capture("cat "..datadir.."username")
-  if username==nil then
-    return
-  end
 
   -- sign the username
   local f=io.open(tmp_username,"w")
@@ -77,7 +55,7 @@ share.register=function()
 
 
   curl_url=server_name.."/register?username="..username.."&signature="..signature
-  curl_cmd="curl -s --upload-file "..datadir.."key.public "..'"'..curl_url..'"'
+  curl_cmd="curl -s -m 5 --upload-file "..datadir.."key.public "..'"'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
@@ -86,13 +64,9 @@ share.register=function()
   return result
 end
 
-share.unregister=function()
+share.unregister=function(username)
   tmp_signature=temp_file_name()
   tmp_username=temp_file_name()
-  local username=os.capture("cat "..datadir.."username")
-  if username==nil then
-    return
-  end
 
   -- sign the username
   f=io.open(tmp_username,"w")
@@ -103,7 +77,7 @@ share.unregister=function()
 
   -- send unregistration
   curl_url=server_name.."/unregister?username="..username.."&signature="..signature
-  curl_cmd="curl -s --upload-file "..datadir.."key.public "..'"'..curl_url..'"'
+  curl_cmd="curl -s -m 5 --upload-file "..datadir.."key.public "..'"'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
@@ -113,17 +87,13 @@ share.unregister=function()
   return result
 end
 
-share.upload=function(type,dataname,pathtofile,target)
+share.upload=function(username,type,dataname,pathtofile,target)
   -- type is the type, e.g. tape / barcode (name of script) / etc.
   -- dataname is how the group of data can be represented
   -- pathtofile is the path to the file on this norns
   -- target is the target path to file on any norns that downloads it
   tmp_signature=temp_file_name()
   tmp_hash=temp_file_name()
-  local username=os.capture("cat "..datadir.."username")
-  if username==nil then
-    return
-  end
 
   _,filename,ext = share.split_path(pathtofile)
   print("ext: "..ext)
@@ -156,7 +126,7 @@ share.upload=function(type,dataname,pathtofile,target)
 
   -- upload the file and metadata
   curl_url=server_name.."/upload?type="..type.."&username="..username.."&dataname="..dataname.."&filename="..filename.."&target="..target.."&hash="..hash.."&signature="..signature
-  curl_cmd="curl -s --upload-file "..pathtofile..' "'..curl_url..'"'
+  curl_cmd="curl -s -m 5 --upload-file "..pathtofile..' "'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
@@ -173,7 +143,7 @@ end
 
 share.download=function(type,username,dataname)
   -- check signature
-  result=os.capture("curl -s "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/metadata.json")
+  result=os.capture("curl -s -m 5 "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/metadata.json")
   print(result)
   metadata=json.decode(result)
   if metadata==nil then
@@ -188,12 +158,12 @@ share.download=function(type,username,dataname)
     result = ""
     if ends_with(file.name,".wav.flac") then
       -- download to temp and convert to wav
-      result=os.capture("curl -s -o /dev/shm/"..file.name.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
+      result=os.capture("curl -s -m 5 -o /dev/shm/"..file.name.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
       os.execute("ffmpeg -y -i /dev/shm/"..file.name.." -ar 48000 -c:a pcm_s24le "..file.target)
       os.remove("/dev/shm/"..file.name)
     else
       -- download directly to folder 
-      result=os.capture("curl -s -o "..file.target.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
+      result=os.capture("curl -s -m 5 -o "..file.target.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
     end
     -- TODO: verify
   end
