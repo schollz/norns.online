@@ -57,8 +57,8 @@ share.directory=function()
 end
 
 share.register=function(username)
-  tmp_signature=temp_file_name()
-  tmp_username=temp_file_name()
+  tmp_signature=share.temp_file_name()
+  tmp_username=share.temp_file_name()
 
   -- write username to file
   print("signing "..username)
@@ -81,8 +81,8 @@ share.register=function(username)
 end
 
 share.unregister=function(username)
-  tmp_signature=temp_file_name()
-  tmp_username=temp_file_name()
+  tmp_signature=share.temp_file_name()
+  tmp_username=share.temp_file_name()
 
   -- sign the username
   f=io.open(tmp_username,"w")
@@ -108,8 +108,8 @@ share.upload=function(username,type,dataname,pathtofile,target)
   -- dataname is how the group of data can be represented
   -- pathtofile is the path to the file on this norns
   -- target is the target path to file on any norns that downloads it
-  tmp_signature=temp_file_name()
-  tmp_hash=temp_file_name()
+  tmp_signature=share.temp_file_name()
+  tmp_hash=share.temp_file_name()
 
   _,filename,ext=share.split_path(pathtofile)
   print("ext: "..ext)
@@ -214,6 +214,10 @@ share.split_path=function(path)
 end
 
 
+share.temp_file_name = function()
+  return "/dev/shm/tempfile"..randomString(5)
+end
+
 --
 -- utilities
 --
@@ -248,9 +252,7 @@ function randomString(length)
   return randomString(length-1)..charset[math.random(1,#charset)]
 end
 
-function temp_file_name()
-  return "/dev/shm/"..randomString(5)
-end
+
 
 function file_exists(fname)
   local f=io.open(fname,"r")
