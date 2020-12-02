@@ -6,7 +6,6 @@ DATA_DIR="/home/we/dust/data/norns.online/"
 CONFIG_FILE=DATA_DIR.."config.json"
 
 server_name="https://norns.online"
-server_name="192.168.0.3:8098"
 
 share.log=function(...)
   local arg={...}
@@ -51,6 +50,9 @@ share.directory=function()
   curl_cmd="curl -s -m 5 "..curl_url
   result=os.capture(curl_cmd)
   print(result)
+  if result =="" then 
+    do return nil end
+  end
   return json.decode(result)
 end
 
