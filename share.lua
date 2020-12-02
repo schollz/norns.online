@@ -67,15 +67,14 @@ function upload_callback(path)
 end
 
 function server_register()
+  username=share.key_established()
   if not share.is_registered() then
     uimessage="registering..."
     redraw()
-    msg=share.register(x)
+    msg=share.register(username)
     show_message(msg)
     if not string.match(msg,"OK") then
       share.clean()
-    else
-      username=share.key_established()
     end
   end
 end

@@ -4,6 +4,7 @@ local json=include("norns.online/lib/json")
 
 datadir="/home/we/dust/data/norns.online/"
 server_name="https://norns.online"
+server_name="192.168.0.3:8098"
 
 share.log=function(...)
   local arg={...}
@@ -159,11 +160,11 @@ share.upload=function(type,dataname,filename,targetdir)
   hash=hash:firstword()
   print("hash: "..hash)
   f=io.open(tmp_hash,"w")
-  f:write(dataname)
-  f:write(filename)
   f:write(targetdir)
   f:write(hash)
   f:close()
+
+  print(os.capture("cat "..tmp_hash))
 
   -- sign the hash
   os.execute("openssl dgst -sign "..datadir.."key.private -out "..tmp_signature.." "..tmp_hash)
