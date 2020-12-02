@@ -95,7 +95,7 @@ share.upload=function(username,type,dataname,pathtofile,target)
   tmp_signature=temp_file_name()
   tmp_hash=temp_file_name()
 
-  _,filename,ext = share.split_path(pathtofile)
+  _,filename,ext=share.split_path(pathtofile)
   print("ext: "..ext)
 
   -- convert wav to flac, if it is a wav
@@ -104,7 +104,7 @@ share.upload=function(username,type,dataname,pathtofile,target)
     os.execute("ffmpeg -y -i "..pathtofile.." -ar 48000 /dev/shm/"..filename..".flac")
     -- update the pathname and filename (but not the target path)
     pathtofile="/dev/shm/"..filename..".flac"
-     _,filename,_ = share.split_path(pathtofile)
+    _,filename,_=share.split_path(pathtofile)
     flaced=true
   end
 
@@ -155,14 +155,14 @@ share.download=function(type,username,dataname)
     os.execute("mkdir -p "..target_dir)
 
     -- download
-    result = ""
+    result=""
     if ends_with(file.name,".wav.flac") then
       -- download to temp and convert to wav
       result=os.capture("curl -s -m 5 -o /dev/shm/"..file.name.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
       os.execute("ffmpeg -y -i /dev/shm/"..file.name.." -ar 48000 -c:a pcm_s24le "..file.target)
       os.remove("/dev/shm/"..file.name)
     else
-      -- download directly to folder 
+      -- download directly to folder
       result=os.capture("curl -s -m 5 -o "..file.target.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
     end
     -- TODO: verify
@@ -186,12 +186,12 @@ share.read_file=function(fname)
   return content
 end
 
-share.split_path = function(path)
+share.split_path=function(path)
   -- https://stackoverflow.com/questions/5243179/what-is-the-neatest-way-to-split-out-a-path-name-into-its-components-in-lua
   -- /home/zns/1.txt returns
   -- /home/zns/   1.txt   txt
-  pathname, filename,ext=string.match(path,"(.-)([^\\/]-%.?([^%.\\/]*))$")
-  return pathname, filename, ext
+  pathname,filename,ext=string.match(path,"(.-)([^\\/]-%.?([^%.\\/]*))$")
+  return pathname,filename,ext
 end
 
 
