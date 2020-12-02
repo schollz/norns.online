@@ -205,6 +205,19 @@ share.read_file=function(fname)
   return content
 end
 
+share.dump_table_to_json=function(fname,table_data)
+  data = json.encode(table_data)
+  share.write_file(fname,data)
+end
+
+share.load_table_from_json=function(json_file)
+  data = share.read_file(json_file)
+  if data == "" then 
+    do return nil end
+  end
+  return json.decode(data)
+end
+
 share.split_path=function(path)
   -- https://stackoverflow.com/questions/5243179/what-is-the-neatest-way-to-split-out-a-path-name-into-its-components-in-lua
   -- /home/zns/1.txt returns
@@ -216,6 +229,75 @@ end
 
 share.temp_file_name = function()
   return "/dev/shm/tempfile"..randomString(5)
+end
+
+
+share:script_init = function(o)
+  -- defined parameters
+  self.script_name = o.script_name
+  self.upload_function = o.upload_function
+  self.upload_name = o.upload_name
+
+  self.upload_username = share.username()
+  if self.upload_username == nil then
+    print("not registered")
+    do return end
+  end
+  if self.script_name == nil then 
+    print("no script_name defined")
+    do return end 
+  end
+  if self.upload_function == nil then 
+    print("no upload_function defined")
+    do return end 
+  end
+  if self.upload_name == nil then 
+    params:add_text('share_upload_name',"upload name","")
+    params:add_action('share_upload_name',function(x)
+      self.upload_name=x
+    end)
+  end
+  params:add{type='binary',name="upload ready",id='share_upload_ready',behavior='toggle'}
+  params:add{type='binary',name="UPLOAD",id='share_upload',behavior='momentary',
+    action=function(x)
+      print('params:get("share_upload_ready"):'.. params:get("share_upload_ready"))
+      if params:get("share_upload_ready")==1 then 
+        params:set("share_upload_ready",0)
+        params:set("share_msg","uploading")
+        _menu.redraw()
+        self.upload_function()
+        params:set("share_msg","uploaded")
+      end
+    end
+  }
+  params:add_text('share_msg',"message","")
+end
+
+
+share:script_upload = function(o)
+  if o.dataname == nil then 
+    print("need dataname")
+    do return end
+  end
+  if o.pathtofile == nil then 
+    print("need pathtofile")
+    do return end
+  end
+  if o.target == nil then 
+    print("need target")
+    do return end 
+  end
+  if self.upload_username == nil then
+    print("not registered")
+    do return end
+  end
+  if self.script_name == nil then 
+    print("no script_name defined")
+    do return end 
+  end
+  msg = share.upload(self.upload_username,self.script_name,o.dataname,o.pathtofile,o.target)
+  print(msg)
+  return msg
 end
 
 --
