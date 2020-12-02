@@ -94,6 +94,15 @@ func handle(w http.ResponseWriter, r *http.Request) (err error) {
 			s := strings.TrimPrefix(r.URL.Path, "/share/")
 			if s == "" {
 				s = "norns.online/share"
+			} else {
+				parts := strings.Split(s, "/")
+				s = ""
+				for i, part := range parts {
+					if part == "" {
+						continue
+					}
+					s += fmt.Sprintf("<a href='/share/%s/%s'>%s</a>/", strings.Join(parts[:i], "/"), part, part)
+				}
 			}
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			io.WriteString(w, `<style>
@@ -378,7 +387,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) (err error) {
 		log.Error(err)
 		return
 	}
-	err = auth.VerifyString(string(keyb), m.Files[0].Target+m.Files[0].Hash, m.Files[0].Signature)
+	err = auth.VerifyString(string(keyb), m.Files[0].Name+m.Files[0].Target+m.Files[0].Hash, m.Files[0].Signature)
 	if err != nil {
 		log.Error(err)
 		err = fmt.Errorf("could not verify signature")
