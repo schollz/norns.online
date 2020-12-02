@@ -60,13 +60,15 @@ share.register=function(username)
   tmp_signature=temp_file_name()
   tmp_username=temp_file_name()
 
-  -- sign the username
+  -- write username to file
+  print("signing "..username)
   local f=io.open(tmp_username,"w")
   f:write(username)
   f:close()
+
+  -- create signature
   os.execute("openssl dgst -sign "..DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_username)
   signature=os.capture("base64 -w 0 "..tmp_signature)
-
 
   curl_url=server_name.."/register?username="..username.."&signature="..signature
   curl_cmd="curl -s -m 5 --upload-file "..DATA_DIR.."key.public "..'"'..curl_url..'"'
@@ -175,9 +177,9 @@ share.download=function(type,username,dataname)
     result=""
     if ends_with(file.name,".wav.flac") then
       -- download to temp and convert to wav
-      result=os.capture("curl -s -m 5 -o /dev/shm/"..file.name.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
-      os.execute("ffmpeg -y -i /dev/shm/"..file.name.." -ar 48000 -c:a pcm_s24le "..file.target)
-      os.remove("/dev/shm/"..file.name)
+      result=os.capture("curl -s -m 5 -o /tmp/"..file.name.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
+      os.execute("ffmpeg -y -i /tmp/"..file.name.." -ar 48000 -c:a pcm_s24le "..file.target)
+      os.remove("/tmp/"..file.name)
     else
       -- download directly to folder
       result=os.capture("curl -s -m 5 -o "..file.target.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
@@ -254,7 +256,6 @@ function file_exists(fname)
   local f=io.open(fname,"r")
   if f~=nil then io.close(f) return true else return false end
 end
-
 
 function readAll(file)
   local f=assert(io.open(file,"rb"))

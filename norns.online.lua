@@ -166,6 +166,7 @@ function key(k,z)
       stop()
       redraw()
   elseif k==3 and settings.name=="" then
+    print(settings.name)
     print("register mode")
     server_generate_key()
     redraw()
@@ -515,22 +516,26 @@ function upload_callback(pathtofile)
   uimessage="uploading "..filename.."..."
   target="/home/we/dust/audio/share/"..settings.name.."/"..filename
   redraw()
-  show_message(share.upload(settings.name,"tape",filename,pathtofile,target))
+  msg = share.upload(settings.name,"tape",filename,pathtofile,target)
+  if string.match(msg,"need to register") then
+    settings.is_registered=false
+    write_settings()
+  end
+  show_message(msg)
 end
 
 function server_register()
   if not share.is_registered(settings.name) then
-    uimessage="registering..."
+    uimessage="registering "..settings.name.."..."
     redraw()
     msg=share.register(settings.name)
     show_message(msg)
-    if not string.match(msg,"OK") then
-      settings.name=""
-      share.clean()
-    else
+    if string.match(msg,"OK") then
       settings.is_registered=true
-      write_settings()
+    else
+      settings.is_registered=false
     end
+      write_settings()
   end
 end
 
