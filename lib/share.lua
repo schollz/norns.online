@@ -1,10 +1,10 @@
 -- share.lua
 local share={
-debug=true,
-SHARE_DATA_DIR="/home/we/dust/data/norns.online/",
-CONFIG_FILE="/home/we/dust/data/norns.online/config.json",
-VIRTUAL_DIR="/home/we/dust/data/norns.online/virtualdir/",
-server_name="https://norns.online",
+  debug=true,
+  SHARE_DATA_DIR="/home/we/dust/data/norns.online/",
+  CONFIG_FILE="/home/we/dust/data/norns.online/config.json",
+  VIRTUAL_DIR="/home/we/dust/data/norns.online/virtualdir/",
+  server_name="https://norns.online",
 }
 local json=include("norns.online/lib/json")
 
@@ -23,7 +23,7 @@ share.log=function(...)
 end
 
 --
--- virtual directory 
+-- virtual directory
 --
 
 share.get_remote_directory=function()
@@ -31,44 +31,64 @@ share.get_remote_directory=function()
   curl_cmd="curl -s -m 5 "..curl_url
   result=os.capture(curl_cmd)
   print(result)
-  if result =="" then 
+  if result=="" then
     do return nil end
   end
   return json.decode(result)
 end
 
 share.get_virtual_directory=function(datatype)
-  if datatype == nil then 
-    do return share.VIRTUAL_DIR end 
+  if datatype==nil then
+    do return share.VIRTUAL_DIR end
   end
   return share.VIRTUAL_DIR..datatype.."/"
 end
 
 share.make_virtual_directory=function()
-  dir=share.get_remote_directory()
-  if dir == nil then 
+  -- get remove files
+  remotedir=share.get_remote_directory()
+  if remotedir==nil then
     do return nil end
   end
-  -- -- erase previous virtual directory
-  -- os.execute("rm -rf "..share.VIRTUAL_DIR)
-  -- build virtual directory with empty files
-  for _,s in ipairs(dir) do
-    os.execute("mkdir -p "..share.VIRTUAL_DIR..s.type.."/"..s.username)
-    os.execute("touch "..share.VIRTUAL_DIR..s.type.."/"..s.username.."/"..s.dataname)
+
+  -- get current virutal directory
+  curdir={}
+  for _,f in ipairs(list_files(share.VIRTUAL_DIR)) do
+    curdir[share.trim_prefix(f,share.VIRTUAL_DIR)]=true
+    -- TODO Check this
   end
+
+  -- make new ones
+  for k,_ in pairs(remotedir) do
+    if curdir[k]==nil then
+      path,filename,_=share.split_path(k)
+      print("making "..share.VIRTUAL_DIR..path..filename)
+      -- os.execute("mkdir -p "..share.VIRTUAL_DIR..path)
+      -- os.execute("touch "..share.VIRTUAL_DIR..path..filename)
+    end
+  end
+
+  -- delete missing ones
+  for k,_ in pairs(curdir) do
+    if remotedir[k]==nil then
+      print("removing "..share.VIRTUAL_DIR..k)
+      -- os.execute("rm -rf "..share.VIRTUAL_DIR..k)
+    end
+  end
+
   return share.VIRTUAL_DIR
 end
 
 share.trim_virtual_directory=function(path)
   local path=(path:sub(0,#share.VIRTUAL_DIR)==share.VIRTUAL_DIR) and path:sub(#share.VIRTUAL_DIR+1) or path
-  return path 
+  return path
 end
 
 share.download_from_virtual_directory=function(path)
   if path=="cancel" then
     do return end
   end
-  path = share.trim_virtual_directory(path)
+  path=share.trim_virtual_directory(path)
   foo=share.splitstr(path,"/")
   datatype=foo[1]
   username=foo[2]
@@ -279,51 +299,51 @@ end
 
 --
 -- share uploader
--- 
+--
 
-share.new = function(self,o)
+share.new=function(self,o)
   -- uploader = share:new{script_name="oooooo"}
   -- defined parameters
-  o = o or {}
-  setmetatable(o, self)
-  self.__index = self
-  self.script_name = o.script_name
-  self.upload_username = share.get_username()
-  
-  if self.upload_username == nil then
+  o=o or {}
+  setmetatable(o,self)
+  self.__index=self
+  self.script_name=o.script_name
+  self.upload_username=share.get_username()
+
+  if self.upload_username==nil then
     print("not registered")
     do return nil end
   end
-  if self.script_name == nil then 
+  if self.script_name==nil then
     print("no script_name defined")
-    do return nil end 
+    do return nil end
   end
   return o
 end
 
 
-share.upload = function(self,o)
-  if o.dataname == nil then 
+share.upload=function(self,o)
+  if o.dataname==nil then
     print("need dataname")
     do return end
   end
-  if o.pathtofile == nil then 
+  if o.pathtofile==nil then
     print("need pathtofile")
     do return end
   end
-  if o.target == nil then 
+  if o.target==nil then
     print("need target")
-    do return end 
+    do return end
   end
-  if self.upload_username == nil then
+  if self.upload_username==nil then
     print("not registered")
     do return end
   end
-  if self.script_name == nil then 
+  if self.script_name==nil then
     print("no script_name defined")
-    do return end 
+    do return end
   end
-  msg = share._upload(self.upload_username,self.script_name,o.dataname,o.pathtofile,o.target)
+  msg=share._upload(self.upload_username,self.script_name,o.dataname,o.pathtofile,o.target)
   print(msg)
   return msg
 end
@@ -332,8 +352,8 @@ end
 -- public utilities
 --
 
-share.trim_prefix = function(s,p)
-  local t = (s:sub(0, #p) == p) and s:sub(#p+1) or s
+share.trim_prefix=function(s,p)
+  local t=(s:sub(0,#p)==p) and s:sub(#p+1) or s
   return t
 end
 
@@ -354,13 +374,13 @@ share.read_file=function(fname)
 end
 
 share.dump_table_to_json=function(fname,table_data)
-  data = json.encode(table_data)
+  data=json.encode(table_data)
   share.write_file(fname,data)
 end
 
 share.load_table_from_json=function(json_file)
-  data = share.read_file(json_file)
-  if data == "" then 
+  data=share.read_file(json_file)
+  if data=="" then
     do return nil end
   end
   return json.decode(data)
@@ -375,13 +395,13 @@ share.split_path=function(path)
 end
 
 
-share.temp_file_name = function()
+share.temp_file_name=function()
   return "/dev/shm/tempfile"..randomString(5)
 end
 
 
 
-share.splitstr = function(inputstr,sep)
+share.splitstr=function(inputstr,sep)
   if sep==nil then
     sep="%s"
   end
