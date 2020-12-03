@@ -1,12 +1,15 @@
 -- share.lua
-local share={debug=true}
+local share={
+debug=true,
+DATA_DIR="/home/we/dust/data/norns.online/",
+CONFIG_FILE="/home/we/dust/data/norns.online/config.json",
+VIRTUAL_DIR="/home/we/dust/data/norns.online/virtualdir/",
+server_name="https://norns.online",
+}
 local json=include("norns.online/lib/json")
 
-DATA_DIR="/home/we/dust/data/norns.online/"
-CONFIG_FILE=DATA_DIR.."config.json"
-VIRTUAL_DIR="/home/we/dust/data/norns.online/virtualdir/"
 
-server_name="https://norns.online"
+os.execute("mkdir -p "..share.VIRTUAL_DIR)
 
 share.log=function(...)
   local arg={...}
@@ -24,7 +27,7 @@ end
 --
 
 share.get_remote_directory=function()
-  curl_url=server_name.."/directory.json"
+  curl_url=share.server_name.."/directory.json"
   curl_cmd="curl -s -m 5 "..curl_url
   result=os.capture(curl_cmd)
   print(result)
@@ -34,8 +37,8 @@ share.get_remote_directory=function()
   return json.decode(result)
 end
 
-share.get_virtual_directory=function(datetype)
-  return VIRTUAL_DIR..datatype
+share.get_virtual_directory=function(datatype)
+  return share.VIRTUAL_DIR..datatype.."/"
 end
 
 share.make_virtual_directory=function()
@@ -44,17 +47,17 @@ share.make_virtual_directory=function()
     do return nil end
   end
   -- -- erase previous virtual directory
-  -- os.execute("rm -rf "..VIRTUAL_DIR)
+  -- os.execute("rm -rf "..share.VIRTUAL_DIR)
   -- build virtual directory with empty files
   for _,s in ipairs(dir) do
-    os.execute("mkdir -p "..VIRTUAL_DIR..s.type.."/"..s.username)
-    os.execute("touch "..VIRTUAL_DIR..s.type.."/"..s.username.."/"..s.dataname)
+    os.execute("mkdir -p "..share.VIRTUAL_DIR..s.type.."/"..s.username)
+    os.execute("touch "..share.VIRTUAL_DIR..s.type.."/"..s.username.."/"..s.dataname)
   end
-  return VIRTUAL_DIR
+  return share.VIRTUAL_DIR
 end
 
 share.trim_virtual_directory=function(path)
-  local path=(path:sub(0,#VIRTUAL_DIR)==VIRTUAL_DIR) and path:sub(#VIRTUAL_DIR+1) or path
+  local path=(path:sub(0,#share.VIRTUAL_DIR)==share.VIRTUAL_DIR) and path:sub(#share.VIRTUAL_DIR+1) or path
   return path 
 end
 
@@ -63,7 +66,7 @@ share.download_from_virtual_directory=function(path)
     do return end
   end
   path = share.trim_virtual_directory(path)
-  foo=splitstr(path,"/")
+  foo=share.splitstr(path,"/")
   datatype=foo[1]
   username=foo[2]
   dataname=foo[3]
@@ -77,26 +80,26 @@ end
 --
 share.get_username=function()
   -- returns username
-  if not util.file_exists(CONFIG_FILE) then
+  if not util.file_exists(share.CONFIG_FILE) then
     do return nil end
   end
-  data=readAll(CONFIG_FILE)
+  data=readAll(share.CONFIG_FILE)
   settings=json.decode(data)
   return settings.name
 end
 
 share.generate_keypair=function(username)
-  os.execute("mkdir -p "..DATA_DIR)
-  os.execute("openssl genrsa -out "..DATA_DIR.."key.private 2048")
-  os.execute("openssl rsa -in "..DATA_DIR.."key.private -pubout -out "..DATA_DIR.."key.public")
+  os.execute("mkdir -p "..share.DATA_DIR)
+  os.execute("openssl genrsa -out "..share.DATA_DIR.."key.private 2048")
+  os.execute("openssl rsa -in "..share.DATA_DIR.."key.private -pubout -out "..share.DATA_DIR.."key.public")
 end
 
 share.is_registered=function(username)
-  local publickey=os.capture("cat "..DATA_DIR.."key.public")
+  local publickey=os.capture("cat "..share.DATA_DIR.."key.public")
   if publickey==nil then
     return
   end
-  curl_url=server_name.."/share/keys/"..username
+  curl_url=share.server_name.."/share/keys/"..username
   curl_cmd="curl -s -m 5 "..curl_url
   result=os.capture(curl_cmd)
   return result==publickey
@@ -113,11 +116,11 @@ share.register=function(username)
   f:close()
 
   -- create signature
-  os.execute("openssl dgst -sign "..DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_username)
+  os.execute("openssl dgst -sign "..share.DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_username)
   signature=os.capture("base64 -w 0 "..tmp_signature)
 
-  curl_url=server_name.."/register?username="..username.."&signature="..signature
-  curl_cmd="curl -s -m 5 --upload-file "..DATA_DIR.."key.public "..'"'..curl_url..'"'
+  curl_url=share.server_name.."/register?username="..username.."&signature="..signature
+  curl_cmd="curl -s -m 5 --upload-file "..share.DATA_DIR.."key.public "..'"'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
@@ -134,12 +137,12 @@ share.unregister=function(username)
   f=io.open(tmp_username,"w")
   f:write(username)
   f:close()
-  os.execute("openssl dgst -sign "..DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_username)
+  os.execute("openssl dgst -sign "..share.DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_username)
   signature=os.capture("base64 -w 0 "..tmp_signature)
 
   -- send unregistration
-  curl_url=server_name.."/unregister?username="..username.."&signature="..signature
-  curl_cmd="curl -s -m 5 --upload-file "..DATA_DIR.."key.public "..'"'..curl_url..'"'
+  curl_url=share.server_name.."/unregister?username="..username.."&signature="..signature
+  curl_cmd="curl -s -m 5 --upload-file "..share.DATA_DIR.."key.public "..'"'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
@@ -190,11 +193,11 @@ share._upload=function(username,type,dataname,pathtofile,target)
   print("pathtofile: "..pathtofile)
 
   -- sign the hash
-  os.execute("openssl dgst -sign "..DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_hash)
+  os.execute("openssl dgst -sign "..share.DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_hash)
   signature=os.capture("base64 -w 0 "..tmp_signature)
 
   -- upload the file and metadata
-  curl_url=server_name.."/upload?type="..type.."&username="..username.."&dataname="..dataname.."&filename="..hashed_filename.."&target="..target.."&hash="..hash.."&signature="..signature
+  curl_url=share.server_name.."/upload?type="..type.."&username="..username.."&dataname="..dataname.."&filename="..hashed_filename.."&target="..target.."&hash="..hash.."&signature="..signature
   curl_cmd="curl -s -m 5 --upload-file "..pathtofile..' "'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
@@ -212,7 +215,7 @@ end
 
 share.download=function(type,username,dataname)
   -- check signature
-  result=os.capture("curl -s -m 5 "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/metadata.json")
+  result=os.capture("curl -s -m 5 "..share.server_name.."/share/"..type.."/"..username.."/"..dataname.."/metadata.json")
   print(result)
   metadata=json.decode(result)
   if metadata==nil then
@@ -227,12 +230,12 @@ share.download=function(type,username,dataname)
     result=""
     if ends_with(file.name,".wav.flac") then
       -- download to temp and convert to wav
-      result=os.capture("curl -s -m 5 -o /tmp/"..file.name.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
+      result=os.capture("curl -s -m 5 -o /tmp/"..file.name.." "..share.server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
       os.execute("ffmpeg -y -i /tmp/"..file.name.." -ar 48000 -c:a pcm_s24le "..file.target)
       os.remove("/tmp/"..file.name)
     else
       -- download directly to target
-      result=os.capture("curl -s -m 5 -o "..file.target.." "..server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
+      result=os.capture("curl -s -m 5 -o "..file.target.." "..share.server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
     end
     -- TODO: verify
   end
@@ -245,7 +248,7 @@ end
 -- share uploader
 -- 
 
-share:new = function(o)
+share.new = function(self,o)
   -- uploader = share:new{script_name="oooooo"}
   -- defined parameters
   o = o or {}
@@ -266,7 +269,7 @@ share:new = function(o)
 end
 
 
-share:upload = function(o)
+share.upload = function(self,o)
   if o.dataname == nil then 
     print("need dataname")
     do return end
@@ -341,6 +344,19 @@ end
 
 share.temp_file_name = function()
   return "/dev/shm/tempfile"..randomString(5)
+end
+
+
+
+share.splitstr = function(inputstr,sep)
+  if sep==nil then
+    sep="%s"
+  end
+  local t={}
+  for str in string.gmatch(inputstr,"([^"..sep.."]+)") do
+    table.insert(t,str)
+  end
+  return t
 end
 
 --
