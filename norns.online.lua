@@ -53,9 +53,11 @@ mode=1
 uimessage=""
 ui=1
 uishift=false
-params:add_separator("norns.online")
+refreshed_dir=false
+
 function init()
   startup=true
+  params:add_separator("norns.online")
   params:add_option("allowmenu","menu",{"disabled","enabled"},2)
   params:set_action("allowmenu",function(v)
     settings.allowmenu=v==2
@@ -150,7 +152,6 @@ function init()
   write_settings()
   redraw()
   startup=false
-  share.create_virtual_directory()
 end
 
 function key(k,z)
@@ -161,7 +162,7 @@ function key(k,z)
     show_message("checking installation...")
     install_prereqs()
   end
-  if k==3 and mode==4 and util.file_exists(KILL_FILE) then
+  if k==3 and mode==3 and util.file_exists(KILL_FILE) then
     print("killing server")
       -- kill
       stop()
@@ -171,7 +172,7 @@ function key(k,z)
     print("register mode")
     server_generate_key()
     redraw()
-  elseif k==3 and mode==4 then
+  elseif k==3 and mode==3 then
     start()
   elseif k==3 then
     print("go mode")
@@ -187,12 +188,22 @@ function key(k,z)
     if mode==1 then
       -- upload
       fileselect.enter("/home/we/dust/audio",upload_callback)
-    elseif mode==2 or mode==3 then
+    elseif mode==2 then
       -- download
+        if not refreshed_dir then
+        refreshed_dir=true 
+        uimessage="refreshing directory..."
+        redraw()
+        share.make_virtual_directory()
+        uimessage=""
+        redraw()
+      end
       fileselect.enter(share.get_virtual_directory("tape"),function(x)
+        if x == "cancel" then do return end end 
         uimessage="downloading..."
         redraw()
-        uimessage = share.download_from_virtual_directory(x)
+        msg = share.download_from_virtual_directory(x)
+        show_message(msg)
         redraw()
       end)
     end
@@ -200,7 +211,7 @@ function key(k,z)
 end
 
 function enc(n,z)
-  mode=util.clamp(mode+sign(z),1,4)
+  mode=util.clamp(mode+sign(z),1,3)
   redraw()
 end
 
@@ -217,7 +228,7 @@ function redraw()
     screen.text("norns.online")
   end
 
-  start_point=12
+  start_point=18
   if not settings.name then
     screen.level(15)
     screen.font_face(1)
@@ -229,7 +240,7 @@ function redraw()
   else
     screen.font_face(1)
     screen.font_size(8)
-    for i=1,4 do
+    for i=1,3 do
       if mode==i then
         screen.level(15)
         screen.move(0,start_point+i*11)
@@ -242,9 +253,7 @@ function redraw()
         screen.text("upload tape")
       elseif i==2 then
         screen.text("download tape")
-      elseif i==3 then
-        screen.text("download script save")
-      elseif i==4 then
+      elseif i== 3 then
         if util.file_exists(KILL_FILE) then
           screen.text("go offline")
           x=110
@@ -377,6 +386,9 @@ function toggle()
 end
 
 function start()
+  if not util.file_exists(SERVER_FILE) then 
+    update()
+  end
   print("starting")
   write_settings()
   make_start_sh()
@@ -446,10 +458,10 @@ end
 
 function update()
   os.execute("rm -f "..SERVER_FILE)
-  uimessage="updating"
+  uimessage="updating server..."
   redraw()
   os.execute("cd "..CODE_DIR.." && git pull")
-  uimessage="building"
+  uimessage="building..."
   redraw()
   os.execute("cd "..CODE_DIR.."; /usr/local/go/bin/go build")
   uimessage=""
@@ -481,7 +493,7 @@ function upload_callback(pathtofile)
   uimessage="uploading "..filename.."..."
   target="/home/we/dust/audio/share/"..settings.name.."/"..filename
   redraw()
-  msg = share.upload(settings.name,"tape",filename,pathtofile,target)
+  msg = share._upload(settings.name,"tape",filename,pathtofile,target)
   if string.match(msg,"need to register") then
     settings.is_registered=false
     write_settings()

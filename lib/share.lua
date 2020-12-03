@@ -239,7 +239,7 @@ share.download=function(type,username,dataname)
     end
     -- TODO: verify
   end
-  return "...downloaded"
+  return "downloaded."
 end
 
 
