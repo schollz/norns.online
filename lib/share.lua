@@ -1,7 +1,7 @@
 -- share.lua
 local share={
 debug=true,
-DATA_DIR="/home/we/dust/data/norns.online/",
+SHARE_DATA_DIR="/home/we/dust/data/norns.online/",
 CONFIG_FILE="/home/we/dust/data/norns.online/config.json",
 VIRTUAL_DIR="/home/we/dust/data/norns.online/virtualdir/",
 server_name="https://norns.online",
@@ -92,13 +92,13 @@ share.get_username=function()
 end
 
 share.generate_keypair=function(username)
-  os.execute("mkdir -p "..share.DATA_DIR)
-  os.execute("openssl genrsa -out "..share.DATA_DIR.."key.private 2048")
-  os.execute("openssl rsa -in "..share.DATA_DIR.."key.private -pubout -out "..share.DATA_DIR.."key.public")
+  os.execute("mkdir -p "..share.SHARE_DATA_DIR)
+  os.execute("openssl genrsa -out "..share.SHARE_DATA_DIR.."key.private 2048")
+  os.execute("openssl rsa -in "..share.SHARE_DATA_DIR.."key.private -pubout -out "..share.SHARE_DATA_DIR.."key.public")
 end
 
 share.is_registered=function(username)
-  local publickey=os.capture("cat "..share.DATA_DIR.."key.public")
+  local publickey=os.capture("cat "..share.SHARE_DATA_DIR.."key.public")
   if publickey==nil then
     return
   end
@@ -119,11 +119,11 @@ share.register=function(username)
   f:close()
 
   -- create signature
-  os.execute("openssl dgst -sign "..share.DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_username)
+  os.execute("openssl dgst -sign "..share.SHARE_DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_username)
   signature=os.capture("base64 -w 0 "..tmp_signature)
 
   curl_url=share.server_name.."/register?username="..username.."&signature="..signature
-  curl_cmd="curl -s -m 5 --upload-file "..share.DATA_DIR.."key.public "..'"'..curl_url..'"'
+  curl_cmd="curl -s -m 5 --upload-file "..share.SHARE_DATA_DIR.."key.public "..'"'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
@@ -140,12 +140,12 @@ share.unregister=function(username)
   f=io.open(tmp_username,"w")
   f:write(username)
   f:close()
-  os.execute("openssl dgst -sign "..share.DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_username)
+  os.execute("openssl dgst -sign "..share.SHARE_DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_username)
   signature=os.capture("base64 -w 0 "..tmp_signature)
 
   -- send unregistration
   curl_url=share.server_name.."/unregister?username="..username.."&signature="..signature
-  curl_cmd="curl -s -m 5 --upload-file "..share.DATA_DIR.."key.public "..'"'..curl_url..'"'
+  curl_cmd="curl -s -m 5 --upload-file "..share.SHARE_DATA_DIR.."key.public "..'"'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
@@ -196,7 +196,7 @@ share._upload=function(username,type,dataname,pathtofile,target)
   print("pathtofile: "..pathtofile)
 
   -- sign the hash
-  os.execute("openssl dgst -sign "..share.DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_hash)
+  os.execute("openssl dgst -sign "..share.SHARE_DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_hash)
   signature=os.capture("base64 -w 0 "..tmp_signature)
 
   -- upload the file and metadata
@@ -229,7 +229,7 @@ share._delete=function(username,type,dataname)
   f:close()
 
   -- sign the hash
-  os.execute("openssl dgst -sign "..share.DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_username)
+  os.execute("openssl dgst -sign "..share.SHARE_DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_username)
   signature=os.capture("base64 -w 0 "..tmp_signature)
 
   -- upload the file and metadata
@@ -391,6 +391,8 @@ share.splitstr = function(inputstr,sep)
   end
   return t
 end
+
+
 
 --
 -- private utilities
