@@ -365,6 +365,12 @@ func handleDelete(w http.ResponseWriter, r *http.Request) (err error) {
 	// add to the database
 	err = os.RemoveAll(pathToFile)
 	if err == nil {
+		if utils.IsEmpty(path.Join("share", datatype, username)) {
+			os.RemoveAll(path.Join("share", datatype, username))
+			if utils.IsEmpty(path.Join("share", datatype)) {
+				os.RemoveAll(path.Join("share", datatype))
+			}
+		}
 		w.Write([]byte("data deleted"))
 	}
 	return
