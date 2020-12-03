@@ -89,6 +89,9 @@ func handle(w http.ResponseWriter, r *http.Request) (err error) {
 	} else if strings.HasPrefix(r.URL.Path, "/directory.json") {
 		// this is called from curl/wget upload
 		return handleDirectory(w, r)
+	} else if strings.HasPrefix(r.URL.Path, "/delete") {
+		// this is called from curl/wget upload
+		return handleDelete(w, r)
 	} else if strings.HasPrefix(r.URL.Path, "/share") {
 		if strings.HasSuffix(r.URL.Path, "/") {
 			s := strings.TrimPrefix(r.URL.Path, "/share/")
@@ -285,6 +288,90 @@ func handleUnregister(w http.ResponseWriter, r *http.Request) (err error) {
 	err = os.Remove("share/keys/" + username)
 	if err == nil {
 		w.Write([]byte("...unregistration OK"))
+	}
+	return
+}
+
+func handleDelete(w http.ResponseWriter, r *http.Request) (err error) {
+	isValidFilename := regexp.MustCompile(`^[A-Za-z0-9.\-_]+$`).MatchString
+
+	var username, signature, datatype, dataname string
+	if _, ok := r.URL.Query()["username"]; ok {
+		username = r.URL.Query()["username"][0]
+	} else {
+		err = fmt.Errorf("no username")
+		return
+	}
+
+	// make sure username has valid characters
+	isAlpha := regexp.MustCompile(`^[A-Za-z0-9]+$`).MatchString
+	if !isAlpha(username) {
+		err = fmt.Errorf("bad username")
+		return
+	}
+
+	if _, ok := r.URL.Query()["type"]; ok {
+		datatype = filepath.Base(r.URL.Query()["type"][0])
+	} else {
+		err = fmt.Errorf("no type")
+		return
+	}
+	// make sure type has valid characters
+	if !isValidFilename(datatype) {
+		err = fmt.Errorf("bad type")
+		return
+	}
+
+	if _, ok := r.URL.Query()["dataname"]; ok {
+		dataname = filepath.Base(r.URL.Query()["dataname"][0])
+	} else {
+		err = fmt.Errorf("no dataname")
+		return
+	}
+	// make sure dataname has valid characters
+	if !isValidFilename(dataname) {
+		err = fmt.Errorf("bad data name: '%s'", dataname)
+		return
+	}
+
+	// signature should be base64 encoded
+	if _, ok := r.URL.Query()["signature"]; ok {
+		signature = strings.Replace(r.URL.Query()["signature"][0], " ", "+", -1)
+	} else {
+		err = fmt.Errorf("no signature")
+		return
+	}
+	log.Debugf("signature: %+v", signature)
+
+	// verify signature using username
+	// verify the signature of the hash of data
+	keyb, err := ioutil.ReadFile("share/keys/" + username)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	err = auth.VerifyString(string(keyb), username, signature)
+	if err != nil {
+		log.Error(err)
+		err = fmt.Errorf("could not verify signature")
+		return
+	}
+
+	pathToFile := path.Join("share", datatype, username, dataname)
+	if _, err = os.Stat(pathToFile); os.IsNotExist(err) {
+		err = fmt.Errorf("does not exist")
+		return
+	}
+	// add to the database
+	err = os.RemoveAll(pathToFile)
+	if err == nil {
+		if utils.IsEmpty(path.Join("share", datatype, username)) {
+			os.RemoveAll(path.Join("share", datatype, username))
+			if utils.IsEmpty(path.Join("share", datatype)) {
+				os.RemoveAll(path.Join("share", datatype))
+			}
+		}
+		w.Write([]byte("data deleted"))
 	}
 	return
 }
