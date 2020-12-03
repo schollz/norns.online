@@ -398,6 +398,37 @@ end
 -- private utilities
 --
 
+function list_files(d,files,recursive)
+  -- list files in a flat table
+  if d=="." or d=="./" then
+    d=""
+  end
+  if d~="" and string.sub(d,-1)~="/" then
+    d=d.."/"
+  end
+  folders={}
+  if recursive then
+    local cmd="ls -ad "..d.."*/ 2>/dev/null"
+    local f=assert(io.popen(cmd,'r'))
+    local out=assert(f:read('*a'))
+    f:close()
+    for f in out:gmatch("%S+") do
+      if not (string.match(f,"ls: ") or f=="../" or f=="./") then
+        files=list_files(f,files)
+      end
+    end
+  end
+  do
+    local cmd="ls -p "..d.." | grep -v /"
+    local f=assert(io.popen(cmd,'r'))
+    local out=assert(f:read('*a'))
+    for f in out:gmatch("%S+") do
+      table.insert(files,d..f)
+    end
+  end
+  return files
+end
+
 function os.capture(cmd,raw)
   local f=assert(io.popen(cmd,'r'))
   local s=assert(f:read('*a'))

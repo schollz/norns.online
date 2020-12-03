@@ -154,19 +154,16 @@ body{padding:1em;margin:auto;max-width:800px;color:#fff; font-family: 'uni 05_53
 }
 
 func handleDirectory(w http.ResponseWriter, r *http.Request) (err error) {
-	var metadatas []Metadata
-	err = filepath.Walk(".",
+	files := make(map[string]bool)
+	err = filepath.Walk("share",
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
-			if filepath.Base(path) == "metadata.json" {
-				b, _ := ioutil.ReadFile(path)
-				var m Metadata
-				err = json.Unmarshal(b, &m)
-				if err == nil {
-					metadatas = append(metadatas, m)
-				}
+			path = filepath.ToSlash(path)
+			path = strings.TrimPrefix(path, "share/")
+			if strings.Count(path, "/") == 2 {
+				files[path] = true
 			}
 			return nil
 		})
@@ -174,10 +171,8 @@ func handleDirectory(w http.ResponseWriter, r *http.Request) (err error) {
 		log.Error(err)
 		return
 	}
-	b, err := json.MarshalIndent(metadatas, "", "  ")
-	if err != nil {
-		return
-	}
+
+	b, _ := json.MarshalIndent(files, "", "  ")
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(b)
 	return
