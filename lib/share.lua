@@ -38,6 +38,9 @@ share.get_remote_directory=function()
 end
 
 share.get_virtual_directory=function(datatype)
+  if datatype == nil then 
+    do return share.VIRTUAL_DIR end 
+  end
   return share.VIRTUAL_DIR..datatype.."/"
 end
 
@@ -209,6 +212,36 @@ share._upload=function(username,type,dataname,pathtofile,target)
   if flaced then
     os.remove(pathtofile) -- remove if we converted
   end
+  return result
+end
+
+
+share._delete=function(username,type,dataname)
+  -- type is the type, e.g. tape / barcode (name of script) / etc.
+  -- dataname is how the group of data can be represented
+  -- pathtofile is the path to the file on this norns
+  -- target is the target path to file on any norns that downloads it
+  tmp_signature=share.temp_file_name()
+  tmp_username=share.temp_file_name()
+
+  f=io.open(tmp_username,"w")
+  f:write(username)
+  f:close()
+
+  -- sign the hash
+  os.execute("openssl dgst -sign "..share.DATA_DIR.."key.private -out "..tmp_signature.." "..tmp_username)
+  signature=os.capture("base64 -w 0 "..tmp_signature)
+
+  -- upload the file and metadata
+  curl_url=share.server_name.."/delete?type="..type.."&username="..username.."&dataname="..dataname.."&signature="..signature
+  curl_cmd='curl -s -m 5 "'..curl_url..'"'
+  print(curl_cmd)
+  result=os.capture(curl_cmd)
+  print(result)
+
+  -- clean up
+  os.remove(tmp_username)
+  os.remove(tmp_username)
   return result
 end
 

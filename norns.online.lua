@@ -162,7 +162,7 @@ function key(k,z)
     show_message("checking installation...")
     install_prereqs()
   end
-  if k==3 and mode==3 and util.file_exists(KILL_FILE) then
+  if k==3 and mode==4 and util.file_exists(KILL_FILE) then
     print("killing server")
       -- kill
       stop()
@@ -172,7 +172,7 @@ function key(k,z)
     print("register mode")
     server_generate_key()
     redraw()
-  elseif k==3 and mode==3 then
+  elseif k==3 and mode==4 then
     start()
   elseif k==3 then
     print("go mode")
@@ -188,16 +188,10 @@ function key(k,z)
     if mode==1 then
       -- upload
       fileselect.enter("/home/we/dust/audio",upload_callback)
+
     elseif mode==2 then
       -- download
-        if not refreshed_dir then
-        refreshed_dir=true 
-        uimessage="refreshing directory..."
-        redraw()
-        share.make_virtual_directory()
-        uimessage=""
-        redraw()
-      end
+      refresh_directory()
       fileselect.enter(share.get_virtual_directory("tape"),function(x)
         if x == "cancel" then do return end end 
         uimessage="downloading..."
@@ -206,12 +200,31 @@ function key(k,z)
         show_message(msg)
         redraw()
       end)
+    elseif mode==3 then
+      -- delete something
+      refresh_directory()
+      fileselect.enter(share.get_virtual_directory(),function(x)
+        if x == "cancel" then do return end end 
+        _,filename,_=share.split_path(x)
+        uimessage="deleting "..filename.."..."
+        redraw()
+        x = share.trim_virtual_directory(x)
+        foo=share.splitstr(x,"/")
+        datatype=foo[1]
+        username=foo[2]
+        dataname=foo[3]
+        msg = share._delete(username,datatype,dataname)
+        show_message(msg)
+        print(x)
+        os.execute("rm -rf "..share.get_virtual_directory())
+        refreshed_dir = false
+      end)
     end
   end
 end
 
 function enc(n,z)
-  mode=util.clamp(mode+sign(z),1,3)
+  mode=util.clamp(mode+sign(z),1,4)
   redraw()
 end
 
@@ -228,7 +241,7 @@ function redraw()
     screen.text("norns.online")
   end
 
-  start_point=18
+  start_point=11
   if not settings.name then
     screen.level(15)
     screen.font_face(1)
@@ -240,7 +253,7 @@ function redraw()
   else
     screen.font_face(1)
     screen.font_size(8)
-    for i=1,3 do
+    for i=1,4 do
       if mode==i then
         screen.level(15)
         screen.move(0,start_point+i*11)
@@ -253,7 +266,9 @@ function redraw()
         screen.text("upload tape")
       elseif i==2 then
         screen.text("download tape")
-      elseif i== 3 then
+      elseif i==3 then
+        screen.text("delete something")
+      elseif i== 4 then
         if util.file_exists(KILL_FILE) then
           screen.text("go offline")
           x=110
@@ -299,6 +314,17 @@ end
 --
 -- norns.online stuff
 --
+
+function refresh_directory()
+  if not refreshed_dir then
+    refreshed_dir=true 
+    uimessage="refreshing directory..."
+    redraw()
+    share.make_virtual_directory()
+    uimessage=""
+    redraw()
+  end
+end
 
 function write_settings()
   jsondata=json.encode(settings)
@@ -499,6 +525,7 @@ function upload_callback(pathtofile)
     write_settings()
   end
   show_message(msg)
+  refreshed_dir=false
 end
 
 function server_register()
