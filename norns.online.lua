@@ -1,33 +1,31 @@
 -- norns.online v1.0.0
--- online norns on norns.online
+-- share, connect, collaborate.
 --
 -- llllllll.co/t/norns-online
--- note: this script opens your
--- norns to to the net.
--- (ab)use with caution.
---    ▼ instructions below ▼
--- K3 toggles internet
--- K2 changes name
--- K1+K2 updates
--- more params in global menu
--- if you enable audio, make sure
--- to restart norns.online
+-- 
+-- 
+-- 
+--    ▼ important notes ▼
+-- this script will install about
+-- 200 MB of libraries in order 
+-- to function (mpv and ffmpeg).
+-- do not continue to avoid
+-- installing.
 
-local json=include("lib/json")
 local textentry=require 'textentry'
-local share=include("norns.online/lib/share")
 local fileselect=require 'fileselect'
+local share=include("norns.online/lib/share")
+local json=include("lib/json")
 
 
 -- default files / directories
-CODE_DIR="/home/we/dust/code/norns.online/"
-DATA_DIR="/home/we/dust/data/norns.online/"
+CODE_DIR=_path.code.."norns.online/"
+DATA_DIR=_path.data.."norns.online/"
 CONFIG_FILE=DATA_DIR.."config.json"
 KILL_FILE="/dev/shm/norns.online.kill.sh"
 START_FILE=CODE_DIR.."start.sh"
 SERVER_FILE=CODE_DIR.."norns.online"
 LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v1.0.0/norns.online"
-VIRTUAL_DIR="/dev/shm/dir.norns.online/"
 
 -- default settings
 settings={
@@ -48,11 +46,8 @@ settings={
   is_registered=false,
   is_installed=false,
 }
-dir={}
 mode=1
 uimessage=""
-ui=1
-uishift=false
 refreshed_dir=false
 
 function init()

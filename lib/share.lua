@@ -1,9 +1,8 @@
 -- share.lua
 local share={
-  debug=true,
-  SHARE_DATA_DIR="/home/we/dust/data/norns.online/",
-  CONFIG_FILE="/home/we/dust/data/norns.online/config.json",
-  VIRTUAL_DIR="/home/we/dust/data/norns.online/virtualdir/",
+  SHARE_DATA_DIR=_path.data.."norns.online/",
+  CONFIG_FILE=_path.data.."norns.online/config.json",
+  VIRTUAL_DIR=_path.data.."norns.online/virtualdir/",
   server_name="https://norns.online",
 }
 local json=include("norns.online/lib/json")
@@ -11,16 +10,6 @@ local json=include("norns.online/lib/json")
 
 os.execute("mkdir -p "..share.VIRTUAL_DIR)
 
-share.log=function(...)
-  local arg={...}
-  if share.debug and arg~=nil then
-    printResult=""
-    for i,v in ipairs(arg) do
-      printResult=printResult..tostring(v).." "
-    end
-    print(printResult)
-  end
-end
 
 --
 -- virtual directory
@@ -105,7 +94,9 @@ share.get_username=function()
   if not util.file_exists(share.CONFIG_FILE) then
     do return nil end
   end
-  data=readAll(share.CONFIG_FILE)
+  local f=assert(io.open(share.CONFIG_FILE,"rb"))
+  local data=f:read("*all")
+  f:close()
   settings=json.decode(data)
   return settings.name
 end
@@ -266,7 +257,7 @@ end
 
 
 share.download=function(type,username,dataname)
-  -- check signature
+  -- download metadata
   result=os.capture("curl -s -m 5 "..share.server_name.."/share/"..type.."/"..username.."/"..dataname.."/metadata.json")
   print(result)
   metadata=json.decode(result)
@@ -322,6 +313,10 @@ end
 
 
 share.upload=function(self,o)
+  --
+  -- uploader = share:new{script_name="hello"}
+  -- uploader.upload{dataname=X,pathtofile=Y,target=Z}
+  --
   if o.dataname==nil then
     print("need dataname")
     do return end
@@ -355,7 +350,6 @@ share.trim_prefix=function(s,p)
   local t=(s:sub(0,#p)==p) and s:sub(#p+1) or s
   return t
 end
-
 
 share.write_file=function(fname,data)
   print("saving to "..fname)
@@ -393,12 +387,9 @@ share.split_path=function(path)
   return pathname,filename,ext
 end
 
-
 share.temp_file_name=function()
   return "/dev/shm/tempfile"..randomString(5)
 end
-
-
 
 share.splitstr=function(inputstr,sep)
   if sep==nil then
@@ -477,19 +468,6 @@ function randomString(length)
   if not length or length<=0 then return '' end
   math.randomseed(os.clock()^5)
   return randomString(length-1)..charset[math.random(1,#charset)]
-end
-
-
-function file_exists(fname)
-  local f=io.open(fname,"r")
-  if f~=nil then io.close(f) return true else return false end
-end
-
-function readAll(file)
-  local f=assert(io.open(file,"rb"))
-  local content=f:read("*all")
-  f:close()
-  return content
 end
 
 return share
