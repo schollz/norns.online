@@ -31,28 +31,22 @@ _note:_ the script requires `ffmpeg` and `mpv`, which are automatically installe
 
 ### Documentation 
 
+- move with any encoder, select with K3
+- update with K1+K2
 
-### share tapes 
-
-- open the *norns.online/share* script
-- register if you haven't already.
-- download or upload tapes.
-- _note:_ *uploading* a script save must be done from a script's `SHARE` parameter
+_note:_ if this is the first time running, wait for the `mpv` and `ffmpeg` programs to be installed (~300 MB).
 
 ### beam your norns
 
-- open the *norns.online* script
-- press K3. open browser to `norns.online/<yourname>`. if this is the first time running, wait for the `mpv` and `ffmpeg` programs to be installed (~300 MB).
+- press `go online`. 
+- open browser to `norns.online/<yourname>`. 
 - use norns normally, your norns will stay online in the background.
-- press K2 to change name, or K1+K2 to update
 
 ### norns↔norns audio sharing
 
-
-- open the *norns.online* script
 - go to gloal parameters and make sure both "`send audio`" and "`allow rooms`" are set to "`enabled`".
 - change the "`room`" to the room you want to share audio. make sure your norns partner uses the same room.
-- go to main screen and press K3 to go online. you should now be sharing audio with any other norns in that room.
+- go to main screen and press `go online`. you should now be sharing audio with any other norns in that room.
 - adjust "`room vol`" to change the level of incoming audio.
 
 ### uses
@@ -63,6 +57,7 @@ _note:_ the script requires `ffmpeg` and `mpv`, which are automatically installe
 - make demos (screen capture `norns.online`)
 - download screenshots (right-click image at `norns.online` to download)
 - tech support other people's norns
+- sharing tapes / script saves
 - !?!?!?
 
 ### faq
