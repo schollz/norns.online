@@ -41,8 +41,8 @@ share.make_virtual_directory=function()
 
   -- get current virutal directory
   curdir={}
-  local file_list = list_files(share.VIRTUAL_DIR,{},true)
-  if file_list ~= nil then 
+  local file_list=list_files(share.VIRTUAL_DIR,{},true)
+  if file_list~=nil then
     for _,f in ipairs(file_list) do
       curdir[share.trim_prefix(f,share.VIRTUAL_DIR)]=true
     end
