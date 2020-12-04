@@ -453,7 +453,7 @@ end
 
 function start()
   if not util.file_exists(SERVER_FILE) then 
-    update()
+    norns_online_update()
   end
   print("starting")
   write_settings()
@@ -491,7 +491,7 @@ end
 function install_prereqs()
   -- install the main program
   if not util.file_exists(SERVER_FILE) then
-    update()
+    norns_online_update()
   end
   print(os.capture("ffmpeg --help 2>&1"))
   print(os.capture("mpv --version 2>&1"))
