@@ -55,7 +55,6 @@ share.make_virtual_directory=function()
   curdir={}
   for _,f in ipairs(list_files(share.VIRTUAL_DIR)) do
     curdir[share.trim_prefix(f,share.VIRTUAL_DIR)]=true
-    -- TODO Check this
   end
 
   -- make new ones

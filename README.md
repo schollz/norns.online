@@ -4,15 +4,17 @@
 
 https://vimeo.com/484176216
 
-**connect.** *norns.online* is a script, a script library, and a website.
+**connect.** *norns.online* is a norns script, a script library, and a website.
+
+**share tapes.** use the *norns.online* script to upload or download tapes to [norns.online/share](https://norns.online/share).
+
+**share script saves.** individual scripts also can upload/download saves to [norns.online/share](https://norns.online/share) by going to the `SHARE` parameter from within a particular script (devs: feel free to ask me for help to add it your script).
 
 **listen and visualize.** run the *norns.online* script to beam your audio+visual data to `norns.online/<yourname>`.
 
-**guide.** the website `norns.online/<yourname>` has the same inputs as your norns to provide remote guidance and access.
+**remote control.** the website `norns.online/<yourname>` has the same inputs as your norns to provide remote access.
 
 **collaborate.** use the *norns.online* script to connect to other norns via "*rooms*." anyone in a "room" shares live audio. the latency is ~4 seconds, so you can imagine that you all are playing together while being socially distanced by a distance of a quarter-mile.
-
-**share.** use the *norns.online* script to upload or download tapes. individual scripts also can upload/download script saves by going to the `SHARE` parameter (in global parameters).
 
 _note:_ the script requires `ffmpeg` and `mpv`, which are automatically installed if you use this program (~300 MB).
 
@@ -30,18 +32,14 @@ _note:_ the script requires `ffmpeg` and `mpv`, which are automatically installe
 ### Documentation 
 
 
-### share tapes and download script saves
-
-![parameters for online](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/upload.png)
+### share tapes 
 
 - open the *norns.online/share* script
 - register if you haven't already.
-- download or upload tapes, and download script saves
+- download or upload tapes.
 - _note:_ *uploading* a script save must be done from a script's `SHARE` parameter
 
 ### beam your norns
-
-![parameters for online](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/online.png)
 
 - open the *norns.online* script
 - press K3. open browser to `norns.online/<yourname>`. if this is the first time running, wait for the `mpv` and `ffmpeg` programs to be installed (~300 MB).
@@ -50,7 +48,6 @@ _note:_ the script requires `ffmpeg` and `mpv`, which are automatically installe
 
 ### norns↔norns audio sharing
 
-![parameters for sharing](https://raw.githubusercontent.com/schollz/norns.online/main/static/img/room_sharing.png)
 
 - open the *norns.online* script
 - go to gloal parameters and make sure both "`send audio`" and "`allow rooms`" are set to "`enabled`".
