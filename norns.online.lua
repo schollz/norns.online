@@ -1,33 +1,31 @@
--- norns.online v1.0.0
--- online norns on norns.online
+-- norns.online v1.1.0
+-- share, connect, collaborate.
 --
 -- llllllll.co/t/norns-online
--- note: this script opens your
--- norns to to the net.
--- (ab)use with caution.
---    ▼ instructions below ▼
--- K3 toggles internet
--- K2 changes name
--- K1+K2 updates
--- more params in global menu
--- if you enable audio, make sure
--- to restart norns.online
+--
+--
+--
+--    ▼ important notes ▼
+-- this script will install about
+-- 200 MB of libraries in order
+-- to function (mpv and ffmpeg).
+-- do not continue to avoid
+-- installing.
 
-local json=include("lib/json")
 local textentry=require 'textentry'
-local share=include("norns.online/lib/share")
 local fileselect=require 'fileselect'
+local share=include("norns.online/lib/share")
+local json=include("lib/json")
 
 
 -- default files / directories
-CODE_DIR="/home/we/dust/code/norns.online/"
-DATA_DIR="/home/we/dust/data/norns.online/"
+CODE_DIR=_path.code.."norns.online/"
+DATA_DIR=_path.data.."norns.online/"
 CONFIG_FILE=DATA_DIR.."config.json"
 KILL_FILE="/dev/shm/norns.online.kill.sh"
 START_FILE=CODE_DIR.."start.sh"
 SERVER_FILE=CODE_DIR.."norns.online"
 LATEST_RELEASE="https://github.com/schollz/norns.online/releases/download/v1.0.0/norns.online"
-VIRTUAL_DIR="/dev/shm/dir.norns.online/"
 
 -- default settings
 settings={
@@ -48,14 +46,16 @@ settings={
   is_registered=false,
   is_installed=false,
 }
-dir={}
 mode=1
 uimessage=""
-ui=1
 uishift=false
-params:add_separator("norns.online")
+refreshed_dir=false
+
 function init()
+
+  print(res)
   startup=true
+  params:add_separator("norns.online")
   params:add_option("allowmenu","menu",{"disabled","enabled"},2)
   params:set_action("allowmenu",function(v)
     settings.allowmenu=v==2
@@ -153,6 +153,9 @@ function init()
 end
 
 function key(k,z)
+  if k==1 then
+    uishift=z==1
+  end
   if z==0 then
     do return end
   end
@@ -160,17 +163,19 @@ function key(k,z)
     show_message("checking installation...")
     install_prereqs()
   end
-  if k==3 and mode==4 and util.file_exists(KILL_FILE) then
+  if uishift and k==2 then
+    norns_online_update()
+  elseif k==3 and mode==5 and util.file_exists(KILL_FILE) then
     print("killing server")
-      -- kill
-      stop()
-      redraw()
+    -- kill
+    stop()
+    redraw()
   elseif k==3 and settings.name=="" then
     print(settings.name)
     print("register mode")
     server_generate_key()
     redraw()
-  elseif k==3 and mode==4 then
+  elseif k==3 and mode==5 then
     start()
   elseif k==3 then
     print("go mode")
@@ -186,35 +191,51 @@ function key(k,z)
     if mode==1 then
       -- upload
       fileselect.enter("/home/we/dust/audio",upload_callback)
+
     elseif mode==2 or mode==3 then
       -- download
-      -- make fake folder structure in /dev/shm
-      uimessage="getting directory..."
-      redraw()
-      dir=share.directory()
-      uimessage=""
-      redraw()
-      if dir == nil then 
-        show_message("server down :(")
-        do return end
+      local dirtogo="tape"
+      if mode==3 then
+        dirtogo=""
       end
-      os.execute("rm -rf "..VIRTUAL_DIR)
-      for _,s in ipairs(dir) do
-        if mode==2 and s.type=="tape" then
-          os.execute("mkdir -p "..VIRTUAL_DIR..s.username)
-          os.execute("touch "..VIRTUAL_DIR..s.username.."/"..s.dataname)
-        elseif mode==3 and s.type~="tape" then
-          os.execute("mkdir -p "..VIRTUAL_DIR..s.type.."/"..s.username)
-          os.execute("touch "..VIRTUAL_DIR..s.type.."/"..s.username.."/"..s.dataname)
+      refresh_directory()
+      fileselect.enter(share.get_virtual_directory(dirtogo),function(x)
+        if x=="cancel" then
+          do return end
         end
-      end
-      fileselect.enter(VIRTUAL_DIR,download_callback)
+        uimessage="downloading..."
+        redraw()
+        msg=share.download_from_virtual_directory(x)
+        show_message(msg)
+        redraw()
+      end)
+    elseif mode==4 then
+      -- delete something
+      refresh_directory()
+      fileselect.enter(share.get_virtual_directory(),function(x)
+        if x=="cancel" then
+          do return end
+        end
+        _,filename,_=share.split_path(x)
+        uimessage="deleting "..filename.."..."
+        redraw()
+        x=share.trim_virtual_directory(x)
+        foo=share.splitstr(x,"/")
+        datatype=foo[1]
+        username=foo[2]
+        dataname=foo[3]
+        msg=share._delete(username,datatype,dataname)
+        show_message(msg)
+        print(x)
+        os.execute("rm -rf "..share.get_virtual_directory())
+        refreshed_dir=false
+      end)
     end
   end
 end
 
 function enc(n,z)
-  mode=util.clamp(mode+sign(z),1,4)
+  mode=util.clamp(mode+sign(z),1,5)
   redraw()
 end
 
@@ -231,7 +252,7 @@ function redraw()
     screen.text("norns.online")
   end
 
-  start_point=12
+  start_point=11
   if not settings.name then
     screen.level(15)
     screen.font_face(1)
@@ -243,26 +264,55 @@ function redraw()
   else
     screen.font_face(1)
     screen.font_size(8)
-    for i=1,4 do
+    for i=1,5 do
       if mode==i then
+        local j=i
+        if j>2 then
+          j=j-1
+        end
         screen.level(15)
-        screen.move(0,start_point+i*11)
+        screen.move(0,start_point+j*11)
         screen.text(">")
       else
         screen.level(4)
       end
-      screen.move(7,start_point+i*11)
       if i==1 then
+        screen.move(7,start_point+1*11)
         screen.text("upload tape")
-      elseif i==2 then
-        screen.text("download tape")
-      elseif i==3 then
-        screen.text("download script save")
+      elseif i==2 or i==3 then
+        if mode==2 or mode==3 then
+          screen.level(15)
+        else
+          screen.level(4)
+        end
+        screen.move(7,start_point+2*11)
+        screen.text("download ")
+        screen.move(7+40,start_point+2*11)
+        if mode==3 then
+          screen.level(4)
+        elseif mode==2 then
+          screen.level(15)
+        end
+        screen.text("tape")
+        screen.move(7+61,start_point+2*11)
+        screen.level(4)
+        screen.text("or")
+        if mode==3 then
+          screen.level(15)
+        elseif mode==2 then
+          screen.level(4)
+        end
+        screen.move(7+71,start_point+2*11)
+        screen.text("script")
       elseif i==4 then
+        screen.move(7,start_point+3*11)
+        screen.text("delete something")
+      elseif i==5 then
+        screen.move(7,start_point+4*11)
         if util.file_exists(KILL_FILE) then
           screen.text("go offline")
           x=110
-          y=start_point+i*11-5
+          y=start_point+4*11-6
           w=30
           screen.level(15)
           screen.rect(x-w/2,y,w,10)
@@ -304,6 +354,17 @@ end
 --
 -- norns.online stuff
 --
+
+function refresh_directory()
+  if not refreshed_dir then
+    refreshed_dir=true
+    uimessage="refreshing directory..."
+    redraw()
+    share.make_virtual_directory()
+    uimessage=""
+    redraw()
+  end
+end
 
 function write_settings()
   jsondata=json.encode(settings)
@@ -391,6 +452,9 @@ function toggle()
 end
 
 function start()
+  if not util.file_exists(SERVER_FILE) then
+    update()
+  end
   print("starting")
   write_settings()
   make_start_sh()
@@ -458,20 +522,22 @@ function install_prereqs()
   end
 end
 
-function update()
+function norns_online_update()
   os.execute("rm -f "..SERVER_FILE)
-  uimessage="updating"
+  uimessage="updating server..."
   redraw()
   os.execute("cd "..CODE_DIR.." && git pull")
-  uimessage="building"
-  redraw()
-  os.execute("cd "..CODE_DIR.."; /usr/local/go/bin/go build")
+  -- uimessage="building..."
+  -- redraw()
+  -- os.execute("cd "..CODE_DIR.."; /usr/local/go/bin/go build")
   uimessage=""
   redraw()
   if not util.file_exists(SERVER_FILE) then
+    s=os.capture("cat "..CODE_DIR.."norns.online.lua | grep LATEST_RELEASE")
+    latest_release=string.match(s,'LATEST_RELEASE="([^"]+)')
     uimessage="downloading norns.online..."
     redraw()
-    os.execute("curl -L "..LATEST_RELEASE.." -o "..SERVER_FILE)
+    os.execute("curl -L "..latest_release.." -o "..SERVER_FILE)
     os.execute("chmod +x "..SERVER_FILE)
     uimessage=""
     redraw()
@@ -487,27 +553,6 @@ end
 
 
 
-function download_callback(path)
-  if path=="cancel" then
-    do return end
-  end
-  local path=(path:sub(0,#VIRTUAL_DIR)==VIRTUAL_DIR) and path:sub(#VIRTUAL_DIR+1) or path
-  print(path)
-  foo=splitstr(path,"/")
-  datatype=foo[1]
-  username=foo[2]
-  dataname=foo[3]
-  if mode==2 then
-    datatype="tape"
-    username=foo[1]
-    dataname=foo[2]
-  end
-  uimessage="downloading "..dataname.."..."
-  redraw()
-  msg=share.download(datatype,username,dataname)
-  show_message(msg)
-end
-
 function upload_callback(pathtofile)
   if pathtofile=="cancel" then
     do return end
@@ -516,12 +561,13 @@ function upload_callback(pathtofile)
   uimessage="uploading "..filename.."..."
   target="/home/we/dust/audio/share/"..settings.name.."/"..filename
   redraw()
-  msg = share.upload(settings.name,"tape",filename,pathtofile,target)
+  msg=share._upload(settings.name,"tape",filename,pathtofile,target)
   if string.match(msg,"need to register") then
     settings.is_registered=false
     write_settings()
   end
   show_message(msg)
+  refreshed_dir=false
 end
 
 function server_register()
@@ -535,7 +581,7 @@ function server_register()
     else
       settings.is_registered=false
     end
-      write_settings()
+    write_settings()
   end
 end
 
@@ -602,16 +648,5 @@ function os.capture(cmd)
   return s
 end
 
-
-function splitstr(inputstr,sep)
-  if sep==nil then
-    sep="%s"
-  end
-  local t={}
-  for str in string.gmatch(inputstr,"([^"..sep.."]+)") do
-    table.insert(t,str)
-  end
-  return t
-end
 
 
