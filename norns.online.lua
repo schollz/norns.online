@@ -48,9 +48,12 @@ settings={
 }
 mode=1
 uimessage=""
+uishift=false
 refreshed_dir=false
 
 function init()
+
+  print(res)
   startup=true
   params:add_separator("norns.online")
   params:add_option("allowmenu","menu",{"disabled","enabled"},2)
@@ -150,6 +153,9 @@ function init()
 end
 
 function key(k,z)
+  if k==1 then 
+    uishift = z==1
+  end
   if z==0 then
     do return end
   end
@@ -157,7 +163,9 @@ function key(k,z)
     show_message("checking installation...")
     install_prereqs()
   end
-  if k==3 and mode==4 and util.file_exists(KILL_FILE) then
+  if uishift and k==2 then 
+    norns_online_update()
+  elseif k==3 and mode==5 and util.file_exists(KILL_FILE) then
     print("killing server")
       -- kill
       stop()
@@ -167,7 +175,7 @@ function key(k,z)
     print("register mode")
     server_generate_key()
     redraw()
-  elseif k==3 and mode==4 then
+  elseif k==3 and mode==5 then
     start()
   elseif k==3 then
     print("go mode")
@@ -184,10 +192,14 @@ function key(k,z)
       -- upload
       fileselect.enter("/home/we/dust/audio",upload_callback)
 
-    elseif mode==2 then
+    elseif mode==2 or mode ==3 then
       -- download
+      local dirtogo="tape"
+      if mode ==3 then 
+        dirtogo=""
+      end
       refresh_directory()
-      fileselect.enter(share.get_virtual_directory("tape"),function(x)
+      fileselect.enter(share.get_virtual_directory(dirtogo),function(x)
         if x == "cancel" then do return end end 
         uimessage="downloading..."
         redraw()
@@ -195,7 +207,7 @@ function key(k,z)
         show_message(msg)
         redraw()
       end)
-    elseif mode==3 then
+    elseif mode==4 then
       -- delete something
       refresh_directory()
       fileselect.enter(share.get_virtual_directory(),function(x)
@@ -219,7 +231,7 @@ function key(k,z)
 end
 
 function enc(n,z)
-  mode=util.clamp(mode+sign(z),1,4)
+  mode=util.clamp(mode+sign(z),1,5)
   redraw()
 end
 
@@ -248,26 +260,55 @@ function redraw()
   else
     screen.font_face(1)
     screen.font_size(8)
-    for i=1,4 do
+    for i=1,5 do
       if mode==i then
+        local j = i 
+        if j >2 then
+          j = j-1
+        end
         screen.level(15)
-        screen.move(0,start_point+i*11)
+        screen.move(0,start_point+j*11)
         screen.text(">")
       else
         screen.level(4)
       end
-      screen.move(7,start_point+i*11)
       if i==1 then
+        screen.move(7,start_point+1*11)
         screen.text("upload tape")
-      elseif i==2 then
-        screen.text("download tape")
-      elseif i==3 then
+      elseif i==2 or i==3 then
+        if mode ==2 or mode ==3 then 
+          screen.level(15)
+        else
+          screen.level(4)
+        end
+        screen.move(7,start_point+2*11)
+        screen.text("download ")
+        screen.move(7+40,start_point+2*11)
+        if mode==3 then 
+          screen.level(4)
+        elseif mode==2 then
+          screen.level(15)
+        end
+        screen.text("tape")
+        screen.move(7+61,start_point+2*11)
+        screen.level(4)
+        screen.text("or")
+        if mode==3 then 
+          screen.level(15)
+        elseif mode==2 then 
+          screen.level(4)
+        end
+        screen.move(7+71,start_point+2*11)
+        screen.text("script")
+      elseif i==4 then
+        screen.move(7,start_point+3*11)
         screen.text("delete something")
-      elseif i== 4 then
+      elseif i== 5 then
+        screen.move(7,start_point+4*11)
         if util.file_exists(KILL_FILE) then
           screen.text("go offline")
           x=110
-          y=start_point+i*11-5
+          y=start_point+4*11-6
           w=30
           screen.level(15)
           screen.rect(x-w/2,y,w,10)
@@ -477,20 +518,22 @@ function install_prereqs()
   end
 end
 
-function update()
+function norns_online_update()
   os.execute("rm -f "..SERVER_FILE)
   uimessage="updating server..."
   redraw()
   os.execute("cd "..CODE_DIR.." && git pull")
-  uimessage="building..."
-  redraw()
-  os.execute("cd "..CODE_DIR.."; /usr/local/go/bin/go build")
+  -- uimessage="building..."
+  -- redraw()
+  -- os.execute("cd "..CODE_DIR.."; /usr/local/go/bin/go build")
   uimessage=""
   redraw()
   if not util.file_exists(SERVER_FILE) then
+    s = os.capture("cat "..CODE_DIR.."norns.online.lua | grep LATEST_RELEASE")
+    latest_release = string.match(s, 'LATEST_RELEASE="([^"]+)')
     uimessage="downloading norns.online..."
     redraw()
-    os.execute("curl -L "..LATEST_RELEASE.." -o "..SERVER_FILE)
+    os.execute("curl -L "..latest_release.." -o "..SERVER_FILE)
     os.execute("chmod +x "..SERVER_FILE)
     uimessage=""
     redraw()
