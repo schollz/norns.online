@@ -19,7 +19,6 @@ share.get_remote_directory=function()
   curl_url=share.server_name.."/directory.json"
   curl_cmd="curl -s -m 5 "..curl_url
   result=os.capture(curl_cmd)
-  print(result)
   if result=="" then
     do return nil end
   end
@@ -42,8 +41,11 @@ share.make_virtual_directory=function()
 
   -- get current virutal directory
   curdir={}
-  for _,f in ipairs(list_files(share.VIRTUAL_DIR)) do
-    curdir[share.trim_prefix(f,share.VIRTUAL_DIR)]=true
+  local file_list = list_files(share.VIRTUAL_DIR,{},true)
+  if file_list ~= nil then 
+    for _,f in ipairs(file_list) do
+      curdir[share.trim_prefix(f,share.VIRTUAL_DIR)]=true
+    end
   end
 
   -- make new ones
@@ -51,8 +53,8 @@ share.make_virtual_directory=function()
     if curdir[k]==nil then
       path,filename,_=share.split_path(k)
       print("making "..share.VIRTUAL_DIR..path..filename)
-      -- os.execute("mkdir -p "..share.VIRTUAL_DIR..path)
-      -- os.execute("touch "..share.VIRTUAL_DIR..path..filename)
+      os.execute("mkdir -p "..share.VIRTUAL_DIR..path)
+      os.execute("touch "..share.VIRTUAL_DIR..path..filename)
     end
   end
 
@@ -60,7 +62,7 @@ share.make_virtual_directory=function()
   for k,_ in pairs(curdir) do
     if remotedir[k]==nil then
       print("removing "..share.VIRTUAL_DIR..k)
-      -- os.execute("rm -rf "..share.VIRTUAL_DIR..k)
+      os.execute("rm -rf "..share.VIRTUAL_DIR..k)
     end
   end
 
@@ -422,9 +424,9 @@ function list_files(d,files,recursive)
     local f=assert(io.popen(cmd,'r'))
     local out=assert(f:read('*a'))
     f:close()
-    for f in out:gmatch("%S+") do
-      if not (string.match(f,"ls: ") or f=="../" or f=="./") then
-        files=list_files(f,files)
+    for s in out:gmatch("%S+") do
+      if not (string.match(s,"ls: ") or s=="../" or s=="./") then
+        files=list_files(s,files,recursive)
       end
     end
   end
@@ -432,8 +434,9 @@ function list_files(d,files,recursive)
     local cmd="ls -p "..d.." | grep -v /"
     local f=assert(io.popen(cmd,'r'))
     local out=assert(f:read('*a'))
-    for f in out:gmatch("%S+") do
-      table.insert(files,d..f)
+    f:close()
+    for s in out:gmatch("%S+") do
+      table.insert(files,d..s)
     end
   end
   return files
