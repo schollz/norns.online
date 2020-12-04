@@ -1,4 +1,4 @@
--- norns.online v1.0.0
+-- norns.online v1.1.0
 -- share, connect, collaborate.
 --
 -- llllllll.co/t/norns-online
