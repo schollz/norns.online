@@ -108,7 +108,7 @@ func handle(w http.ResponseWriter, r *http.Request) (err error) {
 				}
 			}
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			io.WriteString(w, `<style>
+			io.WriteString(w, `<title>ᑎOᖇᑎᔕ ||| Sᕼᗩᖇᘿ</title><style>
 @font-face {
     font-family: 'uni 05_53';
     font-style: normal;
