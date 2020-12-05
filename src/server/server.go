@@ -494,8 +494,9 @@ func handleUpload(w http.ResponseWriter, r *http.Request) (err error) {
 			return
 		}
 		// add in things not in current metadata
+		// or update what is currently there
 		for _, file := range mcurrent.Files {
-			if file.Name != m.Files[0].Name {
+			if file.Target != m.Files[0].Target {
 				m.Files = append(m.Files, file)
 			}
 		}
