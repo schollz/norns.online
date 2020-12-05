@@ -213,7 +213,7 @@ share._upload=function(username,type,dataname,pathtofile,target)
 
   -- upload the file and metadata
   curl_url=share.server_name.."/upload?type="..type.."&username="..username.."&dataname="..dataname.."&filename="..hashed_filename.."&target="..target.."&hash="..hash.."&signature="..signature
-  curl_cmd="curl -s -m 5 --upload-file "..pathtofile..' "'..curl_url..'"'
+  curl_cmd='curl -s -g -m 5 --upload-file "'..pathtofile..'" "'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
