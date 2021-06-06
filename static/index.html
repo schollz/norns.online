@@ -161,12 +161,114 @@ ul {
     padding: 0;
     /* To remove default left padding */
 }
+
+input[type=range] {
+  -webkit-appearance: none;
+  margin: 18px 0;
+  width: 100%;
+}
+input[type=range]:focus {
+  outline: none;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 12.4px;
+  cursor: pointer;
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  background: #ffffff;
+  border-radius: 1.3px;
+  border: 0.2px solid #010101;
+}
+input[type=range]::-webkit-slider-thumb {
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  border: 1px solid #000000;
+  height: 36px;
+  width: 16px;
+  border-radius: 3px;
+  background: #ffffff;
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -14px;
+}
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: #367ebd;
+}
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 8.4px;
+  cursor: pointer;
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  background: #ffffff;
+  border-radius: 1.3px;
+  border: 0.2px solid #010101;
+}
+input[type=range]::-moz-range-thumb {
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  border: 1px solid #000000;
+  height: 36px;
+  width: 16px;
+  border-radius: 3px;
+  background: #ffffff;
+  cursor: pointer;
+}
+input[type=range]::-ms-track {
+  width: 100%;
+  height: 8.4px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  border-width: 16px 0;
+  color: transparent;
+}
+input[type=range]::-ms-fill-lower {
+  background: #ffffff;
+  border: 0.2px solid #010101;
+  border-radius: 2.6px;
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+}
+input[type=range]::-ms-fill-upper {
+  background: #ffffff;
+  border: 0.2px solid #010101;
+  border-radius: 2.6px;
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+}
+input[type=range]::-ms-thumb {
+  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  border: 1px solid #000000;
+  height: 36px;
+  width: 16px;
+  border-radius: 3px;
+  background: #ffffff;
+  cursor: pointer;
+}
+input[type=range]:focus::-ms-fill-lower {
+  background: #ffffff;
+}
+input[type=range]:focus::-ms-fill-upper {
+  background: #ffffff;
+}
+
+.banner {
+    background: #ffffff;
+    color: #000;
+    border-radius: 30px;
+    border: 1px solid #000000;
+    padding: 1em;
+    width: 50%;
+    padding-top: 1em;
+}
+
     </style>
 </head>
 
 <body>
     <div class="center">
         <div class="norns">
+            <center style="padding-top: 1em;">
+                <button class="banner hints" id="clickToAllow">
+                    click to allow audio
+                </button>
+            </center>
             <div class="nornsimage">
                 <img id="img" src="/static/img/offline.png" style="filter: brightness(2);" width=365 height=190>
             </div>
@@ -183,6 +285,10 @@ ul {
                 <input type="text" value="75" class="enc2" data-width="100" data-displayInput=false data-cursor=true data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
             </div>
         </div>
+        <div class="hints" style="padding-bottom: 1em;">
+            <span style="position: relative;bottom:0.1em;">Volume (<span id="volumePercent">100</span>%):</span>
+            <input type="range" min="0" max="400" value="100" class="slider" id="volumeSlider" oninput="updateVolume(this.value);" onchange="updateVolume(this.value);">
+        </div>
         <div id="livestream" class="hidden">
             <div style="padding-top:1em" class="text">live stream:</div>
             <div id="playerdiv"></div>
@@ -190,10 +296,8 @@ ul {
         <div class="hints" style="padding-top: 2em;">
             <p><a href="/">norns.online</a>: share your <a href="https://monome.org/" target="_blank">norns</a> screen + audio,</p>
             <p><a href="/share">norns.online/share</a>: share tapes + script saves.</p>
-            
-             <div class="gettingstarted" class="hidden" style="font-size:1.0em;padding-top: 1em;">first, get norns.online from <a href="https://monome.org/docs/norns/maiden/" target="_blank">maiden</a>.
+            <div class="gettingstarted" class="hidden" style="font-size:1.0em;padding-top: 1em;">first, get norns.online from <a href="https://monome.org/docs/norns/maiden/" target="_blank">maiden</a>.
             </div>
-
             <div class="gettingstarted" class="hidden" style="font-size:1.0em;padding-top: 1em;">to share screen + audio:
                 <ul>
                     <li>- open 'norns.online' script</li>
@@ -201,15 +305,12 @@ ul {
                     <li>- open webpage norns.online/&lt;yourname&gt;.</li>
                 </ul>
             </div>
-
             <div class="gettingstarted" class="hidden" style="font-size:1.0em;padding-top: 1em;">to share tapes + script saves:
                 <ul>
                     <li>- open 'norns.online/share' script</li>
                     <li>- press K3 to register.</li>
                 </ul>
-            </div> 
-
-
+            </div>
             <details style="padding-top: 0.5em;" class="hidden" id="hints">
                 <summary><span style="position:relative;bottom:3px; left:-2px">hints</span></summary>
                 <ul>
@@ -218,7 +319,6 @@ ul {
                     <li id="audioenabled" class="hidden">- on mobile, press any button to enable audio.</li>
                 </ul>
             </details>
-
             <p style="padding-top:1em;">made <a href="https://github.com/schollz/norns.online" target="_blank">open-source</a> by infinite digits.</p>
         </div>
     </div>
@@ -227,7 +327,9 @@ ul {
     <script src="https://player.twitch.tv/js/embed/v1.js"></script>
     <script>
     var timeAdjusts = [];
-    var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+    var audioAllowed = false;
+    var audioCtx;
+    var gainNode;
     var currentPlayingFinished = 0;
     var socket;
     var norns_id = window.location.pathname.substr(1);
@@ -243,24 +345,24 @@ ul {
     }
 
     function getAvg(values) {
-  if(values.length ===0) return 0;
+        if (values.length === 0) return 0;
 
-  values.sort(function(a,b){
-    return a-b;
-  });
+        values.sort(function(a, b) {
+            return a - b;
+        });
 
-  var half = Math.floor(values.length / 2);
+        var half = Math.floor(values.length / 2);
 
-  if (values.length % 2)
-    return values[half];
+        if (values.length % 2)
+            return values[half];
 
-  return (values[half - 1] + values[half]) / 2.0;
+        return (values[half - 1] + values[half]) / 2.0;
 
-      //   if (grades.length==0) {
-      //       return 0;
-      //   }
-      // const total = grades.reduce((acc, c) => acc + c, 0);
-      // return total / grades.length;
+        //   if (grades.length==0) {
+        //       return 0;
+        //   }
+        // const total = grades.reduce((acc, c) => acc + c, 0);
+        // return total / grades.length;
     }
 
     function randomString(length) {
@@ -418,6 +520,12 @@ ul {
         }
     }
 
+    function updateVolume(v) {
+        document.getElementById("volumePercent").innerText = v
+        if (audioAllowed) {
+            gainNode.gain.value = v / 100;
+        }
+    }
 
     function base64ToArrayBuffer(base64) {
         var binary_string = window.atob(base64);
@@ -442,7 +550,8 @@ ul {
 
             // connect the AudioBufferSourceNode to the
             // destination so we can hear the sound
-            source.connect(audioCtx.destination);
+            // source.connect(audioCtx.destination);
+            source.connect(gainNode);
 
             // start the source playing
             //console.log(currentPlayingFinished);
@@ -464,8 +573,7 @@ ul {
                     'data:image/png;base64,' + data['img']
                 )
             }
-            if ('audio' in data) {
-                $("#audioenabled").removeClass("hidden");
+            if ('audio' in data && audioAllowed) {
                 playMP3(data['audio'])
             }
             if ('twitch' in data) {
@@ -489,9 +597,9 @@ ul {
             }
             if ('timesend' in data) {
                 rtt = (new Date()).getTime() - data['timeclient'];
-                bf = data['timeserver']-(data['timeclient']+getAvg(timeAdjusts));
+                bf = data['timeserver'] - (data['timeclient'] + getAvg(timeAdjusts));
                 console.log(`rtt: ${rtt}, bf: ${bf}`);
-                timeAdjusts.push(bf-rtt/2);
+                timeAdjusts.push(bf - rtt / 2);
             }
         };
         const socketOpenListener = (e) => {
@@ -505,16 +613,16 @@ ul {
                 "recipient": norns_id,
             }))
             var callCount = 1;
-            var repeater = setInterval(function () {
-              if (callCount < 10) {
-                socket.send(JSON.stringify({
-                    "timesend":true,
-                    "timeclient":(new Date()).getTime()+getAvg(timeAdjusts),
-                }))
-                callCount += 1;
-              } else {
-                clearInterval(repeater);
-              }
+            var repeater = setInterval(function() {
+                if (callCount < 10) {
+                    socket.send(JSON.stringify({
+                        "timesend": true,
+                        "timeclient": (new Date()).getTime() + getAvg(timeAdjusts),
+                    }))
+                    callCount += 1;
+                } else {
+                    clearInterval(repeater);
+                }
             }, 1000);
         };
         const socketErrorListener = (e) => {
@@ -534,6 +642,14 @@ ul {
         window.addEventListener('load', (event) => {
             socketCloseListener();
         });
+        document.getElementById("clickToAllow").addEventListener("click", function() {
+            $("#clickToAllow").fadeOut(2000);
+            audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioCtx.createGain();
+            gainNode.gain.value = parseFloat(document.getElementById("volumePercent").innerText) / 100; // setting it to 10%
+            gainNode.connect(audioCtx.destination);
+            audioAllowed = true;
+        })
     }
     </script>
 </body>
