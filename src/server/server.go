@@ -210,7 +210,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request) (err error) {
 	log.Debugf("signature: %+v", signature)
 
 	// read in the public key to a file
-	fname, err := writeAllBytes(r.Body, 20000)
+	fname, err := writeAllBytes(r.Body, 20000000)
 	defer os.Remove(fname) // always remove
 	if err != nil {
 		return
@@ -444,7 +444,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) (err error) {
 	m.Date = time.Now()
 	log.Debugf("m: %+v", m)
 
-	fname, err := writeAllBytes(r.Body, 200000000)
+	fname, err := writeAllBytes(r.Body, 2000000000)
 	defer os.Remove(fname) // always remove
 	if err != nil {
 		log.Error(err)
@@ -523,7 +523,8 @@ func writeAllBytes(src io.Reader, maxbytes int64) (fname string, err error) {
 	}
 	fname = f.Name()
 	// w := gzip.NewWriter(f)
-	n, err := utils.CopyMax(f, src, maxbytes)
+	n,err:= io.Copy(f,src)
+	//n, err := utils.CopyMax(f, src, maxbytes)
 	// w.Flush()
 	// w.Close()
 	f.Close()

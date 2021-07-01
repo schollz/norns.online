@@ -561,7 +561,7 @@ input[type=range]:focus::-ms-fill-upper {
             if (currentPlayingFinished <= audioCtx.currentTime) {
                 currentPlayingFinished = audioCtx.currentTime + 1
             }
-            source.start(currentPlayingFinished);
+            source.start(currentPlayingFinished-0.001);
             currentPlayingFinished = currentPlayingFinished + buffer.duration;
         })
     }
