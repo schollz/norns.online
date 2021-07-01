@@ -17,7 +17,7 @@ os.execute("mkdir -p "..share.VIRTUAL_DIR)
 
 share.get_remote_directory=function()
   curl_url=share.server_name.."/directory.json"
-  curl_cmd="curl -s -m 5 "..curl_url
+  curl_cmd="curl -s -m 60 "..curl_url
   result=os.capture(curl_cmd)
   if result=="" then
     do return nil end
@@ -115,7 +115,7 @@ share.is_registered=function(username)
     return
   end
   curl_url=share.server_name.."/share/keys/"..username
-  curl_cmd="curl -s -m 5 "..curl_url
+  curl_cmd="curl -s -m 60 "..curl_url
   result=os.capture(curl_cmd)
   return result==publickey
 end
@@ -135,7 +135,7 @@ share.register=function(username)
   signature=os.capture("base64 -w 0 "..tmp_signature)
 
   curl_url=share.server_name.."/register?username="..username.."&signature="..signature
-  curl_cmd="curl -s -m 5 --upload-file "..share.SHARE_DATA_DIR.."key.public "..'"'..curl_url..'"'
+  curl_cmd="curl -s -m 60 --upload-file "..share.SHARE_DATA_DIR.."key.public "..'"'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
@@ -157,7 +157,7 @@ share.unregister=function(username)
 
   -- send unregistration
   curl_url=share.server_name.."/unregister?username="..username.."&signature="..signature
-  curl_cmd="curl -s -m 5 --upload-file "..share.SHARE_DATA_DIR.."key.public "..'"'..curl_url..'"'
+  curl_cmd="curl -s -m 60 --upload-file "..share.SHARE_DATA_DIR.."key.public "..'"'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
@@ -213,7 +213,7 @@ share._upload=function(username,type,dataname,pathtofile,target)
 
   -- upload the file and metadata
   curl_url=share.server_name.."/upload?type="..type.."&username="..username.."&dataname="..dataname.."&filename="..hashed_filename.."&target="..target.."&hash="..hash.."&signature="..signature
-  curl_cmd='curl -s -g -m 5 --upload-file "'..pathtofile..'" "'..curl_url..'"'
+  curl_cmd='curl -s -g -m 60 --upload-file "'..pathtofile..'" "'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
@@ -246,7 +246,7 @@ share._delete=function(username,type,dataname)
 
   -- upload the file and metadata
   curl_url=share.server_name.."/delete?type="..type.."&username="..username.."&dataname="..dataname.."&signature="..signature
-  curl_cmd='curl -s -m 5 "'..curl_url..'"'
+  curl_cmd='curl -s -m 60 "'..curl_url..'"'
   print(curl_cmd)
   result=os.capture(curl_cmd)
   print(result)
@@ -260,7 +260,7 @@ end
 
 share.download=function(type,username,dataname)
   -- download metadata
-  result=os.capture("curl -s -m 5 "..share.server_name.."/share/"..type.."/"..username.."/"..dataname.."/metadata.json")
+  result=os.capture("curl -s -m 60 "..share.server_name.."/share/"..type.."/"..username.."/"..dataname.."/metadata.json")
   print(result)
   metadata=json.decode(result)
   if metadata==nil then
@@ -275,12 +275,12 @@ share.download=function(type,username,dataname)
     result=""
     if ends_with(file.name,".wav.flac") then
       -- download to temp and convert to wav
-      result=os.capture("curl -s -m 5 -o /tmp/"..file.name.." "..share.server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
+      result=os.capture("curl -s -m 60 -o /tmp/"..file.name.." "..share.server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
       os.execute("ffmpeg -y -i /tmp/"..file.name.." -ar 48000 -c:a pcm_s24le "..file.target)
       os.remove("/tmp/"..file.name)
     else
       -- download directly to target
-      result=os.capture("curl -s -m 5 -o "..file.target.." "..share.server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
+      result=os.capture("curl -s -m 60 -o "..file.target.." "..share.server_name.."/share/"..type.."/"..username.."/"..dataname.."/"..file.name)
     end
     -- TODO: verify
   end
