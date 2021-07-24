@@ -138,7 +138,8 @@ body{padding:1em;margin:auto;max-width:800px;color:#fff; font-family: 'uni 05_53
 		http.Redirect(w, r, "/share/", 302)
 	} else if r.URL.Path == "/ws" {
 		err = handleWebsocket(w, r)
-		log.Infof("ws: %w", err)
+		log.Debugf("ws: %w", err)
+		log.Debug(err.Error())
 		if err != nil {
 			err = nil
 		}
@@ -622,7 +623,7 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 			}
 			if sendData {
 				go func(name2 string, c2 *websocket.Conn, m models.Message) {
-					c2.SetWriteDeadline(time.Now().Add(1 * time.Second))
+					c2.SetWriteDeadline(time.Now().Add(10 * time.Second))
 					wsmutex.Lock()
 					err := c2.WriteJSON(m)
 					wsmutex.Unlock()
