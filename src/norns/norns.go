@@ -183,8 +183,8 @@ func (n *Norns) connectToWebsockets() (err error) {
 			n.ws = nil
 			time.Sleep(500 * time.Millisecond)
 		}
-		// wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
-		wsURL := url.URL{Scheme: "wss", Host: "norns.online", Path: "/ws"}
+		wsURL := url.URL{Scheme: "ws", Host: "192.168.0.91:8098", Path: "/ws"}
+		//wsURL := url.URL{Scheme: "wss", Host: "norns.online", Path: "/ws"}
 		logger.Debugf("connecting to %s as %s", wsURL.String(), n.Name)
 		n.ws, _, err = websocket.DefaultDialer.Dial(wsURL.String(), nil)
 		if err != nil {
