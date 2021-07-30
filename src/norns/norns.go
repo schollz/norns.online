@@ -183,8 +183,8 @@ func (n *Norns) connectToWebsockets() (err error) {
 			n.ws = nil
 			time.Sleep(500 * time.Millisecond)
 		}
-		// wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
-		wsURL := url.URL{Scheme: "wss", Host: "norns.online", Path: "/ws"}
+		wsURL := url.URL{Scheme: "ws", Host: "192.168.0.91:8098", Path: "/ws"}
+		// wsURL := url.URL{Scheme: "wss", Host: "norns.online", Path: "/ws"}
 		logger.Debugf("connecting to %s as %s", wsURL.String(), n.Name)
 		n.ws, _, err = websocket.DefaultDialer.Dial(wsURL.String(), nil)
 		if err != nil {
@@ -623,6 +623,13 @@ func (n *Norns) Stream() (filename string, err error) {
 
 	for {
 		fname := <-currentFile // current file is a flac file
+		// convert audio to mp3
+		fname,err = utils.ConvertAudioToMp3(fname)
+		if err != nil {
+			logger.Error(err)
+			os.Remove(fname)
+			continue
+		}
 		// // convert audio from flac
 		// fname, err = utils.ConvertAudio(fname)
 		// if err != nil {
