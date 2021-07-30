@@ -131,6 +131,11 @@ a:hover {
     left: 164px;
     top: 180px;
 }
+.audiostream {
+position: absolute;
+left: 164px;
+top: 180px;
+}
 
 .enc2knob {
     position: absolute;
@@ -254,7 +259,7 @@ input[type=range]:focus::-ms-fill-upper {
     color: #000;
     border-radius: 30px;
     border: 1px solid #000000;
-    padding: 1em;
+    padding: 0.5em;
     width: 50%;
     padding-top: 1em;
 }
@@ -266,8 +271,12 @@ input[type=range]:focus::-ms-fill-upper {
     <div class="center">
         <div class="norns">
             <center style="padding-top: 1em;">
-                <button class="banner hints" id="clickToAllow">
-                    click to allow audio
+                <button class="banner hints">
+                    audio stream:
+                    <audio controls style="padding-top: 0.5em;" id="audioplayer">
+                        <source id="wav_src" src="" type="audio/wav" preload="none">
+                        Your browser does not support the audio element.
+                    </audio>
                 </button>
             </center>
             <div class="nornsimage">
@@ -285,11 +294,14 @@ input[type=range]:focus::-ms-fill-upper {
             <div class="enc3knob knobshadow">
                 <input type="text" value="75" class="enc2" data-width="100" data-displayInput=false data-cursor=true data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
             </div>
+            <div class="audiostream">
+            </div>
         </div>
-        <div class="hints" style="padding-bottom: 1em;" id="volumeThing">
+        <!--         <div class="hints" style="padding-bottom: 1em;" id="volumeThing">
             <span style="position: relative;bottom:0.1em;">Volume (<span id="volumePercent">100</span>%):</span>
             <input type="range" min="0" max="400" value="100" class="slider" id="volumeSlider" oninput="updateVolume(this.value);" onchange="updateVolume(this.value);">
         </div>
+ -->
         <div id="livestream" class="hidden">
             <div style="padding-top:1em" class="text">live stream:</div>
             <div id="playerdiv"></div>
@@ -342,7 +354,7 @@ input[type=range]:focus::-ms-fill-upper {
     if (norns_id == "") {
         $(".gettingstarted").removeClass("hidden");
         $("#clickToAllow").hide();
-        $("#volumeThing").hide();
+        // $("#volumeThing").hide();
     } else {
         $("#hints").removeClass("hidden");
     }
@@ -561,7 +573,7 @@ input[type=range]:focus::-ms-fill-upper {
             if (currentPlayingFinished <= audioCtx.currentTime) {
                 currentPlayingFinished = audioCtx.currentTime + 1
             }
-            source.start(currentPlayingFinished-0.001);
+            source.start(currentPlayingFinished - 0.001);
             currentPlayingFinished = currentPlayingFinished + buffer.duration;
         })
     }
@@ -577,7 +589,7 @@ input[type=range]:focus::-ms-fill-upper {
                 )
             }
             if ('audio' in data && audioAllowed) {
-                playMP3(data['audio'])
+                // playMP3(data['audio'])
             }
             if ('twitch' in data) {
                 if (data['twitch']) {
@@ -645,14 +657,19 @@ input[type=range]:focus::-ms-fill-upper {
         window.addEventListener('load', (event) => {
             socketCloseListener();
         });
-        document.getElementById("clickToAllow").addEventListener("click", function() {
-            $("#clickToAllow").fadeOut(2000);
-            audioCtx = new(window.AudioContext || window.webkitAudioContext)();
-            gainNode = audioCtx.createGain();
-            gainNode.gain.value = parseFloat(document.getElementById("volumePercent").innerText) / 100; // setting it to 10%
-            gainNode.connect(audioCtx.destination);
-            audioAllowed = true;
-        })
+        var audio = $("#audioplayer");
+        $("#wav_src").attr("src", `/stream/${norns_id}.wav`);
+        audio[0].pause();
+        audio[0].load(); //suspends and restores all audio element
+        console.log(audio[0])
+        // document.getElementById("clickToAllow").addEventListener("click", function() {
+        //     $("#clickToAllow").fadeOut(2000);
+        //     audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+        //     gainNode = audioCtx.createGain();
+        //     gainNode.gain.value = parseFloat(document.getElementById("volumePercent").innerText) / 100; // setting it to 10%
+        //     gainNode.connect(audioCtx.destination);
+        //     audioAllowed = true;
+        // })
     }
     </script>
 </body>

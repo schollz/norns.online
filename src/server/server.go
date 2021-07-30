@@ -1,6 +1,8 @@
 package server
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -83,6 +85,9 @@ func handle(w http.ResponseWriter, r *http.Request) (err error) {
 	} else if strings.HasPrefix(r.URL.Path, "/register") {
 		// this is called from curl/wget upload
 		return handleRegister(w, r)
+	} else if strings.HasPrefix(r.URL.Path, "/stream") {
+		// this is called from curl/wget upload
+		return handleStream(w, r)
 	} else if strings.HasPrefix(r.URL.Path, "/unregister") {
 		// this is called from curl/wget upload
 		return handleUnregister(w, r)
@@ -176,6 +181,61 @@ func handleDirectory(w http.ResponseWriter, r *http.Request) (err error) {
 	b, _ := json.MarshalIndent(files, "", "  ")
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(b)
+	return
+}
+
+func handleStream(w http.ResponseWriter, r *http.Request) (err error) {
+	_,fname := filepath.Split(strings.TrimPrefix(r.URL.Path,"/stream/"))
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		panic("expected http.ResponseWriter to be an http.Flusher")
+	}
+
+	w.Header().Set("Connection", "Keep-Alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Transfer-Encoding", "chunked")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Content-Type", "audio/wav")
+	var hash, newHash string
+	for  {
+		time.Sleep(100 *time.Millisecond)
+		if _, err = os.Stat(strings.Replace(fname,".wav",".flac",1)); os.IsNotExist(err) {
+			// does not exist
+		} else {
+			continue
+		}
+		newHash,err = utils.SHA256(fname)
+		if err != nil {
+			return
+		}
+		if hash==newHash {
+			continue
+		}
+		log.Debug(hash,newHash)
+		log.Debugf("sending new chunk %s",fname)
+		b, errRead := ioutil.ReadFile(fname)
+		if errRead != nil {
+			log.Error(errRead)
+			return
+		}
+		loc := bytes.Index(b, []byte("data"))
+		var errWrite error
+		if hash=="" {
+			b[loc+7] = 255
+			b[loc+5] = 255
+			_, errWrite = w.Write(b)
+		} else {
+			_, errWrite = w.Write(b[loc+8:])
+		}
+		if errWrite != nil {
+			log.Error(errWrite)
+			log.Debugf("disconnected from %s stream",fname)
+			break
+		}
+		flusher.Flush() // Trigger "chunked" encoding and send a chunk...
+		hash=newHash
+	}
 	return
 }
 
@@ -602,7 +662,9 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 		}
 		m.Sender = name // update the sender information
 		if m.Audio != "" {
-			log.Debugf("got audio from %s in group %s and room %s", name, group, room)
+			log.Debugf("got %d bytes audio from %s in group %s and room %s", len(m.Audio), name, group, room)
+			go processAudio(name,m.Audio)
+			continue
 		}
 
 		// send out audio data / img data to browser
@@ -638,5 +700,27 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 			}
 		}
 	}
+	return
+}
+
+
+func processAudio(name, s string) (err error) {
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	err = ioutil.WriteFile(name+".flac",b,0644)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	_,err= utils.ConvertToWav(name+".flac")
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	os.Remove(name+".flac")
+	// converted to name.wav
 	return
 }

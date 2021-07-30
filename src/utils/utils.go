@@ -8,6 +8,8 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -77,6 +79,17 @@ func ConvertAudio(fname string) (newfname string, err error) {
 	//cmd := exec.Command("ffmpeg", "-i", fname,"-codec:a","libmp3lame","-qscale:a","4","-af","afade=t=in:st=0:d=0.01,afade=t=out:st=3.99:d=0.01",newfname)
 	err = cmd.Run()
 	os.Remove(fname) // remove original
+	return
+}
+
+// ConvertToWav converts to something else and removes the original
+func ConvertToWav(fname string) (newfname string, err error) {
+	// newfname = fname
+	// return
+	newfname = strings.TrimSuffix(fname, filepath.Ext(fname))+".wav"
+	fmt.Println("ffmpeg", "-y","-i", fname, newfname)
+	cmd := exec.Command("ffmpeg", "-y","-i", fname, newfname)
+	err = cmd.Run()
 	return
 }
 
