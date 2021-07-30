@@ -624,12 +624,12 @@ func (n *Norns) Stream() (filename string, err error) {
 	for {
 		fname := <-currentFile // current file is a flac file
 		// // convert audio from flac
-		// fname, err = utils.ConvertAudio(fname)
-		// if err != nil {
-		// 	logger.Error(err)
-		// 	os.Remove(fname)
-		// 	continue
-		// }
+		fname, err = utils.ConvertAudio(fname)
+		if err != nil {
+			logger.Error(err)
+			os.Remove(fname)
+			continue
+		}
 		logger.Debugf("processing %s", fname)
 		b, errb := ioutil.ReadFile(fname)
 		if errb != nil {
