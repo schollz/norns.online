@@ -524,7 +524,7 @@ func writeAllBytes(src io.Reader, maxbytes int64) (fname string, err error) {
 	}
 	fname = f.Name()
 	// w := gzip.NewWriter(f)
-	n,err:= io.Copy(f,src)
+	n, err := io.Copy(f, src)
 	//n, err := utils.CopyMax(f, src, maxbytes)
 	// w.Flush()
 	// w.Close()
@@ -603,6 +603,8 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) (err error) {
 		m.Sender = name // update the sender information
 		if m.Audio != "" {
 			log.Debugf("got audio from %s in group %s and room %s", name, group, room)
+			first, last, total := utils.MP3FirstFrame(m.Audio)
+			log.Debugf("first/last/total is: %d/%d/%d milliseconds", first, last, total)
 		}
 
 		// send out audio data / img data to browser

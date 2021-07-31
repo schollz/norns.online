@@ -624,7 +624,7 @@ func (n *Norns) Stream() (filename string, err error) {
 	for {
 		fname := <-currentFile // current file is a flac file
 		// convert audio to mp3
-		fname,err = utils.ConvertAudioToMp3(fname)
+		fname, err = utils.ConvertAudioToMp3(fname)
 		if err != nil {
 			logger.Error(err)
 			os.Remove(fname)

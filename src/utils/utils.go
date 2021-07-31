@@ -3,13 +3,38 @@ package utils
 import (
 	"crypto/md5"
 	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"math/rand"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
+
+	"github.com/tcolgate/mp3"
 )
+
+func MP3FirstFrame(mp3base64 string) (first, last, total int64) {
+	skipped := 0
+	r := base64.NewDecoder(base64.StdEncoding, strings.NewReader(mp3base64))
+
+	d := mp3.NewDecoder(r)
+	var f mp3.Frame
+	for {
+		if err := d.Decode(&f, &skipped); err == nil {
+			if first == 0 {
+				first = (&f).Duration().Milliseconds()
+			} else {
+				last = (&f).Duration().Milliseconds()
+			}
+			total += (&f).Duration().Milliseconds()
+		} else {
+			break
+		}
+	}
+	return
+}
 
 func IsEmpty(name string) bool {
 	f, err := os.Open(name)

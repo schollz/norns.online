@@ -557,11 +557,13 @@ input[type=range]:focus::-ms-fill-upper {
             source.connect(gainNode);
 
             // start the source playing
-            //console.log(currentPlayingFinished);
+            console.log(currentPlayingFinished);
             if (currentPlayingFinished <= audioCtx.currentTime) {
-                currentPlayingFinished = audioCtx.currentTime + 1
+                console.log("buffering");
+                currentPlayingFinished = audioCtx.currentTime + 3;
             }
-            source.start(currentPlayingFinished-0.001);
+            source.start(currentPlayingFinished - 0.024);
+            console.log(buffer.duration);
             currentPlayingFinished = currentPlayingFinished + buffer.duration;
         })
     }
