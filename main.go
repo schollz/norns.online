@@ -15,6 +15,7 @@ var config = flag.String("config", "", "config file to use")
 var debugMode = flag.Bool("debug", false, "debug mode")
 var relayMode = flag.Bool("relay", false, "run relay")
 var nornsOnlineHost = flag.String("host", "https://norns.online", "host to connect to")
+var forceRun = flag.Bool("force", false, "force running")
 
 func main() {
 	// logger.SetOutput(&lumberjack.Logger{
@@ -41,10 +42,6 @@ func main() {
 			}
 		}
 	}
-	if numRunning > 1 {
-		fmt.Println("already running")
-		os.Exit(1)
-	}
 
 	fmt.Printf("%d\n", pid)
 
@@ -53,6 +50,13 @@ func main() {
 	logger.SetLevel("info")
 	if *debugMode {
 		logger.SetLevel("debug")
+	}
+
+	if *forceRun == false {
+		if numRunning > 1 {
+			fmt.Println("already running")
+			os.Exit(1)
+		}
 	}
 
 	if *relayMode {
