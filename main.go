@@ -15,6 +15,7 @@ var config = flag.String("config", "", "config file to use")
 var debugMode = flag.Bool("debug", false, "debug mode")
 var relayMode = flag.Bool("relay", false, "run relay")
 var nornsOnlineHost = flag.String("host", "https://norns.online", "host to connect to")
+var matronHost = flag.String("matron", "localhost:5555", "matron host to connect to")
 var forceRun = flag.Bool("force", false, "force running")
 
 func main() {
@@ -62,7 +63,7 @@ func main() {
 	if *relayMode {
 		err = server.Run()
 	} else {
-		n, err := norns.New(*config, pid, *nornsOnlineHost)
+		n, err := norns.New(*config, pid, *nornsOnlineHost, *matronHost)
 		if err == nil {
 			err = n.Run()
 		}
