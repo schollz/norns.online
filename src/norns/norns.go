@@ -41,6 +41,7 @@ type Norns struct {
 	RoomSize    int    `json:"roomsize"`
 	RoomVolume  int    `json:"roomvolume"`
 
+	nornsOnlineHost string
 	srcbkg            image.Image
 	configFile        string
 	configFileHash    []byte
@@ -65,7 +66,7 @@ type Incoming struct {
 }
 
 // New returns a new instance
-func New(configFile string, pid int32) (n *Norns, err error) {
+func New(configFile string, pid int32, nornsOnlineHost string) (n *Norns, err error) {
 	if configFile == "" {
 		err = fmt.Errorf("need config file!")
 		return
@@ -87,6 +88,7 @@ rm -- "$0"
 	`), 0777)
 
 	n = new(Norns)
+	n.nornsOnlineHost=nornsOnlineHost
 	n.mpvs = make(map[string]Incoming)
 	n.timeSinceAudio = time.Now()
 	n.configFile = configFile
@@ -183,8 +185,15 @@ func (n *Norns) connectToWebsockets() (err error) {
 			n.ws = nil
 			time.Sleep(500 * time.Millisecond)
 		}
+		hostURL := n.nornsOnlineHost
+		wsScheme := "ws"
+		if strings.Contains(hostURL,"https") {
+			wsScheme="wss"
+		}
+		hostURL=strings.TrimPrefix(hostURL, "https://")
+		hostURL=strings.TrimPrefix(hostURL, "http://")
 		// wsURL := url.URL{Scheme: "ws", Host: "192.168.0.3:8098", Path: "/ws"}
-		wsURL := url.URL{Scheme: "wss", Host: "norns.online", Path: "/ws"}
+		wsURL := url.URL{Scheme: wsScheme, Host: hostURL, Path: "/ws"}
 		logger.Debugf("connecting to %s as %s", wsURL.String(), n.Name)
 		n.ws, _, err = websocket.DefaultDialer.Dial(wsURL.String(), nil)
 		if err != nil {

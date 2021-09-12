@@ -14,6 +14,7 @@ import (
 var config = flag.String("config", "", "config file to use")
 var debugMode = flag.Bool("debug", false, "debug mode")
 var relayMode = flag.Bool("relay", false, "run relay")
+var nornsOnlineHost = flag.String("host", "https://norns.online", "host to connect to")
 
 func main() {
 	// logger.SetOutput(&lumberjack.Logger{
@@ -57,7 +58,7 @@ func main() {
 	if *relayMode {
 		err = server.Run()
 	} else {
-		n, err := norns.New(*config, pid)
+		n, err := norns.New(*config, pid, *nornsOnlineHost)
 		if err == nil {
 			err = n.Run()
 		}
