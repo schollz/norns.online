@@ -265,13 +265,10 @@ input[type=range]:focus::-ms-fill-upper {
 <body>
     <div class="center">
         <div class="norns">
-            <center style="padding-top: 1em;">
-                <button class="banner hints" id="clickToAllow">
-                    click to allow audio
-                </button>
-            </center>
             <div class="nornsimage">
-                <img id="img" src="/static/img/offline.png" style="filter: brightness(2);" width=365 height=190>
+                <img id="img" src="/static/img/offline.png" style="filter: brightness(2);   image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;" width=365 height=183>
             </div>
             <button class="button k0" id="k0"></button>
             <button class="button k1" id="k1"></button>
@@ -286,66 +283,12 @@ input[type=range]:focus::-ms-fill-upper {
                 <input type="text" value="75" class="enc2" data-width="100" data-displayInput=false data-cursor=true data-fgColor="#fff" data-bgColor="#222222" data-thickness=1 data-curosr=1>
             </div>
         </div>
-        <div class="hints" style="padding-bottom: 1em;" id="volumeThing">
-            <span style="position: relative;bottom:0.1em;">Volume (<span id="volumePercent">100</span>%):</span>
-            <input type="range" min="0" max="400" value="100" class="slider" id="volumeSlider" oninput="updateVolume(this.value);" onchange="updateVolume(this.value);">
-        </div>
-        <div id="livestream" class="hidden">
-            <div style="padding-top:1em" class="text">live stream:</div>
-            <div id="playerdiv"></div>
-        </div>
-        <div class="hints" style="padding-top: 2em;">
-            <p><a href="/">norns.online</a>: share your <a href="https://monome.org/" target="_blank">norns</a> screen + audio,</p>
-            <p><a href="/share">norns.online/share</a>: share tapes + script saves.</p>
-            <div class="gettingstarted" class="hidden" style="font-size:1.0em;padding-top: 1em;">first, get norns.online from <a href="https://monome.org/docs/norns/maiden/" target="_blank">maiden</a>.
-            </div>
-            <div class="gettingstarted" class="hidden" style="font-size:1.0em;padding-top: 1em;">to share screen + audio:
-                <ul>
-                    <li>- open 'norns.online' script</li>
-                    <li>- press K3 to go online.</li>
-                    <li>- open webpage norns.online/&lt;yourname&gt;.</li>
-                </ul>
-            </div>
-            <div class="gettingstarted" class="hidden" style="font-size:1.0em;padding-top: 1em;">to share tapes + script saves:
-                <ul>
-                    <li>- open 'norns.online/share' script</li>
-                    <li>- press K3 to register.</li>
-                </ul>
-            </div>
-            <details style="padding-top: 0.5em;" class="hidden" id="hints">
-                <summary><span style="position:relative;bottom:3px; left:-2px">hints</span></summary>
-                <ul>
-                    <li>- k1 latches so you can use it as a shift.</li>
-                    <li>- double click k1 to get into/out of menu.</li>
-                    <li id="audioenabled" class="hidden">- on mobile, press any button to enable audio.</li>
-                </ul>
-            </details>
-            <p style="padding-top:1em;">made <a href="https://github.com/schollz/norns.online" target="_blank">open-source</a> by infinite digits.</p>
-        </div>
     </div>
     <script src="/static/js/jquery-3.5.1.min.js"></script>
     <script src="/static/js/jquery.knob.min.js"></script>
     <script src="https://player.twitch.tv/js/embed/v1.js"></script>
     <script>
-    var timeAdjusts = [];
-    var audioAllowed = false;
-    var audioCtx;
-    var gainNode;
-    var currentPlayingFinished = 0;
     var socket;
-    var norns_id = window.location.pathname.substr(1);
-    norns_id = norns_id.replace('static/', '')
-    if (norns_id.length < 1) {
-        norns_id = window.location.hash.substr(1);
-    }
-    console.log(`norns_id: "${norns_id}"`);
-    if (norns_id == "") {
-        $(".gettingstarted").removeClass("hidden");
-        $("#clickToAllow").hide();
-        $("#volumeThing").hide();
-    } else {
-        $("#hints").removeClass("hidden");
-    }
 
     function getAvg(values) {
         if (values.length === 0) return 0;
@@ -435,10 +378,8 @@ input[type=range]:focus::-ms-fill-upper {
 
                 last_time = currentTime()
                 z = 1 * multiplier;
-                //console.log(i + " decreased " + z)
-                if (norns_id.length > 0 && socket != null) {
+                if (socket != null) {
                     socket.send(JSON.stringify({
-                        "recipient": norns_id,
                         kind: "enc",
                         n: i + 1,
                         z: z,
@@ -464,7 +405,6 @@ input[type=range]:focus::-ms-fill-upper {
                         kind: "key",
                         n: i + 1,
                         z: value,
-                        "recipient": norns_id,
                     }))
                 }
             },
@@ -480,23 +420,19 @@ input[type=range]:focus::-ms-fill-upper {
                     fast_clicked = false
                 }
                 last_time = currentTime();
-                if (norns_id.length > 0) {
-                    if (i == 0 && socket != null) {
-                        socket.send(JSON.stringify({
-                            kind: "key",
-                            n: i + 1,
-                            z: value,
-                            fast: fast_clicked,
-                            "recipient": norns_id,
-                        }))
-                    } else if (socket != null) {
-                        socket.send(JSON.stringify({
-                            kind: "key",
-                            n: i + 1,
-                            z: value,
-                            "recipient": norns_id,
-                        }))
-                    }
+                if (i == 0 && socket != null) {
+                    socket.send(JSON.stringify({
+                        kind: "key",
+                        n: i + 1,
+                        z: value,
+                        fast: fast_clicked,
+                    }))
+                } else if (socket != null) {
+                    socket.send(JSON.stringify({
+                        kind: "key",
+                        n: i + 1,
+                        z: value,
+                    }))
                 }
             },
             val: function() {
@@ -541,119 +477,38 @@ input[type=range]:focus::-ms-fill-upper {
     }
 
 
-    function playMP3(mp3data) {
-        audioCtx.decodeAudioData(base64ToArrayBuffer(mp3data), function(buffer) {
-            console.log(buffer);
-            // Get an AudioBufferSourceNode.
-            // This is the AudioNode to use when we want to play an AudioBuffer
-            var source = audioCtx.createBufferSource();
-
-            // set the buffer in the AudioBufferSourceNode
-            source.buffer = buffer;
-
-            // connect the AudioBufferSourceNode to the
-            // destination so we can hear the sound
-            // source.connect(audioCtx.destination);
-            source.connect(gainNode);
-
-            // start the source playing
-            //console.log(currentPlayingFinished);
-            if (currentPlayingFinished <= audioCtx.currentTime) {
-                currentPlayingFinished = audioCtx.currentTime + 1
-            }
-            source.start(currentPlayingFinished-0.001);
-            currentPlayingFinished = currentPlayingFinished + buffer.duration;
-        })
-    }
-
-
-    if (norns_id.length > 0) {
-        const socketMessageListener = (e) => {
-            data = JSON.parse(e.data);
-            if ('img' in data) {
-                document.getElementById('img').setAttribute(
-                    'src',
-                    'data:image/png;base64,' + data['img']
-                )
-            }
-            if ('audio' in data && audioAllowed) {
-                playMP3(data['audio'])
-            }
-            if ('twitch' in data) {
-                if (data['twitch']) {
-                    $("#livestream").removeClass("hidden");
-                    if (!twitchActivated) {
-                        twitchActivated = true;
-                        $(".twitch").attr("href", "https://www.twitch.tv/" + norns_id)
-                        var options = {
-                            width: 1050,
-                            height: 200,
-                            channel: norns_id,
-                            parent: ["norns.online"]
-                        };
-                        var player = new Twitch.Player("playerdiv", options);
-                        player.setVolume(0.5);
-                    }
-                } else {
-                    $("#livestream").addClass("hidden");
-                }
-            }
-            if ('timesend' in data) {
-                rtt = (new Date()).getTime() - data['timeclient'];
-                bf = data['timeserver'] - (data['timeclient'] + getAvg(timeAdjusts));
-                console.log(`rtt: ${rtt}, bf: ${bf}`);
-                timeAdjusts.push(bf - rtt / 2);
-            }
-        };
-        const socketOpenListener = (e) => {
-            console.log('Connected');
-            socket.send(JSON.stringify({
-                "name": "browser" + randomString(5),
-                "group": norns_id,
-            }))
-            socket.send(JSON.stringify({
-                "kind": "hello",
-                "recipient": norns_id,
-            }))
-            var callCount = 1;
-            var repeater = setInterval(function() {
-                if (callCount < 10) {
-                    socket.send(JSON.stringify({
-                        "timesend": true,
-                        "timeclient": (new Date()).getTime() + getAvg(timeAdjusts),
-                    }))
-                    callCount += 1;
-                } else {
-                    clearInterval(repeater);
-                }
-            }, 1000);
-        };
-        const socketErrorListener = (e) => {
-            console.error(e);
+    const socketMessageListener = (e) => {
+        data = JSON.parse(e.data);
+        if ('img' in data) {
+            document.getElementById('img').setAttribute(
+                'src',
+                'data:image/png;base64,' + data['img']
+            )
         }
-        const socketCloseListener = (e) => {
-            if (socket) {
-                console.log('Disconnected.');
-            }
-            var url = window.origin.replace("http", "ws") + '/ws';
-            socket = new WebSocket(url);
-            socket.onopen = socketOpenListener;
-            socket.onmessage = socketMessageListener;
-            socket.onclose = socketCloseListener;
-            socket.onerror = socketErrorListener;
-        };
-        window.addEventListener('load', (event) => {
-            socketCloseListener();
-        });
-        document.getElementById("clickToAllow").addEventListener("click", function() {
-            $("#clickToAllow").fadeOut(2000);
-            audioCtx = new(window.AudioContext || window.webkitAudioContext)();
-            gainNode = audioCtx.createGain();
-            gainNode.gain.value = parseFloat(document.getElementById("volumePercent").innerText) / 100; // setting it to 10%
-            gainNode.connect(audioCtx.destination);
-            audioAllowed = true;
-        })
+    };
+    const socketOpenListener = (e) => {
+        console.log('Connected');
+    };
+    const socketErrorListener = (e) => {
+        console.error(e);
     }
+    const socketCloseListener = (e) => {
+        if (socket) {
+            console.log('Disconnected.');
+        }
+        var url = window.origin.replace("http", "ws") + '/ws';
+        socket = new WebSocket(url);
+        socket.onopen = socketOpenListener;
+        socket.onmessage = socketMessageListener;
+        socket.onclose = socketCloseListener;
+        socket.onerror = socketErrorListener;
+    };
+    window.addEventListener('load', (event) => {
+        socketCloseListener();
+        setInterval(function() {
+            document.getElementById('img').src = '/screen.png?rand=' + Math.random();
+        },1000);
+    });
     </script>
 </body>
 
