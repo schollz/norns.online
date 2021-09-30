@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/schollz/logger"
 	"github.com/schollz/norns.online/src/norns"
@@ -14,6 +15,7 @@ import (
 var config = flag.String("config", "", "config file to use")
 var debugMode = flag.Bool("debug", false, "debug mode")
 var relayMode = flag.Bool("relay", false, "run relay")
+var serverMode = flag.Bool("server", false, "run server")
 var nornsOnlineHost = flag.String("host", "https://norns.online", "host to connect to")
 var matronHost = flag.String("matron", "localhost:5555", "matron host to connect to")
 var forceRun = flag.Bool("force", false, "force running")
@@ -60,11 +62,19 @@ func main() {
 		}
 	}
 
-	if *relayMode {
+	if *relayMode && !*serverMode {
 		err = server.Run()
-	} else {
+	} else if *serverMode {
+		logger.Debug("serverMode")
+		if *relayMode {
+			go func() {
+				server.Run()
+			}()
+			time.Sleep(1 * time.Second)
+		}
 		n, err := norns.New(*config, pid, *nornsOnlineHost, *matronHost)
 		if err == nil {
+			logger.Debug("running norns")
 			err = n.Run()
 		}
 	}

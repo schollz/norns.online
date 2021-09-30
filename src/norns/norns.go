@@ -70,6 +70,7 @@ type Incoming struct {
 func New(configFile string, pid int32, nornsOnlineHost string, matronAddress string) (n *Norns, err error) {
 	if configFile == "" {
 		err = fmt.Errorf("need config file!")
+		logger.Error(err)
 		return
 	}
 	// write scripts
@@ -180,6 +181,7 @@ func (n *Norns) Load() (updated bool, err error) {
 }
 
 func (n *Norns) connectToWebsockets() (err error) {
+	logger.Debug("connecting to websockets")
 	for {
 		if n.ws != nil {
 			// close connection and try reconnecting
@@ -267,6 +269,7 @@ func (n *Norns) connectToWebsockets() (err error) {
 
 // Run forever
 func (n *Norns) Run() (err error) {
+	logger.Debug("running norns")
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 

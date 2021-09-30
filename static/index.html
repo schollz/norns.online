@@ -410,32 +410,27 @@ input[type=range]:focus::-ms-fill-upper {
         let consecutive_turns = 0;
         return {
             change: function(v) {
-                dif = 0;
-                dif = (v - value);
-                //  console.log(`v: ${v}, value: ${value}, dif: ${dif}`);
-                value = v;
-                if (Math.abs(dif) > 10) {
-                    return;
-                }
-                if (currentTime() - last_time < 350 || Math.abs(consecutive_turns) < 4) {
-                    consecutive_turns = consecutive_turns + dif;
+                if (currentTime() - last_time < 50) {
+                    // last_time = currentTime()
                     return
                 }
-                //console.log(consecutive_turns);
+                dif = (v - value);
+                value = v;
+                console.log(`v: ${v}, value: ${value}, dif: ${dif}`);
+                if (Math.abs(dif) > 50 || Math.abs(dif) < 0.2) {
+                    // last_time = currentTime()
+                    return
+                }
+                last_time = currentTime()
+
                 var multiplier = 1;
-                if (Math.abs(consecutive_turns) > 25) {
-                    multiplier = 3;
-                } else if (Math.abs(consecutive_turns) > 15) {
+                if (Math.abs(dif) > 5) {
+                    multiplier = Math.floor(Math.abs(dif));
+                } else if (Math.abs(dif) > 3) {
                     multiplier = 2;
                 }
-                if (consecutive_turns < 0) {
-                    multiplier = multiplier * -1;
-                }
-                consecutive_turns = 0;
-
-                last_time = currentTime()
-                z = 1 * multiplier;
-                //console.log(i + " decreased " + z)
+                z = Math.sign(dif) * multiplier;
+                console.log(z);
                 if (norns_id.length > 0 && socket != null) {
                     socket.send(JSON.stringify({
                         "recipient": norns_id,
@@ -561,7 +556,7 @@ input[type=range]:focus::-ms-fill-upper {
             if (currentPlayingFinished <= audioCtx.currentTime) {
                 currentPlayingFinished = audioCtx.currentTime + 1
             }
-            source.start(currentPlayingFinished-0.001);
+            source.start(currentPlayingFinished - 0.001);
             currentPlayingFinished = currentPlayingFinished + buffer.duration;
         })
     }
